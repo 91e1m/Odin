@@ -13,9 +13,6 @@ import me.odinmain.utils.skyblock.itemID
 import me.odinmain.utils.ui.TextHUD
 import me.odinmain.utils.ui.and
 import net.minecraft.network.play.server.S29PacketSoundEffect
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import net.minecraftforge.fml.common.gameevent.TickEvent
-import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
 
 object EnrageDisplay : Module(
     name = "Enrage Display",
@@ -24,7 +21,8 @@ object EnrageDisplay : Module(
     private val unit by SelectorSetting("Unit", arrayListOf("Seconds", "Ticks"))
     private val showUnit by BooleanSetting("Show unit", default = false)
 
-    val animatable = Animatable(0.0.px, 1.px)
+    // test
+    private val animatable = Animatable(0.0.px, 1.px)
 
     private val HUD = TextHUD(2.5.percent, 2.5.percent) { color, font ->
         if (!preview) element.alphaAnim = animatable
@@ -49,34 +47,23 @@ object EnrageDisplay : Module(
     private var enrageTimer = -1
 
     init {
-        onPacket(S29PacketSoundEffect::class.java) {
-            if (it.soundName == "mob.zombie.remedy" && it.pitch == 1.0f && it.volume == 0.5f && mc.thePlayer?.getCurrentArmor(
-                    0
-                )?.itemID == "REAPER_BOOTS" &&
-                mc.thePlayer?.getCurrentArmor(1)?.itemID == "REAPER_LEGGINGS" && mc.thePlayer?.getCurrentArmor(2)?.itemID == "REAPER_CHESTPLATE"
-            )
-                enrageTimer = 120
-        }
-    }
-
-    @SubscribeEvent
-    fun onServerTick(event: RealServerTick) {
-        enrageTimer--
-    }
-
-    init {
-        onEvent<ClientTickEvent> { event ->
-            if (event.phase == TickEvent.Phase.END) {
-                enrageTimer--
-                if (enrageTimer == 0) {
+        onPacket { packet: S29PacketSoundEffect ->
+            if (packet.soundName == "mob.zombie.remedy" && packet.pitch == 1.0f && packet.volume == 0.5f) {
+                if (
+                    mc.thePlayer?.getCurrentArmor(0)?.itemID == "REAPER_BOOTS" &&
+                    mc.thePlayer?.getCurrentArmor(1)?.itemID == "REAPER_LEGGINGS" &&
+                    mc.thePlayer?.getCurrentArmor(2)?.itemID == "REAPER_CHESTPLATE"
+                ) {
+                    enrageTimer = 120
                     animatable.animate(0.25.seconds, Animations.EaseOutQuint)
                 }
             }
         }
-    }
-
-    override fun onKeybind() {
-        enrageTimer = 120
-        animatable.animate(0.25.seconds, Animations.EaseOutQuint)
+        onEvent<RealServerTick> {
+            enrageTimer--
+            if (enrageTimer == 0) {
+                animatable.animate(0.25.seconds, Animations.EaseOutQuint)
+            }
+        }
     }
 }
