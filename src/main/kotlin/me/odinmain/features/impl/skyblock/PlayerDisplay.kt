@@ -1,6 +1,7 @@
 package me.odinmain.features.impl.skyblock
 
 import com.github.stivais.ui.constraints.percent
+import com.github.stivais.ui.constraints.px
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.BooleanSetting
@@ -29,10 +30,10 @@ object PlayerDisplay : Module(
         2.5.percent,
     ) { color, font ->
         if (preview) {
-            text("5000/5000❤", font = font, color = color)
+            text("5000/5000", font = font, color = color, size = 30.px)
         } else {
             needs { SkyblockPlayer.currentHealth != 0 && SkyblockPlayer.maxHealth != 0 }
-            text({ "${SkyblockPlayer.currentHealth}/${SkyblockPlayer.maxHealth}❤" }, font = font, color = color)
+            text({ "${SkyblockPlayer.currentHealth}/${SkyblockPlayer.maxHealth}" }, font = font, color = color, size = 30.px)
         }
     }.setting("Health")
 
