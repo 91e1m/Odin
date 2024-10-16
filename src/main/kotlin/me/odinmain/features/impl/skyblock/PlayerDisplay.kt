@@ -1,9 +1,12 @@
 package me.odinmain.features.impl.skyblock
 
+import com.github.stivais.ui.constraints.percent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.DropdownSetting
+import me.odinmain.utils.skyblock.SkyblockPlayer
+import me.odinmain.utils.ui.TextHUD
 import net.minecraftforge.client.event.RenderGameOverlayEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
@@ -20,6 +23,18 @@ object PlayerDisplay : Module(
     private val hideHealth by BooleanSetting("Hide Health", true).withDependency { hideActionBar }
     private val hideMana by BooleanSetting("Hide Mana", true).withDependency { hideActionBar }
     private val hideDefense by BooleanSetting("Hide Defense", true).withDependency { hideActionBar }
+
+    private val healthHUD by TextHUD(
+        2.5.percent,
+        2.5.percent,
+    ) { color, font ->
+        if (preview) {
+            text("5000/5000❤", font = font, color = color)
+        } else {
+            needs { SkyblockPlayer.currentHealth != 0 && SkyblockPlayer.maxHealth != 0 }
+            text({ "${SkyblockPlayer.currentHealth}/${SkyblockPlayer.maxHealth}❤" }, font = font, color = color)
+        }
+    }.setting("Health")
 
     /*private val healthHud: HudElement by HudSetting("Health Hud", 10f, 10f, 1f, true) {
         val text =
@@ -52,16 +67,6 @@ object PlayerDisplay : Module(
         return@HudSetting mcTextAndWidth(text, 2, 2, 2, Color.GREEN, center = false) * 2f + 2f to 20f
     }*/
 
-
-    fun modifyText(text: String): String {
-        if (!enabled) return text
-        var toReturn = text
-        toReturn = if (hideHealth) toReturn.replace("[\\d|,]+/[\\d|,]+❤".toRegex(), "") else toReturn
-        toReturn = if (hideMana) toReturn.replace("[\\d|,]+/[\\d|,]+✎ Mana".toRegex(), "") else toReturn
-        toReturn = if (hideDefense) toReturn.replace("[\\d|,]+§a❈ Defense".toRegex(), "") else toReturn
-        return toReturn
-    }
-
     @SubscribeEvent
     fun onRenderOverlay(event: RenderGameOverlayEvent.Pre) {
         if (event.isCanceled) return // don't override other mods cancelling the event.
@@ -72,5 +77,16 @@ object PlayerDisplay : Module(
             RenderGameOverlayEvent.ElementType.EXPERIENCE -> hideXP
             else -> return
         }
+    }
+
+
+    @JvmStatic
+    fun modifyText(text: String): String {
+        if (!enabled) return text
+        var toReturn = text
+        toReturn = if (hideHealth) toReturn.replace("[\\d|,]+/[\\d|,]+❤".toRegex(), "") else toReturn
+        toReturn = if (hideMana) toReturn.replace("[\\d|,]+/[\\d|,]+✎ Mana".toRegex(), "") else toReturn
+        toReturn = if (hideDefense) toReturn.replace("[\\d|,]+§a❈ Defense".toRegex(), "") else toReturn
+        return toReturn
     }
 }
