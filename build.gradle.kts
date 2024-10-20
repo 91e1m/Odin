@@ -1,6 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.gradle.kotlin.dsl.create
-
 plugins {
     idea
     java
@@ -47,7 +44,7 @@ allprojects {
         annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT")
         implementation("org.spongepowered:mixin:0.7.11-SNAPSHOT") { isTransitive = false }
 
-        implementation("com.github.unlimitedcoder2:odin-lwjgl:5065fe5c1e")
+        implementation("com.github.odtheking:odin-lwjgl:5065fe5c1e")
 
         sourceSets.main {
             java.srcDir(file("$projectDir/src/main/kotlin"))
