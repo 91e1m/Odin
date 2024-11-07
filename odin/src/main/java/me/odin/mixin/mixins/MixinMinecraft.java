@@ -40,13 +40,13 @@ public class MixinMinecraft {
 
     @Inject(method = "rightClickMouse", at = @At("HEAD"), cancellable = true)
     private void rightClickMouse(CallbackInfo ci) {
-        if (postAndCatch(new ClickEvent.RightClickEvent())) ci.cancel();
-        CPSDisplay.INSTANCE.onRightClick();
+        if (postAndCatch(new ClickEvent.Right())) ci.cancel();
+        CPSDisplay.onRightClick();
     }
 
     @Inject(method = "clickMouse", at = @At("HEAD"), cancellable = true)
     private void clickMouse(CallbackInfo ci) {
-        if (postAndCatch(new ClickEvent.LeftClickEvent())) ci.cancel();
-        CPSDisplay.INSTANCE.onLeftClick();
+        if (postAndCatch(new ClickEvent.Left())) ci.cancel();
+        CPSDisplay.onLeftClick();
     }
 }

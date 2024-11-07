@@ -1,11 +1,12 @@
 package me.odinclient.features.impl.render
 
+import com.github.stivais.ui.color.Color
+import com.github.stivais.ui.color.withAlpha
 import me.odinmain.events.impl.RenderEntityModelEvent
 import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.*
-import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
 import me.odinmain.utils.*
 import me.odinmain.utils.render.*
 import me.odinmain.utils.render.RenderUtils.renderVec
@@ -31,8 +32,7 @@ import kotlin.math.*
 
 object Trajectories : Module(
     name = "Trajectories",
-    description = "Displays the trajectory of pearls and bows.",
-    category = Category.RENDER
+    description = "Displays the trajectory of pearls and bows."
 ) {
     private val bows by BooleanSetting("Bows", true, description = "Render trajectories of bow arrows.")
     private val pearls by BooleanSetting("Pearls", true, description = "Render trajectories of ender pearls.")
@@ -43,7 +43,7 @@ object Trajectories : Module(
     private val width by NumberSetting("Line Width", 1f, 0.1f, 5.0, 0.1f, description = "The width of the line.")
     private val planeSize by NumberSetting("Plane Size", 2f, 0.1f, 5.0, 0.1f, description = "The size of the plane.").withDependency { plane }
     private val boxSize by NumberSetting("Box Size", 0.5f, 0.5f, 3.0f, 0.1f, description = "The size of the box.").withDependency { boxes }
-    private val color by ColorSetting("Color", Color.CYAN, true, description = "The color of the trajectory.")
+    private val color by ColorSetting("Color", Color.MINECRAFT_AQUA, true, description = "The color of the trajectory.")
 
     private var boxRenderQueue: MutableList<AxisAlignedBB> = mutableListOf()
     private var entityRenderQueue = mutableListOf<Entity>()
@@ -223,7 +223,7 @@ object Trajectories : Module(
             }
             else -> return
         }
-        RenderUtils.drawFilledAABB(AxisAlignedBB(vec1.xCoord, vec1.yCoord, vec1.zCoord, vec2.xCoord, vec2.yCoord, vec2.zCoord), color.withAlpha(color.alpha / 2, true), false)
+        RenderUtils.drawFilledAABB(AxisAlignedBB(vec1.xCoord, vec1.yCoord, vec1.zCoord, vec2.xCoord, vec2.yCoord, vec2.zCoord), color.withAlpha(color.alpha / 2f), false)
     }
 
     private fun drawPearlCollisionBox() {

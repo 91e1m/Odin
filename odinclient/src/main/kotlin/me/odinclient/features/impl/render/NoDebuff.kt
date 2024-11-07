@@ -14,7 +14,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object NoDebuff : Module(
     name = "No Debuff",
-    category = Category.RENDER,
     description = "Removes various unwanted effects from the game."
 ) {
     private val antiBlind by BooleanSetting("No Blindness", false, description = "Disables blindness.")

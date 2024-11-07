@@ -165,7 +165,6 @@ object LeapMenu : Module(
         }
     }
 
-
    private val leapTeammates: MutableList<DungeonPlayer> = mutableListOf(
         DungeonPlayer("Stivais", DungeonClass.Healer),
         DungeonPlayer("Odtheking", DungeonClass.Archer),
@@ -173,16 +172,6 @@ object LeapMenu : Module(
         DungeonPlayer("Cezar", DungeonClass.Tank)
     )
 
-
-    /**
-     * Sorts the list of players based on their default quadrant and class priority.
-     * The function first tries to place each player in their default quadrant. If the quadrant is already occupied,
-     * the player is added to a second round list. After all players have been processed, the function fills the remaining
-     * empty quadrants with the players from the second round list.
-     *
-     * @param players The list of players to be sorted.
-     * @return An array of sorted players.
-     */
     /**
      * Sorts the list of players based on their default quadrant and class priority.
      * The function first tries to place each player in their default quadrant. If the quadrant is already occupied,

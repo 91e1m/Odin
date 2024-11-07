@@ -11,8 +11,7 @@ import me.odinmain.utils.skyblock.skyblockID
 
 object AutoGFS : Module(
     name = "Auto GFS",
-    description = "Automatically refills certain items from sack.",
-    category = Category.DUNGEON
+    description = "Automatically refills certain items from sack."
 ) {
     private val inKuudra by BooleanSetting("In Kuudra", true, description = "Only gfs in Kuudra.")
     private val inDungeon by BooleanSetting("In Dungeon", true, description = "Only gfs in Dungeons.")

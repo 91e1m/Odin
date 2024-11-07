@@ -93,7 +93,7 @@ object PlayerDisplay : Module(
     }
     private val ehpColor by ColorSetting("EffectiveHealth Color", Color.DARK_GREEN, true, description = "The color of the effective health text.")*/
 
-
+    @JvmStatic
     fun modifyText(text: String): String {
         if (!enabled) return text
         var toReturn = text

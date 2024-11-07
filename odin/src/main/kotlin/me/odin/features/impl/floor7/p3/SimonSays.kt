@@ -1,12 +1,13 @@
 package me.odin.features.impl.floor7.p3
 
+import com.github.stivais.ui.color.Color
+import com.github.stivais.ui.color.withAlpha
 import me.odinmain.events.impl.BlockChangeEvent
 import me.odinmain.events.impl.PostEntityMetadata
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.features.settings.impl.SelectorSetting
-import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
 import me.odinmain.utils.clock.Clock
 import me.odinmain.utils.floor
 import me.odinmain.utils.render.Renderer
@@ -100,9 +101,9 @@ object SimonSays : Module(
             val y = position.y + .3125
             val z = position.z + .25
             val color = when (index) {
-                clickNeeded -> Color(0, 170, 0)
-                clickNeeded + 1 -> Color(255, 170, 0)
-                else -> Color(170, 0, 0)
+                clickNeeded -> Color.RGB(0, 170, 0)
+                clickNeeded + 1 -> Color.RGB(255, 170, 0)
+                else -> Color.RGB(170, 0, 0)
             }.withAlpha(.5f)
             Renderer.drawStyledBox(AxisAlignedBB(x, y, z, x + .25, y + .375, z + .5), color, style, lineWidth, depthCheck)
         }

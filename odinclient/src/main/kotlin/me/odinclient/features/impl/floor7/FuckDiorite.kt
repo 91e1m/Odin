@@ -23,8 +23,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.Phase
 
 object FuckDiorite : Module(
     name = "Fuck Diorite",
-    description = "Replaces the pillars in the storm fight with glass.",
-    category = Category.FLOOR7,
+    description = "Replaces the pillars in the storm fight with glass."
 ) {
     private val GLASS_STATE = Blocks.glass.defaultState
     private val STAINED_GLASS = Blocks.stained_glass

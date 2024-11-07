@@ -1,14 +1,14 @@
 package me.odin.features.impl.render
 
+import com.github.stivais.ui.color.Color
+import com.github.stivais.ui.color.withAlpha
 import me.odin.mixin.accessors.IEntityPlayerSPAccessor
 import me.odinmain.events.impl.PacketReceivedEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.*
-import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
 import me.odinmain.utils.PositionLook
 import me.odinmain.utils.positionVector
-import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.RenderUtils.renderVec
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.EtherWarpHelper
@@ -25,7 +25,7 @@ object EtherWarpHelper : Module(
     description = "Helpful tools for Ether Warp."
 ) {
     private val render by BooleanSetting("Show Etherwarp Guess", true, description = "Shows where etherwarp will take you.")
-    private val color by ColorSetting("Color", Color.ORANGE.withAlpha(.5f), allowAlpha = true, description = "Color of the box.").withDependency { render }
+    private val color by ColorSetting("Color", Color.MINECRAFT_GOLD.withAlpha(.5f), allowAlpha = true, description = "Color of the box.").withDependency { render }
     private val renderFail by BooleanSetting("Show when failed", true, description = "Shows the box even when the guess failed.").withDependency { render }
     private val wrongColor by ColorSetting("Wrong Color", Color.RED.withAlpha(.5f), allowAlpha = true, description = "Color of the box if guess failed.").withDependency { renderFail }
 

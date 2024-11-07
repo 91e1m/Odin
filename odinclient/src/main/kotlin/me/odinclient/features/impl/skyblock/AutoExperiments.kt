@@ -17,7 +17,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object AutoExperiments : Module(
     name = "Auto Experiments",
-    category = Category.SKYBLOCK,
     description = "Automatically click on the Chronomatron and Ultrasequencer experiments."
 ){
     private val delay by NumberSetting("Click Delay", 200, 0, 1000, 10, unit = "ms", description = "Time in ms between automatic test clicks.")
@@ -41,7 +40,7 @@ object AutoExperiments : Module(
     }
 
     @SubscribeEvent
-    fun onGuiOpen(event: GuiEvent.GuiLoadedEvent) {
+    fun onGuiOpen(event: GuiEvent.Loaded) {
         reset()
         if (!LocationUtils.currentArea.isArea(Island.PrivateIsland)) return
         val chestName = event.name

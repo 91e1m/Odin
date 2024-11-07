@@ -22,7 +22,6 @@ import net.minecraft.util.BlockPos
  */
 object CancelInteract : Module(
     name = "Cancel Interact",
-    category = Category.SKYBLOCK,
     description = "Cancels the interaction with certain blocks, so that the item can be used instead."
 ){
     private val cancelInteract by BooleanSetting("Cancel Interact", true, description = "Cancels the interaction with certain blocks, so that the item can be used instead.")

@@ -1,5 +1,7 @@
 package me.odinclient.features.impl.floor7.p3
 
+import com.github.stivais.ui.color.Color
+import com.github.stivais.ui.color.withAlpha
 import me.odinclient.utils.skyblock.PlayerUtils.rightClick
 import me.odinmain.events.impl.BlockChangeEvent
 import me.odinmain.events.impl.PostEntityMetadata
@@ -8,10 +10,8 @@ import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.NumberSetting
-import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
 import me.odinmain.utils.*
 import me.odinmain.utils.clock.Clock
-import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.*
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
@@ -30,7 +30,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 object SimonSays : Module(
     name = "Simon Says",
     description = "Different features for the Simon Says device.",
-    category = Category.FLOOR7,
     tag = TagType.RISKY
 ) {
     private val start by BooleanSetting("Start", default = true, description = "Automatically starts the device when it can be started.")
@@ -142,7 +141,7 @@ object SimonSays : Module(
         val isInSSRange = mc.thePlayer.getDistanceSqToCenter(BlockPos(108, 120, 93)) <= 1.45 * 1.45
         Renderer.drawCylinder(
             Vec3(108.5, 120.0, 93.5), 1.45f, 1.45f, .6f, 35,
-            1, 0f, 90f, 90f, (if (isInSSRange) Color.GREEN else Color.ORANGE).withAlpha(.5f)
+            1, 0f, 90f, 90f, (if (isInSSRange) Color.GREEN else Color.MINECRAFT_GOLD).withAlpha(.5f)
         )
 
         if (
@@ -194,9 +193,9 @@ object SimonSays : Module(
             val y = pos.y + .3125
             val z = pos.z + .25
             val color = when (index) {
-                clickNeeded -> Color(0, 170, 0)
-                clickNeeded + 1 -> Color(255, 170, 0)
-                else -> Color(170, 0, 0)
+                clickNeeded -> Color.RGB(0, 170, 0)
+                clickNeeded + 1 -> Color.RGB(255, 170, 0)
+                else -> Color.RGB(170, 0, 0)
             }.withAlpha(.5f)
             Renderer.drawBox(AxisAlignedBB(x, y, z, x + .25, y + .375, z + .5), color, outlineAlpha = 1f, fillAlpha = 0.6f)
         }

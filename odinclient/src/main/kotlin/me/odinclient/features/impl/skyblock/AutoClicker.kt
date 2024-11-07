@@ -14,8 +14,7 @@ import org.lwjgl.input.Keyboard
 
 object AutoClicker : Module(
     name = "Auto Clicker",
-    description = "Auto clicker with options for left-click, right-click, or both.",
-    category = Category.SKYBLOCK
+    description = "Auto clicker with options for left-click, right-click, or both."
 ) {
     private val enableLeftClick by BooleanSetting("Enable Left Click", true, description = "Enable auto-clicking for left-click.")
     private val enableRightClick by BooleanSetting("Enable Right Click", true, description = "Enable auto-clicking for right-click.")

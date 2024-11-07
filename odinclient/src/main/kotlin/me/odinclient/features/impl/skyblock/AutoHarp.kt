@@ -22,7 +22,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent
  */
 object AutoHarp : Module(
     name = "Auto Harp",
-    category = Category.SKYBLOCK,
     description = "Automatically Completes Melody's Harp."
 ){
     private var inHarp = false

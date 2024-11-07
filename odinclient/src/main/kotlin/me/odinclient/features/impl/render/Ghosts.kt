@@ -1,11 +1,11 @@
 package me.odinclient.features.impl.render
 
+import com.github.stivais.ui.color.Color
 import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.utils.addVec
 import me.odinmain.utils.getSBMaxHealth
-import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.RenderUtils.renderVec
 import me.odinmain.utils.render.Renderer
 import net.minecraft.entity.monster.EntityCreeper
@@ -14,8 +14,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object Ghosts : Module(
     name = "Ghosts",
-    description = "Diverse QOL for ghosts in the Dwarven Mines.",
-    category = Category.SKYBLOCK
+    description = "Diverse QOL for ghosts in the Dwarven Mines."
 ) {
     private var showGhostNametag by BooleanSetting(name = "Show Ghost Nametag", description = "Show the ghost's name tag.")
     private var showGhosts by BooleanSetting(name = "Hide Ghosts", description = "Hide ghosts.")

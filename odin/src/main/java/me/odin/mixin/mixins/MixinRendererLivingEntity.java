@@ -1,8 +1,8 @@
 package me.odin.mixin.mixins;
 
-
+import com.github.stivais.ui.color.ColorUtils;
 import me.odinmain.events.impl.RenderEntityModelEvent;
-import me.odinmain.utils.render.Color;
+import com.github.stivais.ui.color.Color;
 import me.odinmain.utils.render.HighlightRenderer;
 import me.odinmain.utils.render.RenderUtils;
 import net.minecraft.client.model.ModelBase;
@@ -74,10 +74,10 @@ public abstract class MixinRendererLivingEntity<T extends EntityLivingBase> {
             GL11.glTexEnvi(8960, OpenGlHelper.GL_OPERAND0_ALPHA, 770);
             this.brightnessBuffer.position(0);
             Color color = highlightEntity.getColor();
-            brightnessBuffer.put(color.getR() / 255f);
-            brightnessBuffer.put(color.getG() / 255f);
-            brightnessBuffer.put(color.getB() / 255f);
-            brightnessBuffer.put(color.getA() / 255f);
+            brightnessBuffer.put(ColorUtils.getRed(color) / 255f);
+            brightnessBuffer.put(ColorUtils.getGreen(color) / 255f);
+            brightnessBuffer.put(ColorUtils.getBlue(color) / 255f);
+            brightnessBuffer.put(ColorUtils.getAlpha(color) / 255f);
             this.brightnessBuffer.flip();
             GL11.glTexEnv(8960, 8705, this.brightnessBuffer);
             GlStateManager.setActiveTexture(OpenGlHelper.GL_TEXTURE2);
