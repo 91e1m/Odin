@@ -1,6 +1,5 @@
 package me.odinmain.features.impl.skyblock
 
-import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.BooleanSetting
@@ -12,10 +11,9 @@ import me.odinmain.utils.skyblock.modMessage
 import me.odinmain.utils.skyblock.partyMessage
 import net.minecraft.network.play.server.S29PacketSoundEffect
 
-object RagAxe : Module(
+object RagnarokAxe : Module(
     name = "Rag Axe",
-    description = "Tracks rag axe cooldowns.",
-    category = Category.SKYBLOCK
+    description = "Tracks rag axe cooldowns."
 ) {
     private val alert by BooleanSetting("Alert", true, description = "Alerts you when you start casting rag axe.")
     private val alertCancelled by BooleanSetting("Alert Cancelled", true, description = "Alerts you when your rag axe is cancelled.")
