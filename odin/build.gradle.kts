@@ -9,7 +9,6 @@ val shadowImpl: Configuration by configurations.creating {
 }
 
 dependencies {
-    implementation(project(":"))
     shadowImpl(project(":"))
 }
 

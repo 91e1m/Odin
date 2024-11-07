@@ -3,9 +3,7 @@ package me.odin.mixin.mixins;
 import me.odin.mixin.accessors.IMinecraftAccessor;
 import me.odinmain.features.impl.render.Animations;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.renderer.ItemRenderer;
-import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,8 +18,6 @@ public abstract class MixinItemRenderer {
     @Final
     @Shadow private Minecraft mc;
 
-    @Shadow private ItemStack itemToRender;
-
     @Shadow protected abstract void transformFirstPersonItem(float equipProgress, float swingProgress);
 
     @Inject(method = "transformFirstPersonItem", at = @At("HEAD"), cancellable = true)
@@ -29,22 +25,9 @@ public abstract class MixinItemRenderer {
         if (Animations.INSTANCE.itemTransferHook(equipProgress, swingProgress)) ci.cancel();
     }
 
-    @Redirect(method = "renderItemInFirstPerson", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/entity/AbstractClientPlayer;getItemInUseCount()I"))
-    private int noBlockHook(AbstractClientPlayer instance) {
-        if (Animations.INSTANCE.getEnabled() && Animations.INSTANCE.getNoBlock()) {
-            return Animations.INSTANCE.getItemInUseCountHook(instance, itemToRender);
-        }
-        return instance.getItemInUseCount();
-    }
-
     @Redirect(method = "renderItemInFirstPerson", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemRenderer;transformFirstPersonItem(FF)V", ordinal = 0))
     private void renderItemHook(ItemRenderer instance, float equipProgress, float swingProgress) {
-        if (Animations.INSTANCE.getEnabled()) {
-            this.transformFirstPersonItem(equipProgress, swingProgress);
-        }
-        else {
-            this.transformFirstPersonItem(equipProgress, swingProgress);
-        }
+        this.transformFirstPersonItem(equipProgress, swingProgress);
     }
 
     @Redirect(method = "renderItemInFirstPerson", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemRenderer;transformFirstPersonItem(FF)V", ordinal = 1))
@@ -79,15 +62,11 @@ public abstract class MixinItemRenderer {
 
     @Redirect(method = "renderItemInFirstPerson", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemRenderer;transformFirstPersonItem(FF)V", ordinal = 4))
     private void renderItemHook4(ItemRenderer instance, float equipProgress, float swingProgress) {
-        if (Animations.INSTANCE.getEnabled()) {
-            this.transformFirstPersonItem(equipProgress, swingProgress);
-        }
-        else {
-            this.transformFirstPersonItem(equipProgress, swingProgress);
-        }
+        this.transformFirstPersonItem(equipProgress, swingProgress);
     }
 
     @Inject(method = "doItemUsedTransformations", at = @At("HEAD"), cancellable = true)
-    private void noSwing(float swingProgress, CallbackInfo ci) { if (Animations.INSTANCE.getNoSwing() && Animations.INSTANCE.getEnabled()) ci.cancel(); }
-
+    private void noSwing(float swingProgress, CallbackInfo ci) {
+        if (Animations.INSTANCE.getShouldStopSwing()) ci.cancel();
+    }
 }

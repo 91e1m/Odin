@@ -40,8 +40,7 @@ object WarpCooldown : Module (
     private var lastUpdate: Long = System.currentTimeMillis()
 
     init {
-        onMessage(Regex("(?s)^.*\\[[^]]+] (\\w+) entered \\w+ Catacombs, Floor (\\w+)!.*\$")) {
-            if (!it.startsWith("-----------------------------") && !it.endsWith("-----------------------------")) return@onMessage
+        onMessage(Regex("^-*>newLine<-\\[[^]]+] (\\w+) entered (?:MM )?\\w+ Catacombs, Floor (\\w+)!->newLine<-*$")) {
             lastUpdate = System.currentTimeMillis() + 30_000
         }
     }

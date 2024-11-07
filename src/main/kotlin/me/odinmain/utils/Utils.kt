@@ -7,22 +7,23 @@ import me.odinmain.OdinMain
 import me.odinmain.OdinMain.logger
 import me.odinmain.OdinMain.mc
 import me.odinmain.features.ModuleManager
-import me.odinmain.utils.skyblock.devMessage
-import me.odinmain.utils.skyblock.modMessage
-import net.minecraft.client.Minecraft
+import me.odinmain.utils.skyblock.*
+import net.minecraft.entity.Entity
+import net.minecraft.entity.EntityLivingBase
+import net.minecraft.entity.SharedMonsterAttributes
+import net.minecraft.entity.player.EntityPlayer
+import net.minecraft.event.ClickEvent
+import net.minecraft.event.HoverEvent
 import net.minecraft.inventory.Container
 import net.minecraft.inventory.ContainerChest
+import net.minecraft.util.ChatComponentText
+import net.minecraft.util.ChatStyle
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.Event
-import org.lwjgl.input.Keyboard
-import org.lwjgl.input.Mouse
-import org.lwjgl.opengl.Display
 import org.lwjgl.opengl.GL11
 import org.lwjgl.util.glu.GLU
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.time.Month
-import java.time.format.TextStyle
 import java.util.*
 import kotlin.math.*
 
@@ -113,7 +114,6 @@ fun Int.floor(): Int {
     return this
 }
 
-
 /**
  * Rounds the current number to the specified number of decimals.
  * @param decimals The number of decimals to round to.
@@ -126,10 +126,26 @@ fun Number.round(decimals: Int): Number {
 }
 
 val ContainerChest.name: String
-    get() = this.lowerChestInventory.displayName.unformattedText
+    get() = this.lowerChestInventory?.displayName?.unformattedText ?: ""
 
 val Container.name: String
     get() = (this as? ContainerChest)?.name ?: "Undefined Container"
+
+operator fun Number.div(number: Number): Number {
+    return this.toDouble() / number.toDouble()
+}
+
+operator fun Number.times(number: Number): Number {
+    return this.toDouble() * number.toDouble()
+}
+
+operator fun Number.minus(number: Number): Number {
+    return this.toDouble() - number.toDouble()
+}
+
+operator fun Number.plus(number: Number): Number {
+    return this.toDouble() + number.toDouble()
+}
 
 /**
  * Returns a random number between the specified range.
@@ -155,8 +171,11 @@ fun Event.postAndCatch(): Boolean {
     }.onFailure {
         it.printStackTrace()
         logger.error("An error occurred", it)
-        modMessage("${OdinMain.VERSION} Caught and logged an ${it::class.simpleName ?: "error"} at ${this::class.simpleName}. §cPlease report this with a log in the discord!")
-    }.getOrDefault(isCanceled)
+        val style = ChatStyle()
+        style.chatClickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/od copy ```${it.stackTraceToString().lineSequence().take(10).joinToString("\n")}```")
+        style.chatHoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, ChatComponentText("§6Click to copy the error to your clipboard."))
+        modMessage("${OdinMain.VERSION} Caught an ${it::class.simpleName ?: "error"} at ${this::class.simpleName}. §cPlease click this message to copy and send it in the Odin discord!",
+            chatStyle = style)}.getOrDefault(isCanceled)
 }
 
 /**
@@ -164,13 +183,12 @@ fun Event.postAndCatch(): Boolean {
  * @param ticks The number of ticks to wait.
  * @param func The function to execute after the specified number of
  */
-// todo: my idea is to remove ticktasks to a better system, make it use that
-fun runIn(ticks: Int, func: () -> Unit) {
+fun runIn(ticks: Int, server: Boolean = false, func: () -> Unit) {
     if (ticks <= 0) {
         func()
         return
     }
-    ModuleManager.tickTasks.add(ModuleManager.TickTask(ticks, func))
+    ModuleManager.tickTasks.add(ModuleManager.TickTask(ticks, server, func))
 }
 
 /**
@@ -188,7 +206,7 @@ inline fun profile(name: String, func: () -> Unit) {
 
 /**
  * Starts a minecraft profiler section with the specified name + "Odin: ".
- */
+ * */
 fun startProfile(name: String) {
     mc.mcProfiler.startSection("Odin: $name")
 }
@@ -198,6 +216,28 @@ fun startProfile(name: String) {
  */
 fun endProfile() {
     mc.mcProfiler.endSection()
+}
+
+/**
+ * Returns the maximum value of the numbers you give in as a float
+ *
+ * @param numbers All the numbers you want to compare
+ *
+ * @returns The maximum value of the numbers, as a float
+ */
+fun max(vararg numbers: Number): Float {
+    return numbers.maxBy { it.toFloat() }.toFloat()
+}
+
+/**
+ * Returns the minimum value of the numbers you give in as a float
+ *
+ * @param numbers All the numbers you want to compare
+ *
+ * @returns The minimum value of the numbers, as a float
+ */
+fun min(vararg numbers: Number): Float {
+    return numbers.minBy { it.toFloat() }.toFloat()
 }
 
 /**
@@ -217,12 +257,16 @@ fun <T> Collection<T>.getSafe(index: Int?): T? {
     }
 }
 
-fun getCurrentMonthName(): String {
-    val currentMonth = Month.entries[java.time.LocalDateTime.now().monthValue - 1]
-    return currentMonth.getDisplayName(TextStyle.FULL, Locale.getDefault())
-}
-
-fun formatTime(time: Long): String {
+/**
+ * Formats a time duration in milliseconds into a human-readable string.
+ *
+ * The string will show hours, minutes, and seconds, with an optional number of decimal places for the seconds.
+ *
+ * @param time The time duration in milliseconds to be formatted.
+ * @param decimalPlaces The number of decimal places to show for the seconds. Default is 2.
+ * @return A formatted string representing the time duration. For example, "1h 2m 3.45s".
+ */
+fun formatTime(time: Long, decimalPlaces: Int = 2): String {
     if (time == 0L) return "0s"
     var remaining = time
     val hours = (remaining / 3600000).toInt().let {
@@ -234,13 +278,13 @@ fun formatTime(time: Long): String {
         if (it > 0) "${it}m " else ""
     }
     val seconds = (remaining / 1000f).let {
-        "%.2f".format(it)
+        String.format(Locale.US, "%.${decimalPlaces}f", it)
     }
     return "$hours$minutes${seconds}s"
 }
 
 val Char.isHexaDecimal
-    get() = isDigit() || equalsOneOf("a","b","c","d","e","f","A","B","C","D","E","F")
+    get() = isDigit() || lowercase().equalsOneOf("a","b","c","d","e","f")
 
 fun checkGLError(message: String) {
     var i: Int
@@ -252,7 +296,9 @@ fun checkGLError(message: String) {
     }
 }
 
-// todo: move all this to somewhere more relevant
+/**
+ * Writes the given text to the clipboard.
+ */
 fun writeToClipboard(text: String, successMessage: String?) {
     try {
         val clipboard = Toolkit.getDefaultToolkit().systemClipboard
@@ -260,84 +306,52 @@ fun writeToClipboard(text: String, successMessage: String?) {
         clipboard.setContents(stringSelection, null)
         if (successMessage != null)
             modMessage(successMessage)
-    } catch (exception: Exception) {
+    } catch (_: Exception) {
         devMessage("Clipboard not available!")
     }
 }
 
-
-// todo: move all this to somewhere more relevant
 fun writeToClipboard(text: String) {
     writeToClipboard(text, null)
 }
 
-
-fun isCtrlKeyDown(): Boolean {
-    return if (Minecraft.isRunningOnMac) Keyboard.isKeyDown(219) || Keyboard.isKeyDown(220) else Keyboard.isKeyDown(
-        29
-    ) || Keyboard.isKeyDown(157)
-}
-
-fun isShiftKeyDown(): Boolean {
-    return Keyboard.isKeyDown(42) || Keyboard.isKeyDown(54)
-}
-
-private fun isAltKeyDown(): Boolean {
-    return Keyboard.isKeyDown(56) || Keyboard.isKeyDown(184)
-}
-
-fun isKeyComboCtrlX(keyID: Int): Boolean {
-    return keyID == 45 && isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown()
-}
-
-fun isKeyComboCtrlV(keyID: Int): Boolean {
-    return keyID == 47 && isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown()
-}
-
-fun isKeyComboCtrlC(keyID: Int): Boolean {
-    return keyID == 46 && isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown()
-}
-
-fun isKeyComboCtrlA(keyID: Int): Boolean {
-    return keyID == 30 && isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown()
-}
-
-fun isKeyComboCtrlZ(keyID: Int): Boolean {
-    return keyID == Keyboard.KEY_Z && isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown()
-}
-
 private val romanMap = mapOf('I' to 1, 'V' to 5, 'X' to 10, 'L' to 50, 'C' to 100, 'D' to 500, 'M' to 1000)
-
 fun romanToInt(s: String): Int {
-    var result = 0
-    for (i in 0 until s.length - 1) {
-        val current = romanMap[s[i]] ?: 0
-        val next = romanMap[s[i + 1]] ?: 0
-        result += if (current < next) -current else current
+    return if (s.matches(Regex("^[0-9]+$"))) s.toInt()
+    else {
+        var result = 0
+        for (i in 0 until s.length - 1) {
+            val current = romanMap[s[i]] ?: 0
+            val next = romanMap[s[i + 1]] ?: 0
+            result += if (current < next) -current else current
+        }
+        result + (romanMap[s.last()] ?: 0)
     }
-    return result + (romanMap[s.last()] ?: 0)
 }
 
-// remove
-inline fun <T> List<T>.forEachIndexedReturn(action: (index: Int, T) -> Unit): List<T> {
-    for (i in indices) {
-        action(i, this[i])
-    }
-    return this
+fun fillItemFromSack(amount: Int, itemId: String, sackName: String, sendMessage: Boolean) {
+    val needed = mc.thePlayer?.inventory?.mainInventory?.find { it?.skyblockID == itemId }?.stackSize ?: 0
+    if (needed != amount) sendCommand("gfs $sackName ${amount - needed}") else if (sendMessage) modMessage("§cAlready at max stack size.")
 }
 
-// remove
-val trueMouseX: Float
-    get() = Mouse.getX().toFloat()
+inline fun <T> MutableCollection<T>.removeFirstOrNull(predicate: (T) -> Boolean): T? {
+    val first = firstOrNull(predicate) ?: return null
+    this.remove(first)
+    return first
+}
 
-// remove
-val trueMouseY: Float
-    get() = mc.displayHeight - Mouse.getY() - 1f
+fun Int.rangeAdd(add: Int): IntRange = this..this+add
 
-// remove
-fun getQuadrant(): Int {
-    return when {
-        trueMouseX >= Display.getWidth() / 2 -> if (trueMouseY >= Display.getHeight() / 2) 4 else 2
-        else -> if (trueMouseY >= Display.getHeight() / 2) 3 else 1
-    }
+val Entity.rotation get() = Pair(rotationYaw, rotationPitch)
+
+fun runOnMCThread(run: () -> Unit) {
+    if (!mc.isCallingFromMinecraftThread) mc.addScheduledTask(run) else run()
+}
+
+fun EntityPlayer?.isOtherPlayer(): Boolean {
+    return this != null && this != mc.thePlayer && this.uniqueID.version() != 2
+}
+
+fun EntityLivingBase?.getSBMaxHealth(): Float {
+    return this?.getEntityAttribute(SharedMonsterAttributes.maxHealth)?.baseValue?.toFloat() ?: 0f
 }

@@ -7,12 +7,12 @@ import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.sendCommand
 
 object DungeonRequeue : Module(
-    name = "Auto Requeue",
+    name = "Dungeon Requeue",
     description = "Automatically starts a new dungeon at the end of a dungeon."
 ) {
-    private val delay by NumberSetting("Delay", 10, 0, 30, 1, description = "The delay in seconds before requeuing.")
+    private val delay by NumberSetting("Delay", 2, 0, 30, 1, description = "The delay in seconds before requeuing.", unit = "s")
     private val type by SelectorSetting("Type", "Normal", arrayListOf("Requeue", "Normal"), description = "The type of command to execute to fulfill the requeue request.")
-    private val disablePartyLeave by BooleanSetting("Disable Party Leave", false, description = "Disables the requeue on party leave message.")
+    private val disablePartyLeave by BooleanSetting("Disable on leave/kick", true, description = "Disables the requeue on party leave message.")
 
     var disableRequeue = false
     init {
@@ -26,9 +26,11 @@ object DungeonRequeue : Module(
                 sendCommand(if (type == 0) "instancerequeue" else "od ${DungeonUtils.floor.name.lowercase()}", clientSide = type != 0)
             }
         }
-        onMessage(Regex("\\[?(?:MVP|VIP)?\\+*]? ?(.{1,16}) has left the party.")) {
+
+        onMessage(Regex("(\\[.+])? ?(.{1,16}) has (left|been removed from) the party.")) {
             if (disablePartyLeave) disableRequeue = true
         }
+
         onWorldLoad { disableRequeue = false }
     }
 }

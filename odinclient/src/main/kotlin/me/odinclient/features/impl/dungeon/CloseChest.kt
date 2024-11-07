@@ -14,7 +14,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object CloseChest : Module(
     name = "Close Chest",
-    description = "Options to close the chest automatically or with any key or automatically."
+    description = "Allows you to close the chest with any key or automatically."
 ) {
     private val mode by SelectorSetting("Mode", "Auto", arrayListOf("Auto", "Any Key"), description = "The mode to use, auto will automatically close the chest, any key will make any key input close the chest.")
 
@@ -31,7 +31,7 @@ object CloseChest : Module(
         val gui = event.gui as? GuiChest ?: return
         if (!inDungeons || mode != 1) return
         if ((gui.inventorySlots as? ContainerChest)?.name?.noControlCodes?.equalsOneOf("Chest", "Large Chest") == true)
-            mc.thePlayer.closeScreen()
+            mc.thePlayer?.closeScreen()
     }
 
     @SubscribeEvent
@@ -39,6 +39,6 @@ object CloseChest : Module(
         val gui = event.gui as? GuiChest ?: return
         if (!inDungeons || mode != 1) return
         if ((gui.inventorySlots as? ContainerChest)?.name?.noControlCodes?.equalsOneOf("Chest", "Large Chest") == true)
-            mc.thePlayer.closeScreen()
+            mc.thePlayer?.closeScreen()
     }
 }

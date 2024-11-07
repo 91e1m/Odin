@@ -10,10 +10,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static me.odinmain.utils.Utils.postAndCatch;
 
-/*
- * From Floppa Client
- * https://github.com/FloppaCoding/FloppaClient/blob/master/src/main/java/floppaclient/mixins/render/EntityRendererMixin.java
- */
 @Mixin(value = EntityRenderer.class)
 abstract public class MixinEntityRenderer implements IResourceManagerReloadListener {
 

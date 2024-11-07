@@ -1,8 +1,8 @@
 package me.odinmain.features.impl.floor7.p3.termGUI
 
 object SelectAllGui : TermGui() {
-    /*override fun render() {
-        setCurrentGui(this)
+    override fun render() {
+       /* setCurrentGui(this)
         itemIndexMap.clear()
         roundedRectangle(-300, -175, 600, 350, TerminalSolver.customGuiColor, 10f, 1f)
         if (TerminalSolver.customGuiText == 0) {
@@ -12,7 +12,7 @@ object SelectAllGui : TermGui() {
             text("Select All the \"*\" Items!", 0, -163, Color.WHITE, 20, align = TextAlign.Middle, verticalAlign = TextPos.Top)
             roundedRectangle(-getTextWidth("Select All the \"*\" Items!", 20f) / 2, -135, getTextWidth("Select All the \"*\" Items!", 20f), 3, Color.WHITE, radius = 5f)
         }
-        solution.forEach { pane ->
+        TerminalSolver.currentTerm.solution.forEach { pane ->
             val row = pane / 9 - 1
             val col = pane % 9 - 2
             val box = BoxWithClass((-168 + ((gap -20).unaryPlus() * 0.5)) + col * 70, -115 + row * 70, 70 - gap, 70 - gap)
@@ -23,6 +23,6 @@ object SelectAllGui : TermGui() {
                 box.w.toFloat() * customScale,
                 box.h.toFloat() * customScale
             )
-        }
-    }*/
+        }*/
+    }
 }

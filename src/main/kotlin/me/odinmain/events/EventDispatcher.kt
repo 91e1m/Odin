@@ -1,38 +1,32 @@
 package me.odinmain.events
 
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import me.odinmain.OdinMain.mc
+import me.odinmain.OdinMain.scope
 import me.odinmain.events.impl.*
 import me.odinmain.utils.*
 import me.odinmain.utils.clock.Clock
+import me.odinmain.utils.skyblock.dungeon.DungeonUtils.dungeonItemDrops
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.inDungeons
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.isSecret
+import me.odinmain.utils.skyblock.unformattedName
 import net.minecraft.client.gui.inventory.GuiChest
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.inventory.ContainerChest
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement
-import net.minecraft.network.play.server.S02PacketChat
-import net.minecraft.network.play.server.S29PacketSoundEffect
-import net.minecraft.network.play.server.S32PacketConfirmTransaction
+import net.minecraft.network.play.server.*
 import net.minecraftforge.client.event.GuiOpenEvent
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object EventDispatcher {
 
-    private val drops = listOf(
-        "Health Potion VIII Splash Potion", "Healing Potion 8 Splash Potion", "Healing Potion VIII Splash Potion", "Healing VIII Splash Potion", "Healing 8 Splash Potion",
-        "Decoy", "Inflatable Jerry", "Spirit Leap", "Trap", "Training Weights", "Defuse Kit", "Dungeon Chest Key", "Treasure Talisman", "Revive Stone", "Architect's First Draft"
-    )
-
     /**
      * Dispatches [SecretPickupEvent.Item]
      */
     @SubscribeEvent
     fun onRemoveEntity(event: EntityLeaveWorldEvent) {
-        if (!inDungeons || event.entity !is EntityItem || !event.entity.entityItem.displayName.noControlCodes.containsOneOf(drops, true) || mc.thePlayer.getDistanceToEntity(event.entity) > 6) return
+        if (!inDungeons || event.entity !is EntityItem || event.entity.entityItem?.unformattedName?.containsOneOf(dungeonItemDrops, true) == false || mc.thePlayer.getDistanceToEntity(event.entity) > 6) return
         SecretPickupEvent.Item(event.entity).postAndCatch()
     }
 
@@ -78,16 +72,15 @@ object EventDispatcher {
      */
     @OptIn(DelicateCoroutinesApi::class)
     @SubscribeEvent
-    fun onGuiOpen(event: GuiOpenEvent) = GlobalScope.launch {
+    fun onGuiOpen(event: GuiOpenEvent) = scope.launch {
         if (event.gui !is GuiChest) return@launch
         val container = (event.gui as GuiChest).inventorySlots
 
         if (container !is ContainerChest) return@launch
-        val chestName = container.name
 
         val deferred = waitUntilLastItem(container)
-        try { deferred.await() } catch (e: Exception) { return@launch } // Wait until the last item in the chest isn't null
+        try { deferred.await() } catch (_: Exception) { return@launch } // Wait until the last item in the chest isn't null
 
-        GuiEvent.Loaded(chestName, container).postAndCatch()
+        GuiEvent.Loaded(container.name, container).postAndCatch()
     }
 }

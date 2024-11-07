@@ -3,7 +3,8 @@ package me.odinmain.features.impl.dungeon
 import com.github.stivais.ui.color.Color
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
-import me.odinmain.utils.render.Renderer
+import me.odinmain.utils.render.*
+import me.odinmain.utils.runIn
 import me.odinmain.utils.skyblock.getBlockAt
 import me.odinmain.utils.skyblock.isAir
 import me.odinmain.utils.toVec3
@@ -15,59 +16,51 @@ import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
-import java.util.*
-import kotlin.concurrent.schedule
 import kotlin.math.abs
 
 object CanClip : Module(
     name = "Can Clip",
     description = "Tells you if you are currently able to clip through a stair under you."
 ) {
-    private val line by BooleanSetting("Line", true, description = "draws a line where you can clip")
-    /*private val hud: HudElement by HudSetting("Display", 10f, 10f, 1f, true) {
+    private val line by BooleanSetting("Line", true, description = "Draws a line where you can clip.")
+   /* private val hud by HudSetting("Display", 10f, 10f, 1f, true) {
         if (it) {
-            text("Can Clip", 1f, 9f, Color.WHITE, 12f, 0)
+            text("Can Clip", 1f, 9f, Color.WHITE, 12f, OdinFont.REGULAR)
             getTextWidth("Can Clip", 12f) to 12f
         } else {
-            text("Can Clip", 1f, 9f, Color(0, 255, 0, animation.get(0f, 1f, !canClip)), 12f, 0)
+            text("Can Clip", 1f, 9f, Color(0, 255, 0, animation.get(0f, 1f, !canClip)), 12f, OdinFont.REGULAR)
             getTextWidth("Can Clip", 12f) to 12f
         }
     }*/
 
-    //private val animation = EaseInOut(300)
     private var canClip = false
+
+    private val ranges = listOf(0.235..0.265, 0.735..0.765)
 
     @SubscribeEvent
     fun onTick(event: ClientTickEvent) {
-        if (mc.thePlayer == null || !mc.thePlayer.isSneaking) {
-            if (canClip) {
-                //animation.start()
-                canClip = false
-            }
+        val player = mc.thePlayer ?: return
+
+        if (player.isSneaking) {
+            if (canClip) canClip = false
             return
         }
 
-        val x = abs(mc.thePlayer.posX % 1)
-        val z = abs(mc.thePlayer.posZ % 1)
-        val prev = canClip
-        canClip = x in 0.235..0.265 || x in 0.735..0.765 || z in 0.235..0.265 || z in 0.735..0.765
-        //if (prev != canClip) animation.start()
+        canClip = ranges.any { abs(player.posX % 1) in it || abs(player.posZ % 1) in it }
     }
 
     private val Blocks = mutableMapOf<Vec3, String>()
 
     init {
         onPacket(C07PacketPlayerDigging::class.java) {
-            if (it.status != C07PacketPlayerDigging.Action.START_DESTROY_BLOCK || !line) return@onPacket
-            val block = getBlockAt(it.position)
-            val state = mc.theWorld.getBlockState(it.position)
-            if (block is BlockStairs) {
-                val dir = getDirection(state)
-                Timer().schedule(1) {
-                    if (isAir(it.position)) Blocks[it.position.toVec3()] = dir
-                }
+            if (it.status != C07PacketPlayerDigging.Action.START_DESTROY_BLOCK || !line || getBlockAt(it.position) !is BlockStairs) return@onPacket
+            val state = mc.theWorld?.getBlockState(it.position) ?: return@onPacket
+
+            runIn(1) {
+                if (isAir(it.position)) Blocks[it.position.toVec3()] = getDirection(state)
             }
         }
+
         onWorldLoad {
             Blocks.clear()
         }
@@ -98,7 +91,7 @@ object CanClip : Module(
                 else -> return
             }
 
-            if (line) Renderer.draw3DLine(pos1, pos2, color = Color.MINECRAFT_RED)
+            if (line) Renderer.draw3DLine(listOf(pos1, pos2), color = Color.RED, depth = true)
         }
     }
 

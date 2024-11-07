@@ -1,11 +1,12 @@
 package me.odin.features.impl.floor7.p3
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.multiplyAlpha
 import me.odinmain.events.impl.BlockChangeEvent
 import me.odinmain.events.impl.PostEntityMetadata
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.NumberSetting
+import me.odinmain.features.settings.impl.SelectorSetting
+import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
 import me.odinmain.utils.clock.Clock
 import me.odinmain.utils.floor
 import me.odinmain.utils.render.Renderer
@@ -16,15 +17,19 @@ import net.minecraft.block.BlockButtonStone
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.init.Blocks
 import net.minecraft.item.Item
+import net.minecraft.util.AxisAlignedBB
 import net.minecraft.util.BlockPos
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object SimonSays : Module(
     name = "Simon Says",
-    description = "Different features for the Simon Says puzzle in f7/m7."
+    description = "Shows a solution for the Simon Says device."
 ) {
-    private val clearAfter by BooleanSetting("Clear After", false, description = "Clears the clicks when showing next, should work better with ss skip, but will be less consistent")
+    private val style by SelectorSetting("Style", Renderer.DEFAULT_STYLE, Renderer.styles, description = Renderer.STYLE_DESCRIPTION)
+    private val lineWidth by NumberSetting("Line Width", 2f, 0.1f, 10f, 0.1f, description = "The width of the box's lines.")
+    private val depthCheck by BooleanSetting("Depth check", false, description = "Boxes show through walls.")
+    private val clearAfter by BooleanSetting("Clear After", false, description = "Clears the clicks when showing next, should work better with ss skip, but will be less consistent.")
 
     private val firstButton = BlockPos(110, 121, 91)
     private val clickInOrder = ArrayList<BlockPos>()
@@ -42,7 +47,7 @@ object SimonSays : Module(
 
     @SubscribeEvent
     fun onBlockChange(event: BlockChangeEvent) {
-        if (DungeonUtils.getPhase() != M7Phases.P3) return
+        if (DungeonUtils.getF7Phase() != M7Phases.P3) return
         val pos = event.pos
         val old = event.old
         val state = event.update
@@ -76,10 +81,10 @@ object SimonSays : Module(
     }
 
     @SubscribeEvent
-    fun onEntityJoin(event: PostEntityMetadata) {
-        val ent = mc.theWorld.getEntityByID(event.packet.entityId) as? EntityItem ?: return
-        if (Item.getIdFromItem(ent.entityItem.item) != 77) return
-        val pos = BlockPos(ent.posX.floor().toDouble(), ent.posY.floor().toDouble(), ent.posZ.floor().toDouble()).east()
+    fun onPostMetadata(event: PostEntityMetadata) {
+        val entity = mc.theWorld?.getEntityByID(event.packet.entityId) as? EntityItem ?: return
+        if (Item.getIdFromItem(entity.entityItem.item) != 77) return
+        val pos = BlockPos(entity.posX.floor().toDouble(), entity.posY.floor().toDouble(), entity.posZ.floor().toDouble()).east()
         val index = clickInOrder.indexOf(pos)
         if (index == 2 && clickInOrder.size == 3) clickInOrder.removeFirst()
         else if (index == 0 && clickInOrder.size == 2) clickInOrder.reverse()
@@ -91,12 +96,15 @@ object SimonSays : Module(
 
         for (index in clickNeeded until clickInOrder.size) {
             val position = clickInOrder[index]
+            val x = position.x - .125
+            val y = position.y + .3125
+            val z = position.z + .25
             val color = when (index) {
-                clickNeeded -> Color.MINECRAFT_GREEN
-                clickNeeded + 1 -> Color.MINECRAFT_GOLD
-                else -> Color.MINECRAFT_RED
-            }.multiplyAlpha(0.5f)
-            Renderer.drawBlock(position, color, 1f, depth = true, outlineAlpha = 0)
+                clickNeeded -> Color(0, 170, 0)
+                clickNeeded + 1 -> Color(255, 170, 0)
+                else -> Color(170, 0, 0)
+            }.withAlpha(.5f)
+            Renderer.drawStyledBox(AxisAlignedBB(x, y, z, x + .25, y + .375, z + .5), color, style, lineWidth, depthCheck)
         }
     }
 }

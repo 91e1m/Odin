@@ -1,7 +1,7 @@
 package me.odinmain.features.impl.nether
 
 import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.multiplyAlpha
+import com.github.stivais.ui.color.withAlpha
 import me.odinmain.events.impl.RenderEntityModelEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
@@ -15,22 +15,23 @@ import net.minecraft.entity.Entity
 import net.minecraft.entity.item.EntityArmorStand
 import net.minecraft.entity.monster.*
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import kotlin.collections.set
 
 object BlazeAttunement : Module(
     name = "Blaze Attunement",
     description = "Displays what attunement a blaze boss currently needs."
 ) {
-    private val overlay by BooleanSetting("Overlay Entities", false)
-    private val thickness by NumberSetting("Outline Thickness", 5f, 5f, 20f, 0.5f)
-    private val cancelHurt by BooleanSetting("Cancel Hurt", true)
+    private val overlay by BooleanSetting("Overlay Entities", false, description = "Overlay the entities with the color of the attunement.")
+    private val thickness by NumberSetting("Outline Thickness", 5f, 5f, 20f, 0.5f, description = "The thickness of the outline.")
 
     private var currentBlazes = hashMapOf<Entity, Color>()
 
     init {
         execute(1000) {
+            if (!overlay) return@execute
             currentBlazes.clear()
-            mc.theWorld?.loadedEntityList?.filterIsInstance<EntityArmorStand>()?.forEach { entity ->
-                if (currentBlazes.any { it.key == entity }) return@forEach
+            mc.theWorld?.loadedEntityList?.forEach { entity ->
+                if (entity !is EntityArmorStand || currentBlazes.any { it.key == entity }) return@forEach
                 val name = entity.name.noControlCodes
 
                 val color = when {
@@ -39,12 +40,12 @@ object BlazeAttunement : Module(
                     name.contains("AURIC ♨") -> Color.RGB(206, 219, 57)
                     name.contains("SPIRIT ♨") -> Color.RGB(255, 255, 255)
                     else -> return@forEach
-                }.multiplyAlpha(.4f)
+                }.withAlpha(.4f)
 
                 val entities =
-                    mc.theWorld.getEntitiesWithinAABBExcludingEntity(entity, entity.entityBoundingBox.expand(0.0, 3.0, 0.0))
-                        .filter { it is EntityBlaze || it is EntitySkeleton || it is EntityPigZombie }
-                        .sortedByDescending { xzDistance(it, entity) }
+                    mc.theWorld?.getEntitiesWithinAABBExcludingEntity(entity, entity.entityBoundingBox.offset(0.0, -1.0, 0.0))
+                        ?.filter { it is EntityBlaze || it is EntitySkeleton || it is EntityPigZombie }
+                        ?.sortedByDescending { xzDistance(it, entity) } ?: return@execute
                 if (entities.isEmpty()) return@forEach
                 currentBlazes[entities.first()] = color
             }
@@ -55,11 +56,12 @@ object BlazeAttunement : Module(
     fun onRenderEntityModel(event: RenderEntityModelEvent) {
         val color = currentBlazes[event.entity] ?: return
 
-        OutlineUtils.outlineEntity(event, thickness, color, cancelHurt)
+        OutlineUtils.outlineEntity(event, color, thickness)
     }
 
+    @JvmStatic
     fun changeBlazeColor(entity: Entity) {
-        if (currentBlazes.size == 0 || !overlay) return
+        if (!enabled || currentBlazes.isEmpty() || !overlay) return
         val color = currentBlazes[entity] ?: return
         GlStateManager.disableTexture2D()
         GlStateManager.enableBlend()
@@ -67,14 +69,16 @@ object BlazeAttunement : Module(
         color.bind()
     }
 
+    @JvmStatic
     fun renderModelBlazePost() {
-        if (currentBlazes.size == 0 || !overlay) return
+        if (!enabled || currentBlazes.isEmpty() || !overlay) return
         GlStateManager.disableBlend()
         GlStateManager.enableTexture2D()
     }
 
+    @JvmStatic
     fun changeBipedColor(entity: Entity) {
-        if (currentBlazes.size == 0 || !overlay) return
+        if (!enabled || currentBlazes.isEmpty() || !overlay) return
         val color = currentBlazes[entity] ?: return
         GlStateManager.disableTexture2D()
         GlStateManager.enableBlend()
@@ -82,8 +86,9 @@ object BlazeAttunement : Module(
         color.bind()
     }
 
+    @JvmStatic
     fun renderModelBipedPost() {
-        if (currentBlazes.size == 0 || !overlay) return
+        if (!enabled || currentBlazes.isEmpty() || !overlay) return
         GlStateManager.disableBlend()
         GlStateManager.enableTexture2D()
     }

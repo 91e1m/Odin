@@ -1,8 +1,11 @@
 package me.odinmain.features.impl.nether
 
 import me.odinmain.features.Module
+import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.utils.skyblock.*
+import me.odinmain.utils.skyblock.KuudraUtils.SupplyPickUpSpot
 import me.odinmain.utils.skyblock.KuudraUtils.giantZombies
 import net.minecraft.util.Vec3
 
@@ -10,79 +13,132 @@ object NoPre : Module(
     name = "Pre-Spot Alert",
     description = "Alerts the party about the state of a pre spot."
 ) {
-    private val showAlert by BooleanSetting("Show Alert", true, description = "Shows the alert")
+    private val showCratePriority by BooleanSetting("Show Crate Priority", false, description = "Shows the crate priority alert.")
+    private val cratePriorityTitleTime by NumberSetting("Title Time", 30, 1, 60, description = "The time the crate priority alert will be displayed for.").withDependency { showCratePriority }
+    private val advanced by BooleanSetting("Advanced Mode", false, description = "Enables pro mode for the crate priority alert.").withDependency { showCratePriority }
 
-    private val shop = Vec3(-81.0, 76.0, -143.0)
-    private val xCannon = Vec3(-143.0, 76.0, -125.0)
-    private val square = Vec3(-143.0, 76.0, -80.0)
-    private val triangle = Vec3(-67.5, 77.0, -122.5)
-    private val X = Vec3(-142.5, 77.0, -151.0)
-    private val equals = Vec3(-65.5, 76.0, -87.5)
-    private val slash = Vec3(-113.5, 77.0, -68.5)
-    private var preSpot = ""
-    var missing = ""
-    private var preLoc = Vec3(0.0, 0.0, 0.0)
+    private var preSpot = SupplyPickUpSpot.None
+    var missing = SupplyPickUpSpot.None
+
+    private val partyChatRegex = Regex("^Party > (\\[[^]]*?])? ?(\\w{1,16}): No ?(Triangle|X|Equals|Slash|xCannon|Square|Shop)!\$")
 
     init {
-        onMessage("[NPC] Elle: Head over to the main platform, I will join you when I get a bite!", false) {
+        onMessage(Regex("\\[NPC] Elle: Head over to the main platform, I will join you when I get a bite!")) {
             val playerLocation = mc.thePlayer?.positionVector ?: return@onMessage
-            when {
-                triangle.distanceTo(playerLocation) < 15 -> {
-                    preSpot = "Triangle"
-                    preLoc = triangle
-                }
-
-                X.distanceTo(playerLocation) < 30 -> {
-                    preSpot = "X"
-                    preLoc = X
-                }
-
-                equals.distanceTo(playerLocation) < 15 -> {
-                    preSpot = "Equals"
-                    preLoc = equals
-                }
-
-                slash.distanceTo(playerLocation) < 15 -> {
-                    preSpot = "Slash"
-                    preLoc = slash
-                }
+            preSpot = when {
+                SupplyPickUpSpot.Triangle.location.distanceTo(playerLocation) < 15 -> SupplyPickUpSpot.Triangle
+                SupplyPickUpSpot.X.location.distanceTo(playerLocation) < 30 -> SupplyPickUpSpot.X
+                SupplyPickUpSpot.Equals.location.distanceTo(playerLocation) < 15 -> SupplyPickUpSpot.Equals
+                SupplyPickUpSpot.Slash.location.distanceTo(playerLocation) < 15 -> SupplyPickUpSpot.Slash
+                else -> SupplyPickUpSpot.None
             }
-            modMessage("Pre-spot: ${preSpot.ifEmpty { "§cDidn't register your pre-spot because you didn't get there in time." }}")
+            modMessage(if (preSpot == SupplyPickUpSpot.None) "§cDidn't register your pre-spot because you didn't get there in time." else "Pre-spot: ${preSpot.name}")
         }
 
-        onMessage("[NPC] Elle: Not again!", false) {
+        onMessage(Regex("\\[NPC] Elle: Not again!")) {
+            if (preSpot == SupplyPickUpSpot.None) return@onMessage
             var pre = false
             var second = false
             var msg = ""
             giantZombies.forEach { supply ->
                 val supplyLoc = Vec3(supply.posX, 76.0, supply.posZ)
                 when {
-                    preLoc.distanceTo(supplyLoc) < 18 -> pre = true
-                    preSpot == "Triangle" && shop.distanceTo(supplyLoc) < 18 -> second = true
-                    preSpot == "X" && xCannon.distanceTo(supplyLoc) < 16 -> second = true
-                    preSpot == "Slash" && square.distanceTo(supplyLoc) < 20 -> second = true
+                    preSpot.location.distanceTo(supplyLoc) < 18 -> pre = true
+                    preSpot == SupplyPickUpSpot.Triangle && SupplyPickUpSpot.Shop.location.distanceTo(supplyLoc) < 18 -> second = true
+                    preSpot == SupplyPickUpSpot.X && SupplyPickUpSpot.xCannon.location.distanceTo(supplyLoc) < 16 -> second = true
+                    preSpot == SupplyPickUpSpot.Slash && SupplyPickUpSpot.Square.location.distanceTo(supplyLoc) < 20 -> second = true
                 }
             }
             if (second && pre) return@onMessage
-            if (!pre && preSpot.isNotEmpty()) {
-                msg = "No $preSpot!"
-            } else if (!second) {
-                val location = when (preSpot) {
-                    "Triangle" -> "Shop"
-                    "X" -> "X Cannon"
-                    "Slash" -> "Square"
+            if (!pre && preSpot != SupplyPickUpSpot.None) msg = "No ${preSpot.name}!"
+            else if (!second) {
+                msg = when (preSpot) {
+                    SupplyPickUpSpot.Triangle -> "No Shop!"
+                    SupplyPickUpSpot.X -> "No xCannon!"
+                    SupplyPickUpSpot.Slash -> "No Square!"
                     else -> return@onMessage
                 }
-                msg = "No $location!"
             }
-            if (msg.isEmpty()) return@onMessage modMessage("You didn't get to your pre spot in time")
+            if (msg.isEmpty()) return@onMessage
             partyMessage(msg)
-            if (showAlert) PlayerUtils.alert(msg, time = 10)
         }
 
-        onMessage(Regex("^Party > \\[?(?:MVP|VIP)?\\+*]? ?(.{1,16}): No ?(.*)!")) {
-            val match = Regex("^Party > \\[?(?:MVP|VIP)?\\+*]? ?(.{1,16}): No ?(.*)!").find(it) ?: return@onMessage
-            missing = match.groupValues.lastOrNull() ?: return@onMessage
+        onMessage(partyChatRegex) {
+            missing = SupplyPickUpSpot.valueOf(partyChatRegex.find(it)?.groupValues?.lastOrNull() ?: return@onMessage)
+            if (!showCratePriority) return@onMessage
+            val cratePriority = cratePriority(missing).ifEmpty { return@onMessage }
+            PlayerUtils.alert(cratePriority, time = cratePriorityTitleTime)
+            modMessage("Crate Priority: $cratePriority")
+        }
+
+        onWorldLoad {
+            preSpot = SupplyPickUpSpot.None
+            missing = SupplyPickUpSpot.None
+        }
+    }
+    
+    fun cratePriority(missing: SupplyPickUpSpot): String {
+        return when (missing) {
+            // Shop Missing
+            SupplyPickUpSpot.Shop -> when (preSpot) {
+                SupplyPickUpSpot.Triangle, SupplyPickUpSpot.X -> "Go X Cannon"
+                SupplyPickUpSpot.Equals -> if (advanced) "Go X Cannon" else "Go Shop"
+                SupplyPickUpSpot.Slash -> "Go Square"
+                else -> ""
+            }
+
+            // Triangle Missing
+            SupplyPickUpSpot.Triangle -> when (preSpot) {
+                SupplyPickUpSpot.Triangle -> if (advanced) "Pull Square and X Cannon. Next: collect Shop" else "Pull Square. Next: collect Shop"
+                SupplyPickUpSpot.X, SupplyPickUpSpot.Equals -> "Go X Cannon"
+                SupplyPickUpSpot.Slash -> "Go Square, place on Triangle"
+                else -> ""
+            }
+
+            // Equals Missing
+            SupplyPickUpSpot.Equals -> when (preSpot) {
+                SupplyPickUpSpot.Triangle -> if (advanced) "Go Shop" else "Go X Cannon"
+                SupplyPickUpSpot.X -> "Go X Cannon"
+                SupplyPickUpSpot.Equals -> if (advanced) "Pull Square and X Cannon. Next: collect Shop" else "Pull Square. Next: collect Shop"
+                SupplyPickUpSpot.Slash -> "Go Square, place on Equals"
+                else -> ""
+            }
+
+            // Slash Missing
+            SupplyPickUpSpot.Slash -> when (preSpot) {
+                SupplyPickUpSpot.Triangle -> "Go x Cannon"
+                SupplyPickUpSpot.X -> "Go X Cannon"
+                SupplyPickUpSpot.Equals -> "Go Square, place on Slash"
+                SupplyPickUpSpot.Slash -> if (advanced) "Pull Square and X Cannon. Next: collect Shop" else "Pull Square. Next: collect Shop"
+                else -> ""
+            }
+
+            // Square Missing
+            SupplyPickUpSpot.Square -> when (preSpot) {
+                SupplyPickUpSpot.Triangle, SupplyPickUpSpot.Equals -> "Go Shop"
+                SupplyPickUpSpot.X -> "Go X Cannon"
+                SupplyPickUpSpot.Slash -> "Go X Cannon"
+                else -> ""
+            }
+
+            // X Cannon Missing
+            SupplyPickUpSpot.xCannon -> when (preSpot) {
+                SupplyPickUpSpot.Triangle, SupplyPickUpSpot.Equals -> "Go Shop"
+                SupplyPickUpSpot.X -> "Go Square"
+                SupplyPickUpSpot.Slash -> "Go Square, place on X Cannon"
+                else -> ""
+            }
+
+            // X Missing
+            SupplyPickUpSpot.X -> when (preSpot) {
+                SupplyPickUpSpot.Triangle -> "Go X Cannon"
+                SupplyPickUpSpot.X -> if (advanced) "Pull Square and X Cannon. Next: collect Shop" else "Pull Square. Next: collect Shop"
+                SupplyPickUpSpot.Equals -> if (advanced) "Go Shop" else "Go X Cannon"
+                SupplyPickUpSpot.Slash -> "Go Square, place on X"
+                else -> ""
+            }
+
+            else -> ""
         }
     }
 }

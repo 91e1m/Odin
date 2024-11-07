@@ -1,11 +1,11 @@
 package me.odinmain
 
-import me.odinmain.features.impl.render.ClickGUI.updateMessage
+import com.google.gson.Gson
+import com.google.gson.JsonArray
 import me.odinmain.utils.downloadFile
-import me.odinmain.utils.render.RenderUtils
+import me.odinmain.utils.fetchURLData
 import net.minecraft.client.gui.*
 import net.minecraft.client.renderer.GlStateManager
-import net.minecraft.client.renderer.texture.DynamicTexture
 import net.minecraft.event.ClickEvent
 import net.minecraft.util.ChatComponentText
 import net.minecraft.util.ChatStyle
@@ -15,9 +15,9 @@ import org.lwjgl.opengl.GL11
 import java.io.File
 import java.lang.management.ManagementFactory
 
-object OdinUpdater: GuiScreen() {
+object OdinUpdater : GuiScreen() {
 
-    private val logoTexture = DynamicTexture(RenderUtils.loadBufferedImage("/assets/odinmain/logo.png"))
+    //private val logoTexture = DynamicTexture(RenderUtils.loadBufferedImage("/assets/odinmain/logo.png"))
     private val javaRuntime = "\"${System.getProperty("java.home")}${File.separatorChar}bin${File.separatorChar}javaw${if (System.getProperty("os.name").contains("win")) ".exe" else ""}\""
     private val javaUpdateGuide = ChatComponentText(null).setChatStyle(ChatStyle().setChatClickEvent(ClickEvent(ClickEvent.Action.OPEN_URL, "https://github.com/ChatTriggers/ChatTriggers/wiki/Fixing-broken-imports")))
 
@@ -30,22 +30,25 @@ object OdinUpdater: GuiScreen() {
     fun onGuiOpen(event: GuiOpenEvent) {
         if (event.gui !is GuiMainMenu || isNewer) return
 
+        val gson = Gson()
+
         // To prevent this in the future do the TrustManager thing and add a X509 cert to access github in jre 51
         val javaVersion = System.getProperty("java.version")
         if (javaVersion == "1.8.0_51") {
             isOutdatedJava = true
         }
 
-        val tags = try {
-            //Json.parseToJsonElement(fetchURLData("https://api.github.com/repos/odtheking/OdinClient/tags"))
+        val tags: JsonArray = try {
+            gson.fromJson(fetchURLData("https://api.github.com/repos/odtheking/OdinClient/tags"), JsonArray::class.java)
         } catch (e: Exception) {
             return
         }
-        //tag = tags.jsonArray[0].jsonObject["name"].toString().replace("\"", "")
-        // use gson instead of kotlinx.serialization.json
+
+        tag = tags[0].asJsonObject["name"].asString.replace("\"", "")
+
         isNewer = this.isSecondNewer(tag)
 
-        if (isNewer)
+        if (!isNewer)
             OdinMain.display = this@OdinUpdater
     }
 
@@ -55,8 +58,8 @@ object OdinUpdater: GuiScreen() {
         // add a warning that updating will restart the game
         this.scaleFactor = ScaledResolution(mc).scaleFactor
         if (isOutdatedJava) {
-            //this.buttonList.add(OdinGuiButton(2, mc.displayWidth / 2 - 175, mc.displayHeight - 500, 350, 80, "Update Java Guide", 24f))
-            //this.buttonList.add(OdinGuiButton(0, mc.displayWidth / 2 - 60, mc.displayHeight - 100, 120, 50, "Close", 20f))
+           // this.buttonList.add(OdinGuiButton(2, mc.displayWidth / 2 - 175, mc.displayHeight - 500, 350, 80, "Update Java Guide", 24f))
+           // this.buttonList.add(OdinGuiButton(0, mc.displayWidth / 2 - 60, mc.displayHeight - 100, 120, 50, "Close", 20f))
         } else {
             //this.buttonList.add(OdinGuiButton(0, mc.displayWidth / 2 - 60, mc.displayHeight - 100, 120, 50, "Later", 20f))
             //this.buttonList.add(OdinGuiButton(1, mc.displayWidth / 2 - 100, mc.displayHeight - 300, 200, 70, "Update", 24f))
@@ -64,20 +67,20 @@ object OdinUpdater: GuiScreen() {
         super.initGui()
     }
 
-  /*  override fun drawScreen(mouseX: Int, mouseY: Int, partialTicks: Float) {
+    override fun drawScreen(mouseX: Int, mouseY: Int, partialTicks: Float) {
         this.drawBackground(0)
         GlStateManager.pushMatrix()
         GlStateManager.scale(1f / scaleFactor, 1f / scaleFactor, 1f)
         this.drawLogo()
         if (isOutdatedJava) {
-            text("You are using an outdated version of java (${System.getProperty("java.version")}) which does not allow the auto updater to work properly", mc.displayWidth / 2f, 500f, Color.RED, 18f, 0, TextAlign.Middle, TextPos.Middle, false)
+           // text("You are currently using an outdated version of Java (${System.getProperty("java.version")}), which prevents the auto-updater from functioning correctly. Upgrading to a newer version of Java will not only resolve this issue but also provide enhanced security features and improved performance.", mc.displayWidth / 2f, 500f, Color.RED, 18f, OdinFont.REGULAR, TextAlign.Middle, TextPos.Middle, false)
         } else {
-            text("A new version of ${if (OdinMain.isLegitVersion) "Odin" else "OdinClient"} is available!", mc.displayWidth / 2f, 450f, Color.WHITE, 18f, 0, TextAlign.Middle, TextPos.Middle, false)
-            text("§fNewest: §r$tag   §fCurrent: §r${OdinMain.VERSION}", mc.displayWidth / 2f - getTextWidth("Newest: $tag   Current: ${OdinMain.VERSION}", 18f) / 2, 500f, ClickGUI.oldColor, 18f, 0, TextAlign.Left, TextPos.Middle, false)
+          //  text("A new version of ${if (OdinMain.isLegitVersion) "Odin" else "OdinClient"} is available!", mc.displayWidth / 2f, 450f, Color.WHITE, 18f, OdinFont.REGULAR, TextAlign.Middle, TextPos.Middle, false)
+          //  text("§fNewest: §r$tag   §fCurrent: §r${OdinMain.VERSION}", mc.displayWidth / 2f - getTextWidth("Newest: $tag   Current: ${OdinMain.VERSION}", 18f) / 2, 500f, ClickGUIModule.color, 18f, OdinFont.REGULAR, TextAlign.Left, TextPos.Middle, false)
         }
         GlStateManager.popMatrix()
         super.drawScreen(mouseX, mouseY, partialTicks)
-    }*/
+    }
 
     override fun actionPerformed(button: GuiButton?) {
         if (button == null) return
@@ -130,7 +133,7 @@ object OdinUpdater: GuiScreen() {
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
         GlStateManager.translate(mc.displayWidth / 2f - 384, 0f, 0f)
         GlStateManager.scale(0.4f, 0.4f, 1f)
-        //drawDynamicTexture(logoTexture, 0f, 0f, 1920f, 1080f)
+      //  drawDynamicTexture(logoTexture, 0f, 0f, 1920f, 1080f)
         GlStateManager.disableBlend()
         GlStateManager.popMatrix()
     }
@@ -139,8 +142,8 @@ object OdinUpdater: GuiScreen() {
         val currentVersion = OdinMain.VERSION
         if (currentVersion.isEmpty() || second.isNullOrEmpty()) return false // Handle null or empty strings appropriately
 
-        val (major, minor, patch, beta) = currentVersion.split(".").mapNotNull { it.toIntOrNull() ?: if (it.startsWith("beta") && updateMessage == 1) it.substring(4).toIntOrNull() else 99 }.plus(listOf(99, 99, 99, 99))
-        val (major2, minor2, patch2, beta2) = second.split(".").mapNotNull { it.toIntOrNull() ?: if (it.startsWith("beta")  && updateMessage == 1) it.substring(4).toIntOrNull() else 99 }.plus(listOf(99, 99, 99, 99))
+        val (major, minor, patch, beta) = currentVersion.split(".").mapNotNull { it.toIntOrNull() ?: if (it.startsWith("beta") /*&& updateMessage == 1*/) it.substring(4).toIntOrNull() else 99 }.plus(listOf(99, 99, 99, 99))
+        val (major2, minor2, patch2, beta2) = second.split(".").mapNotNull { it.toIntOrNull() ?: if (it.startsWith("beta") /*&& updateMessage == 1*/) it.substring(4).toIntOrNull() else 99 }.plus(listOf(99, 99, 99, 99))
 
         return when {
             major > major2 -> false

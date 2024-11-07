@@ -1,6 +1,7 @@
 package me.odinmain.utils.skyblock.dungeon
 
 import com.github.stivais.ui.color.Color
+import com.github.stivais.ui.renderer.Image
 import me.odinmain.utils.skyblock.PersonalBest
 import net.minecraft.entity.player.EntityPlayer
 
@@ -9,14 +10,16 @@ import net.minecraft.entity.player.EntityPlayer
  *
  * @property name The name of the player.
  * @property clazz The player's class, defined by the [DungeonClass] enum.
- * @property locationSkin The resource location of the player's skin.
+ * @property skinImage The resource location of the player's skin.
  * @property entity The optional associated player entity. Defaults to `null`.
  * @property isDead The player's death status. Defaults to `false`.
  */
 data class DungeonPlayer(
     val name: String,
-    var clazz: DungeonClass,
-    val entity: EntityPlayer? = null,
+    val clazz: DungeonClass,
+    val clazzLvl: Int = 0,
+    val skinImage: Image = Image("https://mc-heads.net/avatar/Stivais/32"),
+    var entity: EntityPlayer? = null,
     var isDead: Boolean = false
 )
 
@@ -25,18 +28,18 @@ data class Puzzle(
     var status: PuzzleStatus? = null
 ) {
     companion object {
-        private val Unknown = Puzzle("???")
+        val Unknown = Puzzle("???")
         val Blaze = Puzzle("Higher Or Lower")
-        private val Beams = Puzzle("Creeper Beams")
-        private val Weirdos = Puzzle("Three Weirdos")
-        private val TTT = Puzzle("Tic Tac Toe")
-        private val WaterBoard = Puzzle("Water Board")
-        private val TPMaze = Puzzle("Teleport Maze")
-        private val Boulder = Puzzle("Boulder")
-        private val IceFill = Puzzle("Ice Fill")
-        private val IcePath = Puzzle("Ice Path")
-        private val Quiz = Puzzle("Quiz")
-        private val BombDefuse = Puzzle("Bomb Defuse")
+        val Beams = Puzzle("Creeper Beams")
+        val Weirdos = Puzzle("Three Weirdos")
+        val TTT = Puzzle("Tic Tac Toe")
+        val WaterBoard = Puzzle("Water Board")
+        val TPMaze = Puzzle("Teleport Maze")
+        val Boulder = Puzzle("Boulder")
+        val IceFill = Puzzle("Ice Fill")
+        val IcePath = Puzzle("Ice Path")
+        val Quiz = Puzzle("Quiz")
+        val BombDefuse = Puzzle("Bomb Defuse")
 
         val allPuzzles = listOf(
             Blaze, Beams, Weirdos, TTT, WaterBoard, TPMaze,
@@ -99,7 +102,7 @@ enum class Blessing(
  * Each floor has an associated floor number and an indicator of whether it is a master mode floor.
  *
  * @property floorNumber The numerical representation of the floor, where E represents the entrance floor.
- * @property isInMM Indicates whether the floor is a master mode floor (M1 to M7).
+ * @property isMM Indicates whether the floor is a master mode floor (M1 to M7).
  * @property personalBest The personal best time for the floor.
  * @property secretPercentage The percentage of secrets required.
  */
@@ -146,7 +149,7 @@ enum class Floor(val personalBest: PersonalBest?, val secretPercentage: Float = 
      *
      * @return `true` if the floor is a master mode floor (M1 to M7), otherwise `false`.
      */
-    val isInMM: Boolean
+    val isMM: Boolean
         get() {
             return when (this) {
                 E, F1, F2, F3, F4, F5, F6, F7, None -> false

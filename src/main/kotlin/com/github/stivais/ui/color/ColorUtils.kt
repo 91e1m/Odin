@@ -2,6 +2,9 @@
 
 package com.github.stivais.ui.color
 
+import com.github.stivais.ui.color.Color.Companion.BLACK
+import com.google.gson.*
+import java.lang.reflect.Type
 import kotlin.math.roundToInt
 
 inline val Int.red
@@ -125,4 +128,16 @@ inline fun color(crossinline getter: () -> Int): Color = object : Color {
         get() {
             return getter()
         }
+}
+
+class ColorSerializer : JsonSerializer<Color>, JsonDeserializer<Color> {
+    override fun serialize(p0: Color?, p1: Type?, p2: JsonSerializationContext?): JsonElement? {
+        return JsonPrimitive("#${p0?.toHexString() ?: BLACK.toHexString()}")
+    }
+
+    override fun deserialize(p0: JsonElement?, p1: Type?, p2: JsonDeserializationContext?
+    ): Color? {
+        val hexValue = p0?.asString?.replace("#", "") ?: "00000000"
+        return colorFrom(hexValue)
+    }
 }

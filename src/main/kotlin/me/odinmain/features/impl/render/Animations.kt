@@ -2,19 +2,12 @@ package me.odinmain.features.impl.render
 
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.*
-import net.minecraft.client.entity.AbstractClientPlayer
-import net.minecraft.client.entity.EntityPlayerSP
+import me.odinmain.utils.skyblock.isHolding
 import net.minecraft.client.renderer.GlStateManager
-import net.minecraft.item.ItemStack
-import net.minecraft.item.ItemSword
-import net.minecraft.potion.Potion
-import net.minecraft.util.MathHelper
-import net.minecraft.util.MovingObjectPosition
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
-import kotlin.math.exp
-import kotlin.math.max
+import kotlin.math.*
 
 /**
  * Parts taken from [Floppa Client](https://github.com/FloppaCoding/FloppaClient)
@@ -32,14 +25,19 @@ object Animations : Module(
     private val roll by NumberSetting("Roll", 0.0f, -180.0, 180.0, 1.0, description = "Rotates your held item. Default: 0")
     val speed by NumberSetting("Speed", 0.0f, -2.0, 1.0, 0.05, description = "Speed of the swing animation.")
     val ignoreHaste by BooleanSetting("Ignore Haste", false, description = "Makes the chosen speed override haste modifiers.")
-    val blockHit by BooleanSetting("Block Hit", false, description = "Visual 1.7 block hit animation")
-    val noEquipReset by BooleanSetting("No Equip Reset", false, description = "Disables the equipping animation when switching items")
-    val noSwing by BooleanSetting("No Swing", false, description = "Prevents your item from visually swinging forward")
-    val noBlock by BooleanSetting("No Block", false, description = "Disables the visual block animation")
+    val blockHit by BooleanSetting("Block Hit", false, description = "Visual 1.7 block hit animation.")
+    private val noEquipReset by BooleanSetting("No Equip Reset", false, description = "Disables the equipping animation when switching items.")
+    private val noSwing by BooleanSetting("No Swing", false, description = "Prevents your item from visually swinging forward.")
+    private val noTermSwing by BooleanSetting("No Terminator Swing", false, description = "Prevents your Terminator from swinging.")
 
     val reset by ActionSetting("Reset") {
         settings.forEach { it.reset() }
     }
+
+    @JvmStatic
+    val shouldNoEquipReset get() = enabled && noEquipReset
+
+    val shouldStopSwing get() = enabled && noSwing
 
     fun itemTransferHook(equipProgress: Float, swingProgress: Float): Boolean {
         if (!enabled) return false
@@ -48,51 +46,31 @@ object Animations : Module(
         val newY = (-0.52f * (1 - y))
         val newZ = (-0.71999997f * (1 + z))
         GlStateManager.translate(newX, newY, newZ)
-        GlStateManager.translate(0.0f, equipProgress * -0.6f, 0.0f)
+        GlStateManager.translate(0f, equipProgress * -.6f, 0f)
 
         //Rotation
-        GlStateManager.rotate(pitch, 1.0f, 0.0f, 0.0f)
-        GlStateManager.rotate(yaw, 0.0f, 1f, 0f)
-        GlStateManager.rotate(roll, 0f, 0f, 1f)
+        GlStateManager.rotate(pitch,     1f, 0f, 0f)
+        GlStateManager.rotate(yaw + 45f, 0f, 1f, 0f)
+        GlStateManager.rotate(roll,      0f, 0f, 1f)
 
-        GlStateManager.rotate(45f, 0.0f, 1f, 0f)
-
-        val f = MathHelper.sin(swingProgress * swingProgress * Math.PI.toFloat())
-        val f1 = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * Math.PI.toFloat())
-        GlStateManager.rotate(f * -20.0f, 0.0f, 1.0f, 0.0f)
-        GlStateManager.rotate(f1 * -20.0f, 0.0f, 0.0f, 1.0f)
-        GlStateManager.rotate(f1 * -80.0f, 1.0f, 0.0f, 0.0f)
+        val f = sin(swingProgress * swingProgress * Math.PI.toFloat())
+        val f1 = sin(sqrt(swingProgress) * Math.PI.toFloat())
+        GlStateManager.rotate(f  * -20f, 0f, 1f, 0f)
+        GlStateManager.rotate(f1 * -20f, 0f, 0f, 1f)
+        GlStateManager.rotate(f1 * -80f, 1f, 0f, 0f)
         GlStateManager.scale(newSize, newSize, newSize)
         return true
     }
 
-    fun getItemInUseCountHook(player: AbstractClientPlayer, itemToRender: ItemStack): Int {
-        return if (this.noBlock && itemToRender.item is ItemSword && player.itemInUseDuration <= 7) 0
-        else player.itemInUseCount
-    }
-
-    private fun getArmSwingAnimationEnd(player: EntityPlayerSP): Int {
-        val length =
-            if (ignoreHaste) 6
-            else if (player.isPotionActive(Potion.digSpeed)) 6 - (1 + player.getActivePotionEffect(Potion.digSpeed).amplifier)
-            else if (player.isPotionActive(Potion.digSlowdown)) 6 + (1 + player.getActivePotionEffect(Potion.digSlowdown).amplifier) * 2
-            else 6
-        return max((length * exp(-speed)),1.0f).toInt()
-    }
-
-    /**
-    Taken from [Sk1erLLC's OldAnimations Mod](https://github.com/Sk1erLLC/OldAnimations) to enable block hitting
-     */
     @SubscribeEvent
     fun onTick(event: ClientTickEvent) {
-        if (!blockHit || event.phase != TickEvent.Phase.END) return
+        if (event.phase != TickEvent.Phase.END) return
         val player = mc.thePlayer ?: return
-
-        if (mc.gameSettings.keyBindAttack.isKeyDown && mc.objectMouseOver != null && mc.objectMouseOver.typeOfHit === MovingObjectPosition.MovingObjectType.BLOCK) {
-            if (!player.isSwingInProgress || player.swingProgressInt >= getArmSwingAnimationEnd(player) / 2 || player.swingProgressInt < 0) {
-                player.isSwingInProgress = true
-                player.swingProgressInt = -1
-            }
+        if (noTermSwing && isHolding("TERMINATOR")) {
+            player.isSwingInProgress = false
+            player.swingProgress = 0f
+            player.swingProgressInt = -1
+            return
         }
     }
 }

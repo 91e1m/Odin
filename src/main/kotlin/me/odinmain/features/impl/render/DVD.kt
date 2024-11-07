@@ -20,8 +20,8 @@ object DVD : Module(
     private val boxHeight by NumberSetting("Box Height", 50, 0, 150, 1, description = "Height of the DVD box.")
     private val roundedCorners by BooleanSetting("Rounded Corners", true, description = "Whether the DVD box should have rounded corners.")
 
-    private val text: String by StringSetting("Text", "ODVD", description = "Text to display on the DVD box.")
-    private val textScale: Float by NumberSetting("Text Scale", 1.5f, 0.1f, 2f, 0.1f, description = "Scale of the text.")
+    private val text by StringSetting("Text", "ODVD", description = "Text to display on the DVD box.")
+    private val textScale by NumberSetting("Text Scale", 1.5f, 0.1f, 2f, 0.1f, description = "Scale of the text.")
 
     override fun onEnable() {
         x = Display.getWidth() / 4
@@ -34,7 +34,7 @@ object DVD : Module(
     
     private var x = Display.getWidth() / 2
     private var y = Display.getHeight() / 2
-    var color = Color.WHITE
+    private var color = Color.WHITE
 
     private fun getDVDColor() {
         val hue = (Math.random() * 360).toFloat()

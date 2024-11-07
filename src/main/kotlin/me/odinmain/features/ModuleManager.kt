@@ -9,8 +9,8 @@ import me.odinmain.events.impl.*
 import me.odinmain.features.impl.dungeon.*
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints
 import me.odinmain.features.impl.dungeon.puzzlesolvers.PuzzleSolvers
-import me.odinmain.features.impl.floor7.NecronDropTimer
 import me.odinmain.features.impl.floor7.TerminalSimulator
+import me.odinmain.features.impl.floor7.TickTimers
 import me.odinmain.features.impl.floor7.WitherDragons
 import me.odinmain.features.impl.floor7.p3.*
 import me.odinmain.features.impl.nether.*
@@ -72,7 +72,7 @@ object ModuleManager {
     )
 
     // todo: cleanup
-    data class TickTask(var ticksLeft: Int, val function: () -> Unit)
+    data class TickTask(var ticksLeft: Int, val server: Boolean, val function: () -> Unit)
 
     // todo: cleanup
     val packetFunctions = mutableListOf<PacketFunction<Packet<*>>>()
@@ -86,27 +86,27 @@ object ModuleManager {
 
     val modules: ArrayList<Module> = arrayListOf(
         // dungeon
-        DungeonRequeue, BlessingDisplay, ExtraStats, KeyHighlight, Mimic, TeammatesHighlight,
-        TerracottaTimer, BloodCamp, ClickedSecrets, DungeonWaypoints, SecretChime, LeapMenu, PuzzleSolvers,
-        WarpCooldown, MapInfo,
+        DungeonRequeue, BlessingDisplay, PosMessages, ExtraStats, KeyHighlight, Mimic, TeammatesHighlight,
+        TerracottaTimer, BloodCamp, SecretClicked, DungeonWaypoints, LeapMenu, PuzzleSolvers,
+        WarpCooldown, MapInfo, SwapSound,
 
         // floor 7
-        TerminalSolver, TerminalTimes, MelodyMessage, NecronDropTimer, InactiveWaypoints, WitherDragons,
-        GoldorTimer, TerminalSimulator, TerminalSounds, ArrowsDevice,
+        TerminalSolver, TerminalTimes, MelodyMessage, TickTimers, InactiveWaypoints, WitherDragons,
+        TerminalSimulator, TerminalSounds, ArrowAlign,
 
         // render
-        BPSDisplay, ClickGUI, CustomHighlight, CPSDisplay, DragonHitboxes, GyroWand, NameChanger,
+        BPSDisplay, CustomHighlight, CPSDisplay, DragonHitboxes, GyroWand, NameChanger,
         PersonalDragon, RenderOptimizer, ServerHud, Waypoints, CanClip, Animations, SpaceHelmet,
-        BlockOverlay, VisualWords, DVD, Sidebar,
+        BlockOverlay, VisualWords, DVD, Sidebar, HideArmor, ClickGUI,
 
         //skyblock
         NoCursorReset, AutoSprint, BlazeAttunement, ChatCommands, DeployableTimer, DianaHelper, ArrowHit,
-        Ragaxe, MobSpawn, Splits, WardrobeKeybinds, InvincibilityTimer, EnrageDisplay, /*ItemsHighlight,*/
-        PlayerDisplay, FarmKeys, /*PartyEncoding,*/ PetKeybinds, /*SkillsSucks,*/ ChatEmotes, CommandKeybinds,
+        RagAxe, MobSpawn, Splits, WardrobeKeybinds, InvincibilityTimer, ItemsHighlight, PlayerDisplay,
+        FarmKeys, PetKeybinds, CommandKeybinds, SpringBoots, AbilityTimers,
 
         // kuudra
         BuildHelper, FreshTimer, KuudraDisplay, NoPre, PearlWaypoints, RemovePerks, SupplyHelper, TeamHighlight,
-        VanqNotifier, KuudraReminders, KuudraRequeue, TacTimer
+        VanqNotifier, KuudraReminders, KuudraRequeue,
     )
 
     init {

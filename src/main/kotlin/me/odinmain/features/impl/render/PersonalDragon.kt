@@ -1,6 +1,9 @@
 package me.odinmain.features.impl.render
 
-import com.github.stivais.ui.color.*
+import com.github.stivais.ui.color.Color
+import com.github.stivais.ui.color.blue
+import com.github.stivais.ui.color.green
+import com.github.stivais.ui.color.red
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.*
 import me.odinmain.utils.render.RenderUtils.renderX
@@ -20,13 +23,13 @@ object PersonalDragon : Module(
     name = "Personal Dragon",
     description = "Spawns your own personal dragon."
 ) {
-    private val onlyF5 by BooleanSetting(name = "Only F5", default = true)
-    private val scale by NumberSetting(name = "Scale", 0.5f, 0.0f, 1.0f, 0.01f)
-    private val horizontal by NumberSetting(name = "Horizontal", 0.0f, -10.0f, 10.0f, 0.1f)
-    private val vertical by NumberSetting(name = "Vertical", 0.0f, -10.0f, 10.0f, 0.1f)
-    private val degrees by NumberSetting(name = "Degrees", 0.0f, -180.0f, 180.0f, 1.0f)
-    private val animationSpeed by NumberSetting(name = "Animation Speed", 0.5f, 0.0f, 1.0f, 0.01f)
-    private val color by ColorSetting(name = "Color", Color.WHITE)
+    private val onlyF5 by BooleanSetting(name = "Only F5", default = true, description = "Only render the dragon when in F5 mode.")
+    private val scale by NumberSetting(name = "Scale", 0.5f, 0f, 1f, 0.01f, description = "The scale of the dragon.")
+    private val horizontal by NumberSetting(name = "Horizontal", -1f, -10f, 10f, 0.1f, description = "The horizontal offset of the dragon.")
+    private val vertical by NumberSetting(name = "Vertical", 0f, -10f, 10f, 0.1f, description = "The vertical offset of the dragon.")
+    private val degrees by NumberSetting(name = "Degrees", 0f, -180f, 180f, 1f, description = "The degrees of the dragon.")
+    private val animationSpeed by NumberSetting(name = "Animation Speed", 0.5f, 0.0f, 1f, 0.01f, description = "The speed of the dragon's animation.")
+    private val color by ColorSetting(name = "Color", color = Color.WHITE, description = "The color of the dragon.")
 
     var dragon: EntityDragon? = null
 
@@ -56,13 +59,13 @@ object PersonalDragon : Module(
         mc.thePlayer?.let { player ->
             var yaw = player.rotationYaw
             if (yaw < 0) yaw += 180 else if (yaw > 0) yaw -= 180
-            dragon?.apply { setLocationAndAngles(player.renderX, player.renderY + 9999, player.renderZ, yaw, player.rotationPitch) }
+            dragon?.apply { setLocationAndAngles(player.renderX, player.renderY + 8, player.renderZ, yaw, player.rotationPitch) }
         }
     }
 
     @SubscribeEvent
     fun onTick(event: TickEvent.ClientTickEvent) {
-        if (dragon == null || event.phase != TickEvent.Phase.END) return
+        if (event.phase != TickEvent.Phase.END) return
         dragon?.apply {
             animTime -= (1 - animationSpeed) / 5
             isSilent = true

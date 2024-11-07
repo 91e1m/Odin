@@ -1,8 +1,9 @@
 package me.odinclient.mixin.mixins;
 
-import com.github.stivais.ui.color.Color;
 import me.odinmain.events.impl.RenderEntityModelEvent;
+import me.odinmain.utils.render.Color;
 import me.odinmain.utils.render.HighlightRenderer;
+import me.odinmain.utils.render.RenderUtils;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -20,10 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.nio.FloatBuffer;
-import java.util.List;
-import java.util.Map;
 
-import static com.github.stivais.ui.color.ColorUtils.*;
 import static me.odinmain.utils.Utils.postAndCatch;
 import static org.lwjgl.opengl.GL11.*;
 
@@ -41,11 +39,13 @@ public abstract class MixinRendererLivingEntity<T extends EntityLivingBase> {
     private static DynamicTexture textureBrightness;
 
     @Unique
-    Map<HighlightRenderer.HighlightType, List<HighlightRenderer.HighlightEntity>> odin$entitiesMap = HighlightRenderer.INSTANCE.getEntities();
+    private HighlightRenderer.HighlightEntity odinMod$getHighlightEntity(EntityLivingBase entity) {
+        return HighlightRenderer.INSTANCE.getEntities().get(HighlightRenderer.HighlightType.Overlay).stream().filter(e -> e.getEntity().equals(entity)).findFirst().orElse(null);
+    }
 
     @Inject(method = "setBrightness", at = @At(value = "HEAD"), cancellable = true)
     private  <T extends EntityLivingBase> void setBrightness(T entity, float partialTicks, boolean combineTextures, CallbackInfoReturnable<Boolean> cir) {
-        HighlightRenderer.HighlightEntity highlightEntity = odin$entitiesMap.get(HighlightRenderer.HighlightType.Overlay).stream().filter(e -> e.getEntity().equals(entity)).findFirst().orElse(null);
+        HighlightRenderer.HighlightEntity highlightEntity = odinMod$getHighlightEntity(entity);
         if (highlightEntity != null) {
             GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
             GlStateManager.enableTexture2D();
@@ -99,7 +99,7 @@ public abstract class MixinRendererLivingEntity<T extends EntityLivingBase> {
 
     @Inject(method = "doRender(Lnet/minecraft/entity/EntityLivingBase;DDDFF)V", at = @At("HEAD"))
     private <T extends EntityLivingBase> void injectChamsPre(T entity, double x, double y, double z, float entityYaw, float partialTicks, CallbackInfo callbackInfo) {
-        HighlightRenderer.HighlightEntity highlightEntity = odin$entitiesMap.get(HighlightRenderer.HighlightType.Overlay).stream().filter(e -> e.getEntity().equals(entity)).findFirst().orElse(null);
+        HighlightRenderer.HighlightEntity highlightEntity = odinMod$getHighlightEntity(entity);
         if (highlightEntity != null && !highlightEntity.getDepth()) {
             glEnable(GL_POLYGON_OFFSET_FILL);
             glPolygonOffset(1f, -1000000F);
@@ -108,19 +108,30 @@ public abstract class MixinRendererLivingEntity<T extends EntityLivingBase> {
 
     @Inject(method = "doRender(Lnet/minecraft/entity/EntityLivingBase;DDDFF)V", at = @At("RETURN"))
     private <T extends EntityLivingBase> void injectChamsPost(T entity, double x, double y, double z, float entityYaw, float partialTicks, CallbackInfo callbackInfo) {
-        HighlightRenderer.HighlightEntity highlightEntity = odin$entitiesMap.get(HighlightRenderer.HighlightType.Overlay).stream().filter(e -> e.getEntity().equals(entity)).findFirst().orElse(null);
+        HighlightRenderer.HighlightEntity highlightEntity = odinMod$getHighlightEntity(entity);
         if (highlightEntity != null && !highlightEntity.getDepth()) {
             glPolygonOffset(1f, 1000000F);
             glDisable(GL_POLYGON_OFFSET_FILL);
         }
     }
 
-    @Inject(method = "renderLayers", at = @At("TAIL"), cancellable = true)
+    @Inject(method = "renderLayers", at = @At("RETURN"), cancellable = true)
     private void onRenderLayers(T entitylivingbaseIn, float p_177093_2_, float p_177093_3_, float partialTicks, float p_177093_5_, float p_177093_6_, float p_177093_7_, float p_177093_8_, CallbackInfo ci) {
         if (postAndCatch(new RenderEntityModelEvent(
                 entitylivingbaseIn, p_177093_2_, p_177093_3_, p_177093_5_, p_177093_6_, p_177093_7_, p_177093_8_, mainModel
         ))) {
             ci.cancel();
+        }
+    }
+
+    @Inject(method = "setScoreTeamColor", at = @At("HEAD"), cancellable = true)
+    private void setScoreTeamColor(T entityLivingBaseIn, CallbackInfoReturnable<Boolean> cir) {
+        if (RenderUtils.INSTANCE.isRenderingOutlinedEntities()) {
+            GlStateManager.disableLighting();
+            GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+            GlStateManager.disableTexture2D();
+            GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
+            cir.setReturnValue(true);
         }
     }
 }

@@ -1,13 +1,12 @@
 package me.odinmain.utils.skyblock
 
-import me.odinmain.OdinMain.logger
 import me.odinmain.OdinMain.mc
 import me.odinmain.features.impl.render.ClickGUI.devMessages
 import me.odinmain.features.impl.render.DevPlayers
 import me.odinmain.features.impl.skyblock.ChatCommands
 import me.odinmain.utils.noControlCodes
-import net.minecraft.event.ClickEvent
-import net.minecraft.event.HoverEvent
+import me.odinmain.utils.runOnMCThread
+import net.minecraft.event.*
 import net.minecraft.util.*
 import net.minecraftforge.client.ClientCommandHandler
 import kotlin.math.roundToInt
@@ -54,8 +53,9 @@ fun sendCommand(text: Any, clientSide: Boolean = false) {
  * @param message Message to be sent.
  */
 fun sendChatMessage(message: Any) {
-    if (mc.thePlayer == null) return
-    mc.thePlayer.sendChatMessage(message.toString())
+    runOnMCThread {
+        mc.thePlayer?.sendChatMessage(message.toString())
+    }
 }
 
 /**
@@ -65,12 +65,10 @@ fun sendChatMessage(message: Any) {
  * @param prefix If `true`, adds a prefix to the message.
  * @param chatStyle Optional chat style to be applied to the message.
  */
-fun modMessage(message: Any?, prefix: Boolean = true, chatStyle: ChatStyle? = null) {
-    if (mc.thePlayer == null) return
-    val chatComponent = ChatComponentText(if (prefix) "§3Odin §8»§r $message" else message.toString())
+fun modMessage(message: Any?, prefix: String = "§3Odin §8»§r ", chatStyle: ChatStyle? = null) {
+    val chatComponent = ChatComponentText("$prefix$message")
     chatStyle?.let { chatComponent.setChatStyle(it) } // Set chat style using setChatStyle method
-    try { mc.thePlayer?.addChatMessage(chatComponent) }
-    catch (e: Exception) { logger.error("Error sending message: $message", e)}
+    runOnMCThread { mc.thePlayer?.addChatMessage(chatComponent) }
 }
 
 
@@ -78,12 +76,10 @@ fun modMessage(message: Any?, prefix: Boolean = true, chatStyle: ChatStyle? = nu
  * Sends a client-side message for developers only.
  *
  * @param message Message to be sent.
- * @param prefix If `true`, adds a prefix to the message.
  */
-fun devMessage(message: Any?, prefix: Boolean = true) {
-    if (!devMessages || mc.thePlayer == null || !DevPlayers.isDev) return
-    val msg = if (prefix) "§3Odin§bDev §8»§r $message" else message.toString()
-    mc.thePlayer?.addChatMessage(ChatComponentText(msg))
+fun devMessage(message: Any?) {
+    if (!devMessages || !DevPlayers.isDev) return
+    modMessage(message, prefix = "§3Odin§bDev §8»§r ")
 }
 
 /**
@@ -127,7 +123,7 @@ fun privateMessage(message: Any, name: String) {
  * Sends a message in the corresponding channel.
  *
  * @param message Message to be sent.
- * @param name Name for private message.
+ * @param name Name of the person to send the message to.
  * @param channel Channel to send the message.
  */
 fun channelMessage(message: Any, name: String, channel: ChatCommands.ChatChannel) {

@@ -2,6 +2,7 @@ package me.odinmain.utils.skyblock
 
 import me.odinmain.OdinMain.mc
 import me.odinmain.utils.*
+import me.odinmain.utils.render.RenderUtils.renderVec
 import net.minecraft.util.BlockPos
 import net.minecraft.util.Vec3
 import kotlin.math.*
@@ -23,19 +24,17 @@ object EtherWarpHelper {
      * @param pitch The pitch angle representing the player's vertical viewing direction.
      * @return An `EtherPos` representing the calculated position in the "ether" or `EtherPos.NONE` if the player is not present.
      */
-    fun getEtherPos(pos: Vec3, yaw: Float, pitch: Float): EtherPos {
+    fun getEtherPos(pos: Vec3, yaw: Float, pitch: Float, distance: Double = 60.0, returnEnd: Boolean = false): EtherPos {
         mc.thePlayer ?: return EtherPos.NONE
 
-        val lookVec = getLook(yaw = yaw, pitch = pitch).normalize().multiply(60.0)
         val startPos: Vec3 = getPositionEyes(pos)
+        val endPos = getLook(yaw = yaw, pitch = pitch).normalize().multiply(factor = distance).add(startPos)
 
-        val endPos = lookVec.add(startPos)
-
-        return traverseVoxels(startPos, endPos)
+        return traverseVoxels(startPos, endPos).takeUnless { it == EtherPos.NONE && returnEnd } ?: EtherPos(true, endPos.toBlockPos())
     }
 
-    fun getEtherPos(positionLook: PositionLook): EtherPos {
-        return getEtherPos(positionLook.pos, positionLook.yaw, positionLook.pitch)
+    fun getEtherPos(positionLook: PositionLook = PositionLook(mc.thePlayer.renderVec, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch), distance: Double = 60.0): EtherPos {
+        return getEtherPos(positionLook.pos, positionLook.yaw, positionLook.pitch, distance)
     }
 
     /**
@@ -54,14 +53,11 @@ object EtherWarpHelper {
 
         val currentPos = DoubleArray(3) { floor(start.get(it)) }
         val endPos = DoubleArray(3) { floor(end.get(it)) }
-        var iters = 0
+        var iterations = 0
 
-        while (iters < 1000) {
-            iters++
+        while (iterations++ < 1000) {
             val pos = BlockPos(currentPos[0].toInt(), currentPos[1].toInt(), currentPos[2].toInt())
-            val currentBlock = getBlockIdAt(pos)
-
-            if (currentBlock != 0) return EtherPos(isValidEtherWarpBlock(pos), pos)
+            if (getBlockIdAt(pos) != 0) return EtherPos(isValidEtherWarpBlock(pos), pos)
 
             if (currentPos.contentEquals(endPos)) break // reached end
 
@@ -80,10 +76,7 @@ object EtherWarpHelper {
     private fun isValidEtherWarpBlock(pos: BlockPos): Boolean {
         // Checking the actual block to etherwarp ontop of
         // Can be at foot level, but not etherwarped onto directly.
-        if (getBlockAt(pos).registryName in validEtherwarpFeetBlocks) return false
-
-        // The block at foot level
-        if (getBlockAt(pos.up(1)).registryName !in validEtherwarpFeetBlocks) return false
+        if (getBlockAt(pos).registryName in validEtherwarpFeetBlocks || getBlockAt(pos.up(1)).registryName !in validEtherwarpFeetBlocks) return false
 
         return getBlockAt(pos.up(2)).registryName in validEtherwarpFeetBlocks
     }
@@ -130,5 +123,4 @@ object EtherWarpHelper {
         "minecraft:torch",
         "minecraft:vine",
     )
-
 }

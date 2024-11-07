@@ -13,13 +13,9 @@ data class SplitsGroup(val splits: List<Split>, val personalBest: PersonalBest?)
 object SplitsManager {
 
     var currentSplits: SplitsGroup = SplitsGroup(emptyList(), null)
-    private var dungeonEnded = false
 
-    @SubscribeEvent
+    @SubscribeEvent(receiveCanceled = true)
     fun onChatPacket(event: ChatPacketEvent) {
-        if (Regex(" {29}> EXTRA STATS <").matches(event.message)) dungeonEnded = true
-        if (dungeonEnded) return
-
         val currentSplit = currentSplits.splits.find { it.regex.matches(event.message) } ?: return
         if (currentSplit.time != 0L) return
         currentSplit.time = System.currentTimeMillis()
@@ -27,47 +23,47 @@ object SplitsManager {
         val index = currentSplits.splits.indexOf(currentSplit).takeIf { it != 0 } ?: return
         val currentSplitTime = (currentSplit.time - currentSplits.splits[index - 1].time) / 1000.0
 
-        currentSplits.personalBest?.time(index - 1, currentSplitTime, "s§7!", "§6${currentSplits.splits[index - 1].name} §7took §6", addPBString = true, addOldPBString = true, alwaysSendPB = true, sendOnlyPB = Splits.sendOnlyPB, sendMessage = Splits.enabled)
-
         if (index == currentSplits.splits.size - 1) {
             val (times, _) = getAndUpdateSplitsTimes(currentSplits)
-            currentSplits.personalBest?.time(index, times.last()/ 1000.0, "s§7!", "§6Total time §7took §6", addPBString = true, addOldPBString = true, alwaysSendPB = true, sendOnlyPB = Splits.sendOnlyPB, sendMessage = Splits.enabled)
             runIn(10) {
+                currentSplits.personalBest?.time(index - 1, currentSplitTime, "s§7!", "§6${currentSplits.splits[index - 1].name} §7took §6", addPBString = true, addOldPBString = true, alwaysSendPB = true, sendOnlyPB = Splits.sendOnlyPB, sendMessage = Splits.enabled)
+                currentSplits.personalBest?.time(index, times.last() / 1000.0, "s§7!", "§6Total time §7took §6", addPBString = true, addOldPBString = true, alwaysSendPB = true, sendOnlyPB = Splits.sendOnlyPB, sendMessage = Splits.enabled)
                 times.forEachIndexed { i, it ->
-                    val name = if (i == currentSplits.splits.size - 1) "Total" else currentSplits.splits[i].name
+                    val name = if (i == currentSplits.splits.size - 1) "Total" else currentSplits.splits.getSafe(i)?.name
                     if (sendSplits && Splits.enabled) modMessage("§6$name §7took §6${formatTime(it)} §7to complete.")
                 }
             }
-        }
+        } else currentSplits.personalBest?.time(index - 1, currentSplitTime, "s§7!", "§6${currentSplits.splits[index - 1].name} §7took §6", addPBString = true, addOldPBString = true, alwaysSendPB = true, sendOnlyPB = Splits.sendOnlyPB, sendMessage = Splits.enabled)
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(receiveCanceled = true)
     fun onChat(event: ChatPacketEvent) {
-        if (event.message != "Starting in 4 seconds.") return
+        if (event.message != "Starting in 3 seconds.") return
 
         currentSplits = when (LocationUtils.currentArea) {
             Island.Dungeon -> {
-                val floor = LocationUtils.getFloor() ?: return modMessage("§Couldn't get floor.")
-                val split = dungeonSplits[floor.floorNumber].toMutableList()
+                val floor = LocationUtils.getFloor() ?: return modMessage("§cCouldn't get floor.")
 
-                split.add(0, Split(Regex("\\[NPC] Mort: Here, I found this map when I first entered the dungeon\\.|\\[NPC] Mort: Right-click the Orb for spells, and Left-click \\(or Drop\\) to use your Ultimate!"), "§2Blood Open"))
-                split.add(1, Split(Regex(BLOOD_OPEN_REGEX), "§bBlood Clear"))
-                split.add(2, Split(Regex("\\[BOSS] The Watcher: You have proven yourself\\. You may pass\\."), "§dPortal Entry"))
-                split.add(Split(Regex("^\\s*☠ Defeated (.+) in 0?([\\dhms ]+?)\\s*(\\(NEW RECORD!\\))?\$"), "§1Total"))
-                val newSplit = split.map { it.copy(time = 0L) }
-                SplitsGroup(newSplit, floor.personalBest)
-            }
-
-            Island.Kuudra -> {
-                when (LocationUtils.kuudraTier) {
-                    5 -> SplitsGroup(kuudraT5SplitsGroup.map { it.copy(time = 0L) }, kuudraT5PBs)
-                    4 -> SplitsGroup(kuudraSplitsGroup.map { it.copy(time = 0L) }, kuudraT4PBs)
-                    3 -> SplitsGroup(kuudraSplitsGroup.map { it.copy(time = 0L) }, kuudraT3PBs)
-                    2 -> SplitsGroup(kuudraSplitsGroup.map { it.copy(time = 0L) }, kuudraT2PBs)
-                    1 -> SplitsGroup(kuudraSplitsGroup.map { it.copy(time = 0L) }, kuudraT1PBs)
-                    else -> SplitsGroup(emptyList(), null)
+                with(dungeonSplits[floor.floorNumber].toMutableList()) {
+                    addAll(0, listOf(
+                        Split(Regex("\\[NPC] Mort: Here, I found this map when I first entered the dungeon\\.|\\[NPC] Mort: Right-click the Orb for spells, and Left-click \\(or Drop\\) to use your Ultimate!"), "§2Blood Open") ,
+                        Split(Regex(BLOOD_OPEN_REGEX), "§bBlood Clear"),
+                        Split(Regex("\\[BOSS] The Watcher: You have proven yourself\\. You may pass\\."), "§dPortal Entry")
+                    ))
+                    add(Split(Regex("^\\s*☠ Defeated (.+) in 0?([\\dhms ]+?)\\s*(\\(NEW RECORD!\\))?\$"), "§1Total"))
+                    SplitsGroup(map { it.copy(time = 0L) }, floor.personalBest)
                 }
             }
+
+            Island.Kuudra -> when (LocationUtils.kuudraTier) {
+                5 -> SplitsGroup(kuudraT5SplitsGroup.map { it.copy(time = 0L) }, kuudraT5PBs)
+                4 -> SplitsGroup(kuudraSplitsGroup.map   { it.copy(time = 0L) }, kuudraT4PBs)
+                3 -> SplitsGroup(kuudraSplitsGroup.map   { it.copy(time = 0L) }, kuudraT3PBs)
+                2 -> SplitsGroup(kuudraSplitsGroup.map   { it.copy(time = 0L) }, kuudraT2PBs)
+                1 -> SplitsGroup(kuudraSplitsGroup.map   { it.copy(time = 0L) }, kuudraT1PBs)
+                else -> SplitsGroup(emptyList(), null)
+            }
+
             else -> SplitsGroup(emptyList(), null)
         }
     }
@@ -91,12 +87,11 @@ object SplitsManager {
 
     @SubscribeEvent
     fun onWorldLoad(event: WorldEvent.Load) {
-        dungeonEnded = false
         currentSplits = SplitsGroup(mutableListOf(), null)
     }
 }
 
-private val kuudraT5PBs = PersonalBest("KuudraT5", 6)
+private val kuudraT5PBs = PersonalBest("KuudraT5", 7)
 private val kuudraT4PBs = PersonalBest("KuudraT4", 5)
 private val kuudraT3PBs = PersonalBest("KuudraT3", 5)
 private val kuudraT2PBs = PersonalBest("KuudraT2", 5)
@@ -107,7 +102,8 @@ val kuudraT5SplitsGroup = mutableListOf(
     Split(Regex("^\\[NPC] Elle: OMG! Great work collecting my supplies!$"), "§bBuild"),
     Split(Regex("^\\[NPC] Elle: Phew! The Ballista is finally ready! It should be strong enough to tank Kuudra's blows now!$"), "§dEaten"),
     Split(Regex("^(?!Elle has been eaten by Kuudra!\$)(.{1,16}) has been eaten by Kuudra!$"), "§cStun"),
-    Split(Regex("^(.{1,16}) destroyed one of Kuudra's pods!\$"), "§4Cleared"),
+    Split(Regex("^(.{1,16}) destroyed one of Kuudra's pods!\$"), "§4DPS"),
+    Split(Regex("^\\[NPC] Elle: POW! SURELY THAT'S IT! I don't think he has any more in him!\$"), "§4Cleared"),
     Split(Regex("^\\[NPC] Elle: Good job everyone. A hard fought battle come to an end. Let's get out of here before we run into any more trouble!$"), "Total"))
 
 val kuudraSplitsGroup = mutableListOf(
@@ -140,9 +136,8 @@ private val floor2SplitGroup = mutableListOf(
 )
 
 private val floor3SplitGroup = mutableListOf(
-    Split(entryRegexes[2], "§cProfessor's Guardians"),
+    Split(entryRegexes[2], "§cThe Guardians"),
     Split(Regex("^\\[BOSS] The Professor: Oh\\? You found my Guardians' one weakness\\?$"), "§aThe Professor"),
-    Split(Regex("^\\[BOSS] The Professor: I see\\. You have forced me to use my ultimate technique$"), "§9Professor dying"),
     Split(Regex("^\\[BOSS] The Professor: What\\?! My Guardian power is unbeatable!$"), "§4Cleared"),
 )
 

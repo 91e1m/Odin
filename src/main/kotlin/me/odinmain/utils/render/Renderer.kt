@@ -1,12 +1,15 @@
 package me.odinmain.utils.render
 
-import com.github.stivais.ui.color.*
+import com.github.stivais.ui.color.Color
+import com.github.stivais.ui.color.alpha
+import com.github.stivais.ui.color.multiplyAlpha
+import com.github.stivais.ui.color.withAlpha
 import me.odinmain.OdinMain.mc
-import me.odinmain.utils.addVec
+import me.odinmain.utils.*
 import me.odinmain.utils.render.RenderUtils.drawBeaconBeam
 import me.odinmain.utils.render.RenderUtils.outlineBounds
+import me.odinmain.utils.render.RenderUtils.renderVec
 import me.odinmain.utils.skyblock.getBlockAt
-import me.odinmain.utils.toAABB
 import net.minecraft.client.gui.ScaledResolution
 import net.minecraft.entity.Entity
 import net.minecraft.util.*
@@ -15,7 +18,6 @@ import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
 import kotlin.math.max
-import kotlin.math.min
 
 object Renderer {
 
@@ -43,9 +45,9 @@ object Renderer {
         lineSmoothing: Boolean = true
     ) {
         if (outlineAlpha == 0f && fillAlpha == 0f) return
-        RenderUtils.drawOutlinedAABB(aabb, color.multiplyAlpha(outlineAlpha.toFloat()), thickness = outlineWidth, depth = depth, lineSmoothing)
+        RenderUtils.drawOutlinedAABB(aabb, color.withAlpha(outlineAlpha.toFloat()), thickness = outlineWidth, depth = depth, lineSmoothing)
 
-        RenderUtils.drawFilledAABB(aabb, color.multiplyAlpha(fillAlpha.toFloat()), depth = depth)
+        RenderUtils.drawFilledAABB(aabb, color.withAlpha(fillAlpha.toFloat()), depth = depth)
     }
 
     /**
@@ -109,8 +111,20 @@ object Renderer {
      * @param lineWidth The width of the line (default is 3).
      * @param depth     Indicates whether to draw with depth (default is false).
      */
-    fun draw3DLine(vararg points: Vec3, color: Color, lineWidth: Float = 3f, depth: Boolean = false) {
-        RenderUtils.renderLines(*points, color = color, lineWidth = lineWidth, depth = depth)
+    fun draw3DLine(points: Collection<Vec3>, color: Color, lineWidth: Float = 3f, depth: Boolean = false) {
+        RenderUtils.drawLines(points, color = color, lineWidth = lineWidth, depth = depth)
+    }
+
+    /**
+     * Draws a 3D line between two specified points in the world.
+     *
+     * @param goal       The end point of the line.
+     * @param color     The color of the line.
+     * @param lineWidth The width of the line (default is 3).
+     * @param depth     Indicates whether to draw with depth (default is false).
+     */
+    fun drawTracer(goal: Vec3, color: Color, lineWidth: Float = 3f, depth: Boolean = false) {
+        RenderUtils.drawLines(listOf(mc.thePlayer.renderVec.addVec(y = fastEyeHeight()), goal), color, lineWidth, depth)
     }
 
     /**
@@ -126,8 +140,7 @@ object Renderer {
      */
     fun drawCustomBeacon(title: String, vec3: Vec3, color: Color, beacon: Boolean = true, increase: Boolean = true, noFade: Boolean = false, distance: Boolean = true, style: Int = 1) {
         val dist = vec3.distanceTo(mc.thePlayer.positionVector)
-        drawBox(vec3.toAABB(), color, depth = false,
-            outlineAlpha = if (style == 0) 0 else color.alpha, fillAlpha = if (style == 1) 0 else color.alpha)
+        drawStyledBox(vec3.toAABB(), color, depth = false, style = style)
 
         RenderUtils.drawStringInWorld(
             if (distance) "$title §r§f(§3${dist.toInt()}m§f)" else title,
@@ -138,7 +151,7 @@ object Renderer {
         )
 
         val alpha = if (noFade) 1f else min(1f, max(0f, dist.toFloat()) / 60f)
-        if (beacon) drawBeaconBeam(vec3, color.multiplyAlpha(alpha), depth = false)
+        if (beacon) drawBeaconBeam(vec3, color.withAlpha(alpha), depth = true)
     }
 
     /**
@@ -175,19 +188,18 @@ object Renderer {
      * @param rot2        Rotation parameter.
      * @param rot3        Rotation parameter.
      * @param color       The color of the cylinder.
-     * @param phase       Indicates whether to phase the cylinder (default is false).
-     * @param lineMode    Indicates whether to draw the cylinder in line mode (default is false).
+     * @param depth       Indicates whether to phase the cylinder (default is false).
      */
     fun drawCylinder(
-        pos: Vec3, baseRadius: Float, topRadius: Float, height: Float,
-        slices: Int, stacks: Int, rot1: Float, rot2: Float, rot3: Float,
-        color: Color, phase: Boolean = false, lineMode: Boolean = false
+        pos: Vec3, baseRadius: Number, topRadius: Number, height: Number,
+        slices: Number, stacks: Number, rot1: Number, rot2: Number, rot3: Number,
+        color: Color, depth: Boolean = false
     ) {
-        RenderUtils.drawCylinder(pos, baseRadius, topRadius, height, slices, stacks, rot1, rot2, rot3, color, lineMode, phase)
+        RenderUtils.drawCylinder(pos, baseRadius, topRadius, height, slices, stacks, rot1, rot2, rot3, color, depth)
     }
 
-    fun draw2DEntity(entity: Entity, lineWidth: Float, color: Color) {
-        RenderUtils.draw2D(entity, lineWidth, color)
+    fun draw2DEntity(entity: Entity, color: Color, lineWidth: Float) {
+       RenderUtils2D.draw2DESP(entity.entityBoundingBox, color, lineWidth)
     }
 
     private var displayTitle = ""
@@ -197,7 +209,7 @@ object Renderer {
     fun displayTitle(title: String, ticks: Int, color: Color = Color.WHITE) {
         displayTitle = title
         titleTicks = ticks
-        displayColor = color as Color.RGB
+       // displayColor = color
     }
 
     private fun clearTitle() {
@@ -211,11 +223,11 @@ object Renderer {
         mc.entityRenderer.setupOverlayRendering()
         val sr = ScaledResolution(mc)
 
-        /*mcText( implement nvg text rendering
-            text = displayTitle, x = sr.scaledWidth / 2f,
-            y = sr.scaledHeight / 2.5f, scale = 4.0,
-            color = displayColor, center = true
-        )*/
+//        mcText(
+//            text = displayTitle, x = sr.scaledWidth / 2f,
+//            y = sr.scaledHeight / 2.5f, scale = 4.0,
+//            color = displayColor, center = true
+//        )
     }
 
     @SubscribeEvent

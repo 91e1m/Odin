@@ -10,9 +10,9 @@ import me.odinmain.utils.skyblock.sendCommand
 
 object KuudraRequeue : Module(
     name = "Kuudra Requeue",
-    description = "Automatically starts a new kuudra at the end of a kuudra"
+    description = "Automatically starts a new kuudra at the end of a kuudra."
 ) {
-    private val delay by NumberSetting("Delay", 10, 0, 30, 1, description = "The delay in seconds before requeuing.")
+    private val delay by NumberSetting("Delay", 10, 0, 30, 1, description = "The delay in seconds before requeuing.", unit = "s")
     private val disablePartyLeave by BooleanSetting("Disable Party Leave", false, description = "Disables the requeue on party leave message.")
 
     init {

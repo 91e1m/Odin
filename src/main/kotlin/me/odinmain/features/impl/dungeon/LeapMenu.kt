@@ -7,14 +7,12 @@ import com.github.stivais.ui.color.Color
 import com.github.stivais.ui.constraints.*
 import com.github.stivais.ui.constraints.measurements.Animatable
 import com.github.stivais.ui.elements.impl.Grid
-import com.github.stivais.ui.renderer.Image
 import com.github.stivais.ui.utils.*
 import io.github.moulberry.notenoughupdates.NEUApi
 import me.odinmain.events.impl.GuiEvent
 import me.odinmain.features.Module
 import me.odinmain.features.impl.dungeon.LeapHelper.getPlayer
 import me.odinmain.features.impl.dungeon.LeapHelper.leapHelperBossChatEvent
-import me.odinmain.features.impl.dungeon.LeapHelper.leapHelperClearChatEvent
 import me.odinmain.features.impl.dungeon.LeapHelper.worldLoad
 import me.odinmain.features.impl.render.ClickGUI.`gray 38`
 import me.odinmain.features.settings.Setting.Companion.withDependency
@@ -73,7 +71,7 @@ object LeapMenu : Module(
                     ) {
 
                         image(
-                            Image("https://mc-heads.net/avatar/${it.name}/128", Image.Type.RASTER),
+                            it.skinImage,
                             constraints = constrain(5.percent, 10.percent, 30.percent, 80.percent),
                             12f.radii()
                         )
@@ -157,7 +155,6 @@ object LeapMenu : Module(
 
     init {
         onMessage(Regex(".*")) {
-            leapHelperClearChatEvent(it)
             leapHelperBossChatEvent(it)
         }
 

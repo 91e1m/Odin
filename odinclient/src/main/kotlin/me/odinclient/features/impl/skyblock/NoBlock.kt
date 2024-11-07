@@ -4,7 +4,7 @@ import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.utils.skyblock.LocationUtils
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
-import me.odinmain.utils.skyblock.lore
+import me.odinmain.utils.skyblock.hasAbility
 import net.minecraft.item.ItemSword
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement
 import net.minecraftforge.event.entity.player.PlayerInteractEvent
@@ -20,22 +20,18 @@ object NoBlock : Module(
 
     @SubscribeEvent
     fun onTick(event: TickEvent.ClientTickEvent) {
-        if (event.phase != TickEvent.Phase.START || !LocationUtils.inSkyblock) return
+        if (event.phase != TickEvent.Phase.START || !LocationUtils.isInSkyblock) return
         isRightClickKeyDown = mc.gameSettings.keyBindUseItem.isKeyDown
     }
 
     @SubscribeEvent
     fun onInteract(event: PlayerInteractEvent) {
-        if (!LocationUtils.inSkyblock || event.action != PlayerInteractEvent.Action.RIGHT_CLICK_AIR) return
-        if (onlyBoss && !DungeonUtils.inBoss) return
-        val item = mc.thePlayer.heldItem
-        if (item == null || item.item !is ItemSword) return
+        if (!LocationUtils.isInSkyblock || event.action != PlayerInteractEvent.Action.RIGHT_CLICK_AIR || (onlyBoss && !DungeonUtils.inBoss)) return
 
-        if (!mc.thePlayer.heldItem.lore.any { it.contains("§6Ability: ") && it.endsWith("§e§lRIGHT CLICK") }) return
+        if (mc.thePlayer?.heldItem?.hasAbility == false || mc.thePlayer?.heldItem?.item !is ItemSword) return
         event.isCanceled = true
 
-        if (!isRightClickKeyDown) {
-            mc.netHandler.addToSendQueue(C08PacketPlayerBlockPlacement(mc.thePlayer.heldItem))
-        }
+        if (!isRightClickKeyDown)
+            mc.netHandler.addToSendQueue(C08PacketPlayerBlockPlacement(mc.thePlayer?.heldItem))
     }
 }

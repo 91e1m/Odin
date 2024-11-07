@@ -1,6 +1,7 @@
 package me.odinclient.features.impl.render
 
 import me.odinmain.events.impl.PacketReceivedEvent
+import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.utils.equalsOneOf
@@ -13,9 +14,10 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object NoDebuff : Module(
     name = "No Debuff",
+    category = Category.RENDER,
     description = "Removes various unwanted effects from the game."
 ) {
-    private val antiBlind by BooleanSetting("No Blindness", false, description = "Disables blindness")
+    private val antiBlind by BooleanSetting("No Blindness", false, description = "Disables blindness.")
     private val antiPortal by BooleanSetting("No Portal Effect", false, description = "Disables the nether portal overlay.")
     private val antiPumpkin by BooleanSetting("No Pumpkin Overlay", false, description = "Disables the pumpkin overlay.")
     private val noShieldParticles by BooleanSetting("No Shield Particle", false, description = "Removes purple particles and wither impact hearts.")

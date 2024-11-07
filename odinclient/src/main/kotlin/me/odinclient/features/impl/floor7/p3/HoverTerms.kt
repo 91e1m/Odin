@@ -1,20 +1,16 @@
 package me.odinclient.features.impl.floor7.p3
 
+import me.odinmain.events.impl.GuiEvent
+import me.odinmain.events.impl.TerminalEvent
 import me.odinmain.features.Module
 import me.odinmain.features.impl.floor7.p3.TerminalSolver
 import me.odinmain.features.impl.floor7.p3.TerminalSolver.currentTerm
-import me.odinmain.features.impl.floor7.p3.TerminalSolver.openedTerminalTime
 import me.odinmain.features.impl.floor7.p3.TerminalTypes
-import me.odinmain.features.impl.floor7.p3.termGUI.TermGui
 import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.features.settings.impl.SelectorSetting
-import me.odinmain.utils.*
 import me.odinmain.utils.clock.Clock
 import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.PlayerUtils.windowClick
-import net.minecraft.client.gui.inventory.GuiChest
-import net.minecraft.inventory.ContainerChest
-import net.minecraftforge.client.event.RenderGameOverlayEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object HoverTerms : Module(
@@ -22,50 +18,77 @@ object HoverTerms : Module(
     description = "Clicks the hovered item in a terminal if it is correct.",
     tag = TagType.RISKY
 ) {
-    private val triggerDelay by NumberSetting("Delay", 200L, 50, 800)
-    private val firstClickDelay by NumberSetting("First Click Delay", 200L, 50, 500)
-    private val middleClick by SelectorSetting("Click Type", "Left", arrayListOf("Left", "Middle"), description = "What Click to use")
+    private val triggerDelay by NumberSetting("Delay", 200L, 50, 800, unit = "ms", description = "Delay between clicks.")
+    private val firstClickDelay by NumberSetting("First Click Delay", 200L, 50, 500, unit = "ms", description = "Delay before first click.")
+    private val middleClick by SelectorSetting("Click Type", "Left", arrayListOf("Left", "Middle"), description = "What Click type to use.")
+    private val previouslyClicked = mutableSetOf<Int>()
     private val triggerBotClock = Clock(triggerDelay)
+    private var clickedThisWindow = false
 
-    @SubscribeEvent
-    fun onRenderWorld(event: RenderGameOverlayEvent.Pre) {
+    @SubscribeEvent(receiveCanceled = true)
+    fun onDrawGuiContainer(event: GuiEvent.DrawGuiContainerScreenEvent) {
         if (
-            TerminalSolver.solution.isEmpty() ||
-            mc.currentScreen !is GuiChest ||
-            !enabled ||
+            TerminalSolver.currentTerm.type == TerminalTypes.NONE ||
+            TerminalSolver.currentTerm.solution.isEmpty() ||
             !triggerBotClock.hasTimePassed(triggerDelay) ||
-            System.currentTimeMillis() - openedTerminalTime <= firstClickDelay
+            System.currentTimeMillis() - currentTerm.timeOpened <= firstClickDelay ||
+            clickedThisWindow
         ) return
-        val gui = mc.currentScreen as GuiChest
-        if (gui.inventorySlots !is ContainerChest) return
 
         val hoveredItem =
             when {
-                TerminalSolver.renderType == 3 && TerminalSolver.enabled -> TermGui.getHoveredItem(trueMouseX.toInt(), trueMouseY.toInt())
+                //TerminalSolver.renderType == 3 && TerminalSolver.enabled -> TermGui.getHoveredItem(mouseX.toInt(), mouseY.toInt())
                 else -> {
-                    if (gui.slotUnderMouse?.inventory == mc.thePlayer?.inventory) return
-                    gui.slotUnderMouse?.slotIndex
+                    if (event.gui.slotUnderMouse?.inventory == mc.thePlayer?.inventory) return
+                    event.gui.slotUnderMouse?.slotIndex
                 }
             } ?: return
 
-        if (hoveredItem !in TerminalSolver.solution) return
+        if (hoveredItem !in TerminalSolver.currentTerm.solution || hoveredItem in previouslyClicked) return
 
-        if (currentTerm == TerminalTypes.RUBIX) {
-            val needed = TerminalSolver.solution.count { it == hoveredItem }
-            if (needed >= 3) {
-                windowClick(hoveredItem, PlayerUtils.ClickType.Right)
+        when (currentTerm.type) {
+            TerminalTypes.RUBIX -> {
+                clickedThisWindow = true
+                windowClick(hoveredItem, if (TerminalSolver.currentTerm.solution.count { it == hoveredItem } >= 3) PlayerUtils.ClickType.Right else if (middleClick == 1) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
                 triggerBotClock.update()
-                return
+                if (TerminalSolver.currentTerm.solution.count { it == hoveredItem } < 1) previouslyClicked += hoveredItem
             }
-        } else if (currentTerm == TerminalTypes.ORDER) {
-            if (TerminalSolver.solution.first() == hoveredItem) {
+
+            TerminalTypes.ORDER -> {
+                if (TerminalSolver.currentTerm.solution.first() == hoveredItem) {
+                    clickedThisWindow = true
+                    windowClick(hoveredItem, if (middleClick == 1) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
+                    triggerBotClock.update()
+                    previouslyClicked += hoveredItem
+                }
+            }
+
+            TerminalTypes.MELODY ->
+                if (hoveredItem % 9 == 7) {
+                    clickedThisWindow = true
+                    windowClick(hoveredItem, if (middleClick == 1) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
+                    triggerBotClock.update()
+                    previouslyClicked += hoveredItem
+                }
+
+            TerminalTypes.PANES, TerminalTypes.STARTS_WITH, TerminalTypes.SELECT -> {
+                clickedThisWindow = true
                 windowClick(hoveredItem, if (middleClick == 1) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
                 triggerBotClock.update()
+                previouslyClicked += hoveredItem
             }
-            return
-        } else if (currentTerm.equalsOneOf(TerminalTypes.PANES, TerminalTypes.STARTS_WITH, TerminalTypes.SELECT))
-            windowClick(hoveredItem, if (middleClick == 1) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
+            else -> return
+        }
+    }
 
-        triggerBotClock.update()
+    @SubscribeEvent
+    fun onTerminalLeft(event: TerminalEvent.Closed) {
+        clickedThisWindow = false
+        previouslyClicked.clear()
+    }
+
+    @SubscribeEvent
+    fun onGuiOpen(event: GuiEvent.Loaded) {
+        clickedThisWindow = false
     }
 }

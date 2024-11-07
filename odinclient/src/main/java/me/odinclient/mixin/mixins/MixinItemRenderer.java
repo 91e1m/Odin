@@ -3,9 +3,7 @@ package me.odinclient.mixin.mixins;
 import me.odinclient.mixin.accessors.IMinecraftAccessor;
 import me.odinmain.features.impl.render.Animations;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.renderer.ItemRenderer;
-import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,7 +18,6 @@ public abstract class MixinItemRenderer {
     @Final
     @Shadow private Minecraft mc;
 
-    @Shadow private ItemStack itemToRender;
 
     @Shadow protected abstract void transformFirstPersonItem(float equipProgress, float swingProgress);
 
@@ -29,18 +26,10 @@ public abstract class MixinItemRenderer {
         if (Animations.INSTANCE.itemTransferHook(equipProgress, swingProgress)) ci.cancel();
     }
 
-    @Redirect(method = "renderItemInFirstPerson", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/entity/AbstractClientPlayer;getItemInUseCount()I"))
-    private int noBlockHook(AbstractClientPlayer instance) {
-        if (Animations.INSTANCE.getEnabled() && Animations.INSTANCE.getNoBlock()) {
-            return Animations.INSTANCE.getItemInUseCountHook(instance, itemToRender);
-        }
-        return instance.getItemInUseCount();
-    }
-
     @Redirect(method = "renderItemInFirstPerson", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemRenderer;transformFirstPersonItem(FF)V", ordinal = 0))
     private void renderItemHook(ItemRenderer instance, float equipProgress, float swingProgress) {
         if (Animations.INSTANCE.getEnabled()) {
-            this.transformFirstPersonItem(Animations.INSTANCE.getNoEquipReset() ? 0.0f : equipProgress, swingProgress);
+            this.transformFirstPersonItem(Animations.getShouldNoEquipReset() ? 0.0f : equipProgress, swingProgress);
         }
         else {
             this.transformFirstPersonItem(equipProgress, swingProgress);
@@ -50,7 +39,7 @@ public abstract class MixinItemRenderer {
     @Redirect(method = "renderItemInFirstPerson", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemRenderer;transformFirstPersonItem(FF)V", ordinal = 1))
     private void renderItemHook1(ItemRenderer instance, float equipProgress, float swingProgress) {
         if (Animations.INSTANCE.getEnabled()) {
-            this.transformFirstPersonItem(Animations.INSTANCE.getNoEquipReset() ? 0.0f : equipProgress, Animations.INSTANCE.getBlockHit() ? mc.thePlayer.getSwingProgress(((IMinecraftAccessor) mc).getTimer().elapsedPartialTicks) : swingProgress);
+            this.transformFirstPersonItem(Animations.getShouldNoEquipReset() ? 0.0f : equipProgress, Animations.INSTANCE.getBlockHit() ? mc.thePlayer.getSwingProgress(((IMinecraftAccessor) mc).getTimer().elapsedPartialTicks) : swingProgress);
         }
         else {
             this.transformFirstPersonItem(equipProgress, swingProgress);
@@ -60,7 +49,7 @@ public abstract class MixinItemRenderer {
     @Redirect(method = "renderItemInFirstPerson", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemRenderer;transformFirstPersonItem(FF)V", ordinal = 2))
     private void renderItemHook2(ItemRenderer instance, float equipProgress, float swingProgress) {
         if (Animations.INSTANCE.getEnabled()) {
-            this.transformFirstPersonItem(Animations.INSTANCE.getNoEquipReset() ? 0.0f : equipProgress, Animations.INSTANCE.getBlockHit() ? mc.thePlayer.getSwingProgress(((IMinecraftAccessor) mc).getTimer().elapsedPartialTicks) : swingProgress);
+            this.transformFirstPersonItem(Animations.getShouldNoEquipReset() ? 0.0f : equipProgress, Animations.INSTANCE.getBlockHit() ? mc.thePlayer.getSwingProgress(((IMinecraftAccessor) mc).getTimer().elapsedPartialTicks) : swingProgress);
         }
         else {
             this.transformFirstPersonItem(equipProgress, swingProgress);
@@ -70,7 +59,7 @@ public abstract class MixinItemRenderer {
     @Redirect(method = "renderItemInFirstPerson", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemRenderer;transformFirstPersonItem(FF)V", ordinal = 3))
     private void renderItemHook3(ItemRenderer instance, float equipProgress, float swingProgress) {
         if (Animations.INSTANCE.getEnabled()) {
-            this.transformFirstPersonItem(Animations.INSTANCE.getNoEquipReset() ? 0.0f : equipProgress, Animations.INSTANCE.getBlockHit() ? mc.thePlayer.getSwingProgress(((IMinecraftAccessor) mc).getTimer().elapsedPartialTicks) : swingProgress);
+            this.transformFirstPersonItem(Animations.getShouldNoEquipReset() ? 0.0f : equipProgress, Animations.INSTANCE.getBlockHit() ? mc.thePlayer.getSwingProgress(((IMinecraftAccessor) mc).getTimer().elapsedPartialTicks) : swingProgress);
         }
         else {
             this.transformFirstPersonItem(equipProgress, swingProgress);
@@ -80,7 +69,7 @@ public abstract class MixinItemRenderer {
     @Redirect(method = "renderItemInFirstPerson", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemRenderer;transformFirstPersonItem(FF)V", ordinal = 4))
     private void renderItemHook4(ItemRenderer instance, float equipProgress, float swingProgress) {
         if (Animations.INSTANCE.getEnabled()) {
-            this.transformFirstPersonItem(Animations.INSTANCE.getNoEquipReset() ? 0.0f : equipProgress, swingProgress);
+            this.transformFirstPersonItem(Animations.getShouldNoEquipReset() ? 0.0f : equipProgress, swingProgress);
         }
         else {
             this.transformFirstPersonItem(equipProgress, swingProgress);
@@ -89,8 +78,6 @@ public abstract class MixinItemRenderer {
 
     @Inject(method = "doItemUsedTransformations", at = @At("HEAD"), cancellable = true)
     private void noSwing(float swingProgress, CallbackInfo ci) {
-        if (Animations.INSTANCE.getNoSwing() && Animations.INSTANCE.getEnabled())
-            ci.cancel();
+        if (Animations.INSTANCE.getShouldStopSwing()) ci.cancel();
     }
-
 }

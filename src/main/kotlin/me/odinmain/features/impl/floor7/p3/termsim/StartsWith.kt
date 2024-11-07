@@ -2,7 +2,7 @@ package me.odinmain.features.impl.floor7.p3.termsim
 
 import me.odinmain.events.impl.GuiEvent
 import me.odinmain.features.impl.floor7.p3.TerminalSounds
-import me.odinmain.features.impl.floor7.p3.TerminalSounds.playTerminalSound
+import me.odinmain.features.impl.floor7.p3.TerminalSounds.clickSounds
 import me.odinmain.utils.getRandom
 import me.odinmain.utils.postAndCatch
 import net.minecraft.enchantment.Enchantment
@@ -14,13 +14,12 @@ import kotlin.math.floor
 
 class StartsWith(private val letter: String) : TermSimGui(
     "What starts with: \'$letter\'?",
-    54
+    45
 ) {
     override fun create() {
-        cleanInventory()
         val guaranteed = (10..16).getRandom()
         inventorySlots.inventorySlots.subList(0, size).forEachIndexed { index, it ->
-            if (floor(index / 9.0) in 1.0..4.0 && index % 9 in 1..7) {
+            if (floor(index / 9.0) in 1.0..3.0 && index % 9 in 1..7) {
                 if (index == guaranteed) {
                     it.putStack(ItemStack(
                         GameData.getItemRegistry().filter { it.registryName.replace("minecraft:", "").startsWith(letter, true) }.getRandom()
@@ -43,19 +42,14 @@ class StartsWith(private val letter: String) : TermSimGui(
 
     override fun slotClick(slot: Slot, button: Int) {
         val slot = slot.stack ?: return
-        if (!slot.displayName.startsWith(letter, true) || slot.isItemEnchanted) return
+        if (slot.displayName?.startsWith(letter, true) == false || slot.isItemEnchanted) return
 
         slot.addEnchantment(Enchantment.infinity, 1)
-        if (TerminalSounds.enabled) playTerminalSound() else mc.thePlayer.playSound("random.orb", 1f, 1f)
+        if (!TerminalSounds.enabled || !clickSounds) mc.thePlayer.playSound("random.orb", 1f, 1f)
         GuiEvent.Loaded(name, inventorySlots as ContainerChest).postAndCatch()
         if (inventorySlots?.inventorySlots?.subList(0, size)?.none { it?.stack?.displayName?.startsWith(letter, true) == true && !it.stack.isItemEnchanted } == true) {
             solved(this.name, 3)
         }
-    }
-
-    override fun onGuiClosed() {
-        resetInv()
-        super.onGuiClosed()
     }
 
     companion object {

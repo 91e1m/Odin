@@ -1,6 +1,7 @@
 package me.odinclient.features.impl.floor7
 
 import me.odinmain.features.Module
+import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.M7Phases
 import net.minecraft.entity.Entity
@@ -12,22 +13,21 @@ import net.minecraftforge.fml.common.gameevent.TickEvent
 
 object RelicAura : Module(
     name = "Relic Aura",
-    description = "Automatically picks up relics in the Wither King boss-fight.",
+    description = "Automatically picks up relics in the Wither King boss.",
     tag = TagType.RISKY
 ){
+    private val distance by NumberSetting("Distance", 3.0, 1.0, 6.0, 0.1, description = "The distance to the relic to pick it up.")
+
     @SubscribeEvent
     fun onTick(event: TickEvent.ClientTickEvent) {
-        if (DungeonUtils.getPhase() != M7Phases.P5) return
-        val armorStands = mc.theWorld?.loadedEntityList?.filterIsInstance<EntityArmorStand>()
-            ?.firstOrNull { it.inventory?.get(4)?.displayName?.contains("Relic") == true && mc.thePlayer.getDistanceToEntity(it) < 3 } ?: return
+        if (DungeonUtils.getF7Phase() != M7Phases.P5) return
+        val armorStands = mc.theWorld?.loadedEntityList?.firstOrNull {
+            it is EntityArmorStand && it.inventory?.get(4)?.displayName?.contains("Relic") == true && mc.thePlayer.getDistanceToEntity(it) < distance } ?: return
         interactWithEntity(armorStands)
     }
 
     private fun interactWithEntity(entity: Entity) {
-        val objectMouseOver = mc.objectMouseOver.hitVec
-        val dx = objectMouseOver.xCoord - entity.posX
-        val dy = objectMouseOver.yCoord - entity.posY
-        val dz = objectMouseOver.zCoord - entity.posX
-        mc.netHandler.addToSendQueue(C02PacketUseEntity(entity, Vec3(dx, dy, dz)))
+        val objectMouseOver = mc.objectMouseOver?.hitVec ?: return
+        mc.netHandler.addToSendQueue(C02PacketUseEntity(entity, Vec3(objectMouseOver.xCoord - entity.posX, objectMouseOver.yCoord - entity.posY, objectMouseOver.zCoord - entity.posZ)))
     }
 }

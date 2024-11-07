@@ -16,24 +16,20 @@ object ExtraStats : Module(
     private val extraStats = PostDungeonStats()
 
     private fun printEndStats() {
-        val dungeonMessage = if (DungeonUtils.floor.isInMM) "§cMaster Mode" else "§cThe Catacombs"
-
         val defeatedText = if (extraStats.bossKilled == null) "§c§lFAILED §a- §e${DungeonUtils.dungeonTime}" else
             "§aDefeated §c${extraStats.bossKilled} §ain §e${DungeonUtils.dungeonTime}${if (extraStats.timePB) " §d§l(NEW RECORD!)" else ""}"
 
-        val scoreMessage = "§aScore: §6${extraStats.score} §a(§b${extraStats.scoreLetter}§a${if (extraStats.scorePB) " §d§l(NEW RECORD!)" else ""})"
-
-        modMessage(getChatBreak(), prefix = false)
-        modMessage("", prefix = false)
-        modMessage(getCenteredText(dungeonMessage + " §r- §e${DungeonUtils.floor.name}"), prefix = false)
-        modMessage("", prefix = false)
-        modMessage(getCenteredText(defeatedText), prefix = false)
-        modMessage(getCenteredText(scoreMessage), prefix = false)
-        modMessage(getCenteredText("${extraStats.xp.firstOrNull()}"), prefix = false, chatStyle = createClickStyle(ClickEvent.Action.SUGGEST_COMMAND, extraStats.xp.joinToString("\n")))
-        modMessage(getCenteredText("§b${extraStats.secretsFound}§r-§6${DungeonUtils.cryptCount}§r-§c${DungeonUtils.deathCount}"), prefix = false)
-        modMessage(getCenteredText(if (DungeonUtils.dungeonTeammatesNoSelf.isNotEmpty()) DungeonUtils.dungeonTeammatesNoSelf.joinToString(separator = "§r, ") { "§${it.clazz.colorCode}${it.name}" } else "§3Solo"), prefix = false)
-        modMessage("", prefix = false)
-        modMessage(getChatBreak(), prefix = false, chatStyle = createClickStyle(ClickEvent.Action.SUGGEST_COMMAND, "Passed rooms: \n${DungeonUtils.passedRooms.joinToString("\n") { "§a${it.room.data.name}" }}"))
+        modMessage(getChatBreak(), prefix = "")
+        modMessage("", prefix = "")
+        modMessage(getCenteredText((if (DungeonUtils.floor.isMM) "§cMaster Mode" else "§cThe Catacombs") + " §r- §e${DungeonUtils.floor.name}"), prefix = "")
+        modMessage("", prefix = "")
+        modMessage(getCenteredText(defeatedText), prefix = "")
+        modMessage(getCenteredText("§aScore: §6${extraStats.score} §a(§b${extraStats.scoreLetter}§a${if (extraStats.scorePB) " §d§l(NEW RECORD!)" else ""})"), prefix = "")
+        modMessage(getCenteredText("${extraStats.xp.firstOrNull()}"), prefix = "", chatStyle = createClickStyle(ClickEvent.Action.SUGGEST_COMMAND, extraStats.xp.joinToString("\n")))
+        modMessage(getCenteredText("§b${extraStats.secretsFound}§r-§6${DungeonUtils.cryptCount}§r-§c${DungeonUtils.deathCount}"), prefix = "")
+        modMessage(getCenteredText(if (DungeonUtils.dungeonTeammatesNoSelf.isNotEmpty()) DungeonUtils.dungeonTeammatesNoSelf.joinToString(separator = "§r, ") { "§${it.clazz.colorCode}${it.name}" } else "§3Solo"), prefix = "")
+        modMessage("", prefix = "")
+        modMessage(getChatBreak(), prefix = "", chatStyle = createClickStyle(ClickEvent.Action.SUGGEST_COMMAND, "Passed rooms: \n${DungeonUtils.passedRooms.joinToString("\n") { "§a${it.data.name}" }}"))
     }
 
     init {
@@ -42,31 +38,31 @@ object ExtraStats : Module(
         }
 
         onMessage(Regex("^\\s*☠ Defeated (.+) in 0?([\\dhms ]+?)\\s*(\\(NEW RECORD!\\))?\$")) {
-            val matchResult = Regex("^\\s*☠ Defeated (.+) in 0?([\\dhms ]+?)\\s*(\\(NEW RECORD!\\))?\$").matchEntire(it) ?: return@onMessage
-            extraStats.apply {
-                bossKilled = matchResult.groupValues[1]
-                timePB = matchResult.groupValues[3].isNotEmpty()
+            Regex("^\\s*☠ Defeated (.+) in 0?([\\dhms ]+?)\\s*(\\(NEW RECORD!\\))?\$").matchEntire(it)?.let {
+                extraStats.bossKilled = it.groupValues[1]
+                extraStats.timePB = it.groupValues[3].isNotEmpty()
             }
         }
 
         onMessage(Regex("^\\s*Team Score: (\\d+) \\((.{1,2})\\)\\s?(\\(NEW RECORD!\\))?\$")) { event ->
-            val matchResult = Regex("^\\s*Team Score: (\\d+) \\((.{1,2})\\)\\s?(\\(NEW RECORD!\\))?\$").matchEntire(event) ?: return@onMessage
-            extraStats.apply {
-                score = matchResult.groupValues[1].toInt()
-                scoreLetter = matchResult.groupValues[2]
-                scorePB = matchResult.groupValues[3].isNotEmpty()
+            Regex("^\\s*Team Score: (\\d+) \\((.{1,2})\\)\\s?(\\(NEW RECORD!\\))?\$").matchEntire(event)?.let {
+                extraStats.score = it.groupValues[1].toIntOrNull() ?: 0
+                extraStats.scoreLetter = it.groupValues[2]
+                extraStats.scorePB = it.groupValues[3].isNotEmpty()
             }
         }
 
         onMessage(Regex("^\\s*(\\+[\\d,.]+\\s?\\w+ Experience)\\s?(?:\\(.+\\))?\$")) { event ->
-            val matchResult = Regex("^\\s*(\\+[\\d,.]+\\s?\\w+ Experience)\\s?(?:\\(.+\\))?\$").matchEntire(event) ?: return@onMessage
-            extraStats.xp.add("§3${matchResult.groupValues[1].replace("Experience", "EXP").replace("Catacombs", "Cata")}")
+            Regex("^\\s*(\\+[\\d,.]+\\s?\\w+ Experience)\\s?(?:\\(.+\\))?\$").matchEntire(event)?.let {
+                extraStats.xp.add("§3${it.groupValues[1].replace("Experience", "EXP").replace("Catacombs", "Cata")}")
+            }
         }
 
         onMessage(Regex("^\\s*Secrets Found: (\\d+)\$")) { event ->
-            val matchResult = Regex("^\\s*Secrets Found: (\\d+)\$").matchEntire(event) ?: return@onMessage
-            extraStats.secretsFound = matchResult.groupValues[1].toInt()
-            printEndStats()
+           Regex("^\\s*Secrets Found: (\\d+)\$").matchEntire(event)?.let {
+                extraStats.secretsFound = it.groupValues[1].toIntOrNull() ?: 0
+                printEndStats()
+            }
         }
 
         onWorldLoad {
@@ -81,7 +77,7 @@ object ExtraStats : Module(
                 Regex("^\\s*☠ Defeated (.+) in 0?([\\dhms ]+?)\\s*(\\(NEW RECORD!\\))?\$"),
                 Regex("^\\s*Team Score: \\d+ \\(.{1,2}\\)\\s?(?:\\(NEW RECORD!\\))?\$"),
                 Regex("^\\s*(\\+[\\d,.]+\\s?\\w+ Experience)\\s?(?:\\(.+\\))?\$"),
-                Regex("^\\s*(Master Mode)?(?:The)? Catacombs - (Entrance|Floor .{1,3})\$"),
+                Regex("^\\s*(Master Mode)? ?(?:The)? Catacombs - (Entrance|Floor .{1,3})\$"),
                 Regex("^\\s*Secrets Found: \\d+\$"),
 
                 Regex("^▬+\$"),
@@ -91,12 +87,13 @@ object ExtraStats : Module(
                 Regex("^\\s*The Catacombs - .+ Stats\$"),
                 Regex("^\\s*Deaths: \\d+\$"),
                 Regex("^\\s*Master Mode Catacombs - .+ Stats\$"),
+                Regex("^\\s*Master Mode The Catacombs - .+ Stats\$"),
                 Regex("^\\s*\\+(\\d+) Bits\$"),
                 Regex("^\\s*Enemies Killed: \\d+\\s?(?:\\(NEW RECORD!\\))?\$"),)
             ) event.isCanceled = true
     }
 
-    data class PostDungeonStats(
+    private data class PostDungeonStats(
         var score: Int = 0,
         var scoreLetter: String? = null,
         var bossKilled: String? = null,

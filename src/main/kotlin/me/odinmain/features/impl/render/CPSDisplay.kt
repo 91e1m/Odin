@@ -45,16 +45,16 @@ object CPSDisplay : Module(
 
     init {
         onEvent<ClientTickEvent> {
-            if (leftClicks.size != 0 && System.currentTimeMillis() - leftClicks.first() > 1000) {
+            if (leftClicks.isNotEmpty() && System.currentTimeMillis() - leftClicks.first() > 1000) {
                 leftClicks.removeFirst()
             }
-            if (rightClicks.size != 0 && System.currentTimeMillis() - rightClicks.first() > 1000) {
+            if (rightClicks.isNotEmpty() && System.currentTimeMillis() - rightClicks.first() > 1000) {
                 rightClicks.removeFirst()
             }
         }
         onPacket<C08PacketPlayerBlockPlacement> {
             if (countPackets) {
-                if (rightClicks.size == 0 || System.currentTimeMillis() - rightClicks.last() > 5) {
+                if (rightClicks.isEmpty() || System.currentTimeMillis() - rightClicks.last() > 5) {
                     onRightClick()
                 }
             }

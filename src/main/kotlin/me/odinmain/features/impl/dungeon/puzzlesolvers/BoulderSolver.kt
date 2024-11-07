@@ -2,14 +2,13 @@ package me.odinmain.features.impl.dungeon.puzzlesolvers
 
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import me.odinmain.events.impl.DungeonEvent
-import me.odinmain.utils.addRotationCoords
-import me.odinmain.utils.equalsOneOf
+import me.odinmain.events.impl.RoomEnterEvent
+import me.odinmain.utils.*
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.getBlockIdAt
+import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement
 import net.minecraft.util.BlockPos
-import net.minecraftforge.event.entity.player.PlayerInteractEvent
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
@@ -31,42 +30,38 @@ object BoulderSolver {
         }
     }
 
-    fun onRoomEnter(event: DungeonEvent.RoomEnterEvent) {
-        val room = event.fullRoom?.room ?: return reset()
+    fun onRoomEnter(event: RoomEnterEvent) {
+        val room = event.room ?: return reset()
         if (room.data.name != "Boulder") return reset()
+        val roomComponent = room.roomComponents.firstOrNull() ?: return reset()
         var str = ""
         for (z in -3..2) {
             for (x in -3..3) {
-                room.vec2.addRotationCoords(room.rotation, x * 3, z * 3).let {
-                    str += if (getBlockIdAt(it.x, 66, it.z) == 0) "0" else "1"
-                }
+                roomComponent.vec3.addRotationCoords(room.rotation, x * 3, z * 3).let { str += if (getBlockIdAt(it.xCoord, 66.0, it.zCoord) == 0) "0" else "1" }
             }
         }
-        val coords = solutions[str] ?: return
-        currentPositions = coords.map { sol ->
-            val render = room.vec2.addRotationCoords(room.rotation, sol[0], sol[1])
-            val click = room.vec2.addRotationCoords(room.rotation, sol[2], sol[3])
-            BoxPosition(BlockPos(render.x, 65, render.z), BlockPos(click.x, 65, click.z))
-        }.toMutableList()
+        currentPositions = solutions[str]?.map { sol ->
+            val render = roomComponent.vec3.addRotationCoords(room.rotation, sol[0], sol[1]).let { BlockPos(it.xCoord, 65.0, it.zCoord) }
+            val click = roomComponent.vec3.addRotationCoords(room.rotation, sol[2], sol[3]).let { BlockPos(it.xCoord, 65.0, it.zCoord) }
+            BoxPosition(render, click)
+        }?.toMutableList() ?: return
     }
 
     fun onRenderWorld() {
         if (DungeonUtils.currentRoomName != "Boulder" || currentPositions.isEmpty()) return
-        if (PuzzleSolvers.showAllBoulderClicks == 1) currentPositions.forEach {
+        if (PuzzleSolvers.showAllBoulderClicks == 0) currentPositions.forEach {
             Renderer.drawStyledBlock(it.render, PuzzleSolvers.boulderColor, PuzzleSolvers.boulderStyle, PuzzleSolvers.boulderLineWidth)
-        }
-        else currentPositions.firstOrNull()?.let {
+        } else currentPositions.firstOrNull()?.let {
             Renderer.drawStyledBlock(it.render, PuzzleSolvers.boulderColor, PuzzleSolvers.boulderStyle, PuzzleSolvers.boulderLineWidth)
         }
     }
 
-    fun playerInteract(event: PlayerInteractEvent) {
-        if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK || !getBlockIdAt(event.pos).equalsOneOf(77, 323)) return
-        currentPositions.removeIf { it.click == event.pos }
+    fun playerInteract(event: C08PacketPlayerBlockPlacement) {
+        if (getBlockIdAt(event.position).equalsOneOf(77, 323))
+            currentPositions.removeFirstOrNull { it.click == event.position }
     }
 
     fun reset() {
         currentPositions = mutableListOf()
     }
-
 }

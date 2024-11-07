@@ -91,7 +91,7 @@ object ClickGUI: Module(
         // todo: cleanup
         execute(250) {
             if (joined) destroyExecutor()
-            if (!LocationUtils.inSkyblock) return@execute
+            if (!LocationUtils.isInSkyblock) return@execute
             joined = true
             Config.save()
 
@@ -105,7 +105,7 @@ object ClickGUI: Module(
             §7Use §d§l/od help §r§7for all of of the commands.
              
             §7Join the discord for support and suggestions.
-            """.trimIndent(), false)
+            """.trimIndent(), "")
             mc.thePlayer.addChatMessage(
                 ChatComponentText(" §9https://discord.gg/2nCbC9hkxT")
                     .setChatStyle(createClickStyle(ClickEvent.Action.OPEN_URL, "https://discord.gg/2nCbC9hkxT"))
@@ -116,7 +116,7 @@ object ClickGUI: Module(
             §d§kOdinOnTopWeLoveOdinLiterallyTheBestModAAAAAAAAAAAAAAAA
             ${getChatBreak()}
             
-            """.trimIndent(), false)
+            """.trimIndent(), "")
         }
     }
 

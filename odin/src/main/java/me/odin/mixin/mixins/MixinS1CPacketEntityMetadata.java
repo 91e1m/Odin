@@ -17,5 +17,4 @@ public class MixinS1CPacketEntityMetadata {
         instance.handleEntityMetadata(packet);
         postAndCatch(new PostEntityMetadata(packet));
     }
-
 }

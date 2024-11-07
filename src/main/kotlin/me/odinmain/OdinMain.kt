@@ -1,7 +1,5 @@
 package me.odinmain
 
-import com.github.stivais.ui.UIScreen
-import com.github.stivais.ui.impl.`ui command`
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -11,17 +9,19 @@ import me.odin.lwjgl.Lwjgl3Wrapper
 import me.odinmain.commands.impl.*
 import me.odinmain.commands.registerCommands
 import me.odinmain.config.Config
-import me.odinmain.config.DungeonWaypointConfigCLAY
+import me.odinmain.config.DungeonWaypointConfig
 import me.odinmain.config.PBConfig
-import me.odinmain.config.WaypointConfig
 import me.odinmain.events.EventDispatcher
 import me.odinmain.features.ModuleManager
 import me.odinmain.features.impl.render.ClickGUI
 import me.odinmain.features.impl.render.DevPlayers
 import me.odinmain.features.impl.render.WaypointManager
 import me.odinmain.utils.ServerUtils
+import me.odinmain.utils.SplitsManager
 import me.odinmain.utils.clock.Executor
+import me.odinmain.utils.render.HighlightRenderer
 import me.odinmain.utils.render.RenderUtils
+import me.odinmain.utils.render.RenderUtils2D
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.sendDataToServer
 import me.odinmain.utils.skyblock.KuudraUtils
@@ -29,6 +29,7 @@ import me.odinmain.utils.skyblock.LocationUtils
 import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.SkyblockPlayer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
+import me.odinmain.utils.skyblock.dungeon.ScanUtils
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiScreen
 import net.minecraftforge.common.MinecraftForge
@@ -52,70 +53,50 @@ object OdinMain {
 	val wrapper: Lwjgl3Wrapper by lazy { Lwjgl3Loader.load() }
 
     fun init() {
-        scope.launch(Dispatchers.IO) {
-            PBConfig.loadConfig()
-        }
+        PBConfig.loadConfig()
         listOf(
-            LocationUtils,
-            ServerUtils,
-            PlayerUtils,
-            RenderUtils,
-            Renderer,
-            DungeonUtils,
-            KuudraUtils,
-            EventDispatcher,
-            Executor,
-            ModuleManager,
-            WaypointManager,
-            DevPlayers,
-            SkyblockPlayer,
-            UIScreen,
+            LocationUtils, ServerUtils, PlayerUtils,
+            RenderUtils, Renderer, DungeonUtils, KuudraUtils,
+            EventDispatcher, Executor, ModuleManager,
+            WaypointManager, DevPlayers, SkyblockPlayer,
+            ScanUtils, HighlightRenderer, //OdinUpdater,
+            SplitsManager, RenderUtils2D,
             this
         ).forEach { MinecraftForge.EVENT_BUS.register(it) }
 
         registerCommands(
-            mainCommand,
-            soopyCommand,
-            termSimCommand,
-            chatCommandsCommand,
-            devCommand,
-            highlightCommand,
-            waypointCommand,
-            dungeonWaypointsCommand,
-            petCommand,
-            visualWordsCommand,
-            `ui command`
+            mainCommand, soopyCommand,
+            termSimCommand, chatCommandsCommand,
+            devCommand, highlightCommand,
+            waypointCommand, dungeonWaypointsCommand,
+            petCommand, visualWordsCommand, PosMsgCommand
         )
     }
 
-    fun postInit() = scope.launch(Dispatchers.IO) {
-        val config = File(mc.mcDataDir, "config/odin")
-        if (!config.exists()) {
-            config.mkdirs()
-        }
-        launch { WaypointConfig.loadConfig() }
-        launch { DungeonWaypointConfigCLAY.loadConfig() }
+    fun postInit() {
+        File(mc.mcDataDir, "config/odin").takeIf { !it.exists() }?.mkdirs()
+        scope.launch(Dispatchers.IO) { DungeonWaypointConfig.loadConfig() }
     }
 
-    fun loadComplete() = runBlocking {
-        runBlocking {
+    fun loadComplete() {
+        runBlocking(Dispatchers.IO) {
             launch {
                 Config.load()
                 ClickGUI.firstTimeOnVersion = ClickGUI.lastSeenVersion != VERSION
                 ClickGUI.lastSeenVersion = VERSION
             }
         }
-        scope.launch {
-            val name = mc.session?.username ?: return@launch
-            if (name.matches(Regex("Player\\d{2,3}"))) return@launch
+
+
+        val name = mc.session?.username?.takeIf { !it.matches(Regex("Player\\d{2,3}")) } ?: return
+        scope.launch(Dispatchers.IO) {
             sendDataToServer(body = """{"username": "$name", "version": "${if (isLegitVersion) "legit" else "cheater"} $VERSION"}""")
         }
     }
 
     fun onTick() {
-        if (display != null) {
-            mc.displayGuiScreen(display)
-            display = null
-        }
+        if (display == null) return
+        mc.displayGuiScreen(display)
+        display = null
     }
 }

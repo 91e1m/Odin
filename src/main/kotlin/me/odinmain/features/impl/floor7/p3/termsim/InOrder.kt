@@ -2,7 +2,7 @@ package me.odinmain.features.impl.floor7.p3.termsim
 
 import me.odinmain.events.impl.GuiEvent
 import me.odinmain.features.impl.floor7.p3.TerminalSounds
-import me.odinmain.features.impl.floor7.p3.TerminalSounds.playTerminalSound
+import me.odinmain.features.impl.floor7.p3.TerminalSounds.clickSounds
 import me.odinmain.utils.postAndCatch
 import net.minecraft.inventory.ContainerChest
 import net.minecraft.inventory.Slot
@@ -14,7 +14,6 @@ object InOrder : TermSimGui(
     36
 ) {
     override fun create() {
-        cleanInventory()
         val used = (1..14).shuffled().toMutableList()
         inventorySlots.inventorySlots.subList(0, size).forEachIndexed { index, it ->
             if (floor(index / 9.0) in 1.0..2.0 && index % 9 in 1..7) {
@@ -26,21 +25,11 @@ object InOrder : TermSimGui(
     }
 
     override fun slotClick(slot: Slot, button: Int) {
-        if (
-            inventorySlots.inventorySlots
-                .subList(0, size)
-                .filter { it.stack?.metadata == 14 }
-                .minByOrNull { it.stack?.stackSize ?: 999 } != slot
-        ) return
+        if (inventorySlots.inventorySlots.subList(0, size).minByOrNull { if (it.stack?.metadata == 14) it.stack?.stackSize ?: 999 else 1000 } != slot) return
         slot.putStack(ItemStack(pane, slot.stack.stackSize, 5).apply { setStackDisplayName("") })
-        if (TerminalSounds.enabled) playTerminalSound() else mc.thePlayer.playSound("random.orb", 1f, 1f)
+        if (!TerminalSounds.enabled || !clickSounds) mc.thePlayer.playSound("random.orb", 1f, 1f)
         GuiEvent.Loaded(name, inventorySlots as ContainerChest).postAndCatch()
         if (inventorySlots.inventorySlots.subList(0, size).none { it?.stack?.metadata == 14 })
             solved(this.name, 2)
-    }
-
-    override fun onGuiClosed() {
-        resetInv()
-        super.onGuiClosed()
     }
 }

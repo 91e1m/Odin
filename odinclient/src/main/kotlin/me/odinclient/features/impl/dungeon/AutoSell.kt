@@ -3,6 +3,7 @@ package me.odinclient.features.impl.dungeon
 import me.odinmain.config.Config
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.*
+import me.odinmain.utils.containsOneOf
 import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.name
 import me.odinmain.utils.skyblock.*
@@ -11,12 +12,12 @@ import net.minecraft.inventory.ContainerChest
 
 object AutoSell : Module(
     name = "Auto Sell",
-    description = "Automatically sell items in trades and cookie menus."
+    description = "Automatically sell items in trades and cookie menus. (/autosell)"
 ) {
     val sellList: MutableSet<String> by ListSetting("Sell list", mutableSetOf())
-    private val delay by NumberSetting("Delay", 100L, 30L, 300L, 5L)
-    private val clickType by SelectorSetting("Click Type", "Shift", arrayListOf("Shift", "Middle", "Left"))
-    private val addDefaults by ActionSetting("Add defaults") {
+    private val delay by NumberSetting("Delay", 100L, 30L, 300L, 5L, description = "The delay between each sell action.", unit = "ms")
+    private val clickType by SelectorSetting("Click Type", "Shift", arrayListOf("Shift", "Middle", "Left"), description = "The type of click to use when selling items.")
+    private val addDefaults by ActionSetting("Add defaults", description = "Add default dungeon items to the auto sell list.") {
         sellList.addAll(defaultItems)
         modMessage("§aAdded default items to auto sell list")
         Config.save()
@@ -24,11 +25,11 @@ object AutoSell : Module(
 
     init {
         execute(delay = { delay }) {
-            if (!enabled) return@execute
+            if (!enabled || sellList.isEmpty()) return@execute
             val container = mc.thePlayer?.openContainer as? ContainerChest ?: return@execute
 
             if (!container.name.equalsOneOf("Trades", "Booster Cookie", "Farm Merchant")) return@execute
-            val index = getItemIndexInContainerChest(container, sellList, 54..90) ?: return@execute
+            val index = container.inventorySlots?.subList(54, 90)?.firstOrNull { it.stack?.displayName?.containsOneOf(sellList, true) == true }?.slotNumber ?: return@execute
             when (clickType) {
                 0 -> windowClick(index, PlayerUtils.ClickType.Shift)
                 1 -> windowClick(index, PlayerUtils.ClickType.Middle)
@@ -38,13 +39,13 @@ object AutoSell : Module(
     }
 
     private val defaultItems = arrayOf(
-        "Enchanted Ice", "Health Potion", "Superboom TNT", "Rotten", "Skeleton Master", "Skeleton Grunt", "Cutlass",
-        "Skeleton Lord", "Skeleton Soldier", "Zombie Soldier", "Zombie Knight", "Zombie Commander", "Zombie Lord",
-        "Skeletor", "Super Heavy", "Heavy", "Sniper Helmet", "Dreadlord", "Earth Shard", "Zombie Commander Whip",
-        "Machine Gun", "Sniper Bow", "Soulstealer Bow", "Silent Death", "Training Weight", "Health Potion VIII",
-        "Health Potion 8", "Beating Heart", "Premium Flesh", "Mimic Fragment", "Enchanted Rotten Flesh", "Sign",
-        "Enchanted Bone", "Defuse Kit", "Optical Lens", "Tripwire Hook", "Button", "Carpet", "Lever", "Diamond Atom",
-        "Health Potion VIII Splash Potion", "Healing Potion 8 Splash Potion", "Healing Potion VIII Splash Potion",
-        "Healing VIII Splash Potion", "Healing 8 Splash Potion", "Ancient Claw"
+        "enchanted ice", "health potion", "superboom tnt", "rotten", "skeleton master", "skeleton grunt", "cutlass",
+        "skeleton lord", "skeleton soldier", "zombie soldier", "zombie knight", "zombie commander", "zombie lord",
+        "skeletor", "super heavy", "heavy", "sniper helmet", "dreadlord", "earth shard", "zombie commander whip",
+        "machine gun", "sniper bow", "soulstealer bow", "silent death", "training weight", "health potion viii",
+        "health potion 8", "beating heart", "premium flesh", "mimic fragment", "enchanted rotten flesh", "sign",
+        "enchanted bone", "defuse kit", "optical lens", "tripwire hook", "button", "carpet", "lever", "diamond atom",
+        "health potion viii splash potion", "healing potion 8 splash potion", "healing potion viii splash potion",
+        "healing viii splash potion", "healing 8 splash potion"
     )
 }

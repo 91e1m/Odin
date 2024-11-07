@@ -1,5 +1,6 @@
 package me.odinclient.features.impl.skyblock
 
+import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.utils.containsOneOf
@@ -21,6 +22,7 @@ import net.minecraft.util.BlockPos
  */
 object CancelInteract : Module(
     name = "Cancel Interact",
+    category = Category.SKYBLOCK,
     description = "Cancels the interaction with certain blocks, so that the item can be used instead."
 ){
     private val cancelInteract by BooleanSetting("Cancel Interact", true, description = "Cancels the interaction with certain blocks, so that the item can be used instead.")
@@ -36,7 +38,7 @@ object CancelInteract : Module(
     )
 
     /**
-     * Set containing all the block which interactions should be cancelled with.
+     * Set containing all the block which interactions should be canceled with.
      */
     private val interactionBlacklist = setOf<Block>(
         Blocks.cobblestone_wall, Blocks.oak_fence, Blocks.dark_oak_fence,
@@ -54,8 +56,8 @@ object CancelInteract : Module(
         // When the module is not enabled preform the vanilla action.
         if (cancelInteract && enabled) {
             if (interactionWhitelist.contains(instance.getBlockState(blockPos).block)) return false
-            if (mc.thePlayer.isHolding("Ender Pearl")) return true
-            if (!onlyWithAbility || mc.thePlayer.heldItem.hasAbility)
+            if (mc.thePlayer?.isHolding("Ender Pearl") == true) return true
+            if (!onlyWithAbility || mc.thePlayer?.heldItem?.hasAbility == true)
                 return interactionBlacklist.contains(instance.getBlockState(blockPos).block) || instance.isAirBlock(blockPos)
         }
         return instance.isAirBlock(blockPos)
@@ -66,15 +68,13 @@ object CancelInteract : Module(
      */
     @JvmStatic
     fun isHittingPositionHook(blockPos: BlockPos, currentItemHittingBlock: ItemStack?, currentBlock: BlockPos): Boolean {
-        var flag: Boolean
         val itemStack: ItemStack? = mc.thePlayer?.heldItem
-        flag = currentItemHittingBlock == null && itemStack == null
+        var flag = currentItemHittingBlock == null && itemStack == null
         if (currentItemHittingBlock != null && itemStack != null) {
-            if (noBreakReset && enabled && itemStack.tagCompound != null) {
-                val lore: String = itemStack.lore.toString()
-                if (lore.containsOneOf("GAUNTLET", "DRILL", "PICKAXE"))
+            if (noBreakReset && enabled && itemStack.tagCompound != null)
+                if (itemStack.lore.toString().containsOneOf("GAUNTLET", "DRILL", "PICKAXE"))
                     return blockPos == currentBlock && itemStack.item === currentItemHittingBlock.item
-            }
+
             flag = itemStack.item === currentItemHittingBlock.item && ItemStack.areItemStackTagsEqual(itemStack, currentItemHittingBlock)
                     && (itemStack.isItemStackDamageable || itemStack.metadata == currentItemHittingBlock.metadata)
         }

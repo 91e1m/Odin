@@ -15,11 +15,11 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object LightsDevice : Module(
     name = "Lights Device",
-    description = "Features to help with the lights device (2nd device)."
+    description = "Features to help with the lights device."
 ) {
-    private val triggerBot by BooleanSetting("Triggerbot", false, description = "Flicks correct levers automatically when you look at them.")
-    private val delay by NumberSetting<Long>("Delay", 200, 70, 500).withDependency { triggerBot }
-    val bigLevers by BooleanSetting("Big Levers", false, description = "Makes the levers you want to flick a 1x1x1 hitbox so they are easier to hit.")
+    private val triggerBot by BooleanSetting("Triggerbot", false, description = "Toggles correct levers automatically when you look at them.")
+    private val delay by NumberSetting("Delay", 200L, 70, 500, unit = "ms", description = "The delay between each click.").withDependency { triggerBot }
+    val bigLevers by BooleanSetting("Big Levers", false, description = "Makes the levers you want to toggle a 1x1x1 hitbox so they are easier to hit.")
     private val triggerBotClock = Clock(delay)
 
     val levers = setOf(
@@ -33,7 +33,7 @@ object LightsDevice : Module(
 
     @SubscribeEvent
     fun onRenderWorld(event: RenderWorldLastEvent) {
-        if (!triggerBotClock.hasTimePassed(delay) || DungeonUtils.getPhase() != M7Phases.P3 || !triggerBot) return
+        if (!triggerBotClock.hasTimePassed(delay) || DungeonUtils.getF7Phase() != M7Phases.P3 || !triggerBot) return
         val pos = mc.objectMouseOver?.blockPos ?: return
         if (pos !in levers || mc.theWorld.getBlockState(pos).getValue(BlockLever.POWERED)) return
         rightClick()

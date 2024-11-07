@@ -10,19 +10,20 @@ import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import java.util.*
+import java.util.Locale
+import java.util.concurrent.CopyOnWriteArrayList
 
 object TerracottaTimer : Module(
     name = "Terracotta Timer",
     description = "Displays the time until the terracotta respawns."
 ) {
+    private var terracottaSpawning = CopyOnWriteArrayList<Terracotta>()
     private data class Terracotta(val pos: Vec3, var time: Double)
-    private var terracottaSpawning = mutableListOf<Terracotta>()
 
     @SubscribeEvent
     fun onBlockPacket(event: BlockChangeEvent) {
-        if (!DungeonUtils.isFloor(6) || !DungeonUtils.inBoss || !event.update.block.isFlowerPot || terracottaSpawning.any { it.pos.equal(event.pos.toVec3()) }) return
-        terracottaSpawning.add(Terracotta(Vec3(event.pos).addVec(.5, 1.5, .5), if (DungeonUtils.floor.isInMM) 1200.0 else 1500.0))
+        if (!DungeonUtils.isFloor(6) || !DungeonUtils.inBoss || !event.update.block.isFlowerPot || terracottaSpawning.any { it.pos.equal(event.pos.toVec3().addVec(0.5, 1.5, 0.5)) }) return
+        terracottaSpawning.add(Terracotta(event.pos.toVec3().addVec(0.5, 1.5, 0.5), if (DungeonUtils.floor.isMM) 1200.0 else 1500.0))
     }
 
     @SubscribeEvent
@@ -36,10 +37,9 @@ object TerracottaTimer : Module(
     @SubscribeEvent
     fun onRenderWorld(event: RenderWorldLastEvent) {
         if (!DungeonUtils.isFloor(6) || !DungeonUtils.inBoss || terracottaSpawning.isEmpty()) return
-        val terracottaList = terracottaSpawning.toList()
-        terracottaList.forEach {
+        terracottaSpawning.forEach {
             Renderer.drawStringInWorld(
-                "${String.format(Locale.US, "%.2f",it.time / 100.0)}s",
+                "${String.format(Locale.US, "%.2f", it.time / 100.0)}s",
                 it.pos, getColor(it.time / 100.0), depth = false, scale = 0.03f
             )
         }

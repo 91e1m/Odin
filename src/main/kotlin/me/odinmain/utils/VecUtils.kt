@@ -5,10 +5,12 @@ import kotlinx.coroutines.channels.ticker
 import kotlinx.coroutines.launch
 import me.odinmain.OdinMain.mc
 import me.odinmain.OdinMain.scope
+import me.odinmain.utils.render.RenderUtils.outlineBounds
 import me.odinmain.utils.skyblock.dungeon.tiles.Rotations
 import net.minecraft.entity.Entity
 import net.minecraft.init.Blocks
 import net.minecraft.network.play.server.S29PacketSoundEffect
+import net.minecraft.network.play.server.S2APacketParticles
 import net.minecraft.util.*
 import kotlin.math.*
 
@@ -110,31 +112,18 @@ fun isFacingAABB(aabb: AxisAlignedBB, range: Float, yaw: Float = mc.thePlayer.ro
  */
 fun isXZInterceptable(aabb: AxisAlignedBB, range: Float, pos: Vec3, yaw: Float, pitch: Float): Boolean {
     val position = getPositionEyes(pos)
-    val look = getLook(yaw, pitch)
     return isXZInterceptable(
         position,
-        position.addVector(look.xCoord * range, look.yCoord * range, look.zCoord * range),
+        position.add(getLook(yaw, pitch).multiply(range)),
         aabb
     )
 }
 
 private fun isXZInterceptable(start: Vec3, goal: Vec3?, aabb: AxisAlignedBB): Boolean {
-    return isVecInZ(start.getIntermediateWithXValue(goal, aabb.minX), aabb) ||
+    return  isVecInZ(start.getIntermediateWithXValue(goal, aabb.minX), aabb) ||
             isVecInZ(start.getIntermediateWithXValue(goal, aabb.maxX), aabb) ||
             isVecInX(start.getIntermediateWithZValue(goal, aabb.minZ), aabb) ||
-            isVecInX(start.getIntermediateWithZValue(goal, aabb.maxZ), aabb) /*||
-            isVecInXZ(start.getIntermediateWithYValue(goal, 0.0), aabb) ||
-            isVecInXZ(start.getIntermediateWithYValue(goal, 255.0), aabb)
-            */
-}
-
-/**
- * Checks if every coordinate of the given Vec3 is equal to the other Vec3.
- * @param other The Vec3 to check against
- * @return True if every coordinate of the given Vec3 is equal to the other Vec3
- */
-fun Vec3.equal(other: Vec3): Boolean {
-    return this.xCoord == other.xCoord && this.yCoord == other.yCoord && this.zCoord == other.zCoord
+            isVecInX(start.getIntermediateWithZValue(goal, aabb.maxZ), aabb)
 }
 
 /**
@@ -142,8 +131,25 @@ fun Vec3.equal(other: Vec3): Boolean {
  * @param factor The factor to multiply by
  * @return The multiplied Vec3
  */
-fun Vec3.multiply(factor: Double): Vec3 {
-    return Vec3(this.xCoord * factor, this.yCoord * factor, this.zCoord * factor)
+fun Vec3.multiply(factor: Number): Vec3 {
+    return Vec3(this.xCoord * factor.toDouble(), this.yCoord * factor.toDouble(), this.zCoord * factor.toDouble())
+}
+
+fun Vec3.multiply(x: Double = 1.0, y: Double = 1.0, z: Double = 1.0): Vec3 {
+    return Vec3(this.xCoord * x, this.yCoord * y, this.zCoord * z)
+}
+
+/**
+ * Divides every coordinate of a Vec3 by the given divisor.
+ * @param divisor The divisor to divide by
+ * @return The divided Vec3
+ */
+fun Vec3.divide(divisor: Number): Vec3 {
+    return Vec3(this.xCoord / divisor.toDouble(), this.yCoord / divisor.toDouble(), this.zCoord / divisor.toDouble())
+}
+
+fun Vec3.equal(other: Vec3): Boolean {
+    return this.xCoord == other.xCoord && this.yCoord == other.yCoord && this.zCoord == other.zCoord
 }
 
 /**
@@ -190,69 +196,6 @@ fun Vec3.rotateToNorth(rotation: Rotations): Vec3 {
     }
 }
 
-
-/**
- * Rotates a Vec2 to the given rotation.
- * @param rotation The rotation to rotate to
- * @return The rotated Vec2
- */
-fun Vec2.addRotationCoords(rotation: Rotations, dist: Int = 4): Vec2 {
-    return when (rotation) {
-        Rotations.NORTH -> Vec2(x, z + dist)
-        Rotations.WEST -> Vec2(x + dist, z)
-        Rotations.SOUTH -> Vec2(x, z - dist)
-        Rotations.EAST -> Vec2(x - dist, z)
-        Rotations.NONE -> this
-    }
-}
-
-fun Vec2.addRotationCoords(rotation: Rotations, x: Number = 0, z: Number = 0): Vec2 {
-    return when(rotation){
-        Rotations.NORTH -> Vec2(this.x + x.toInt(), this.z + z.toInt())
-        Rotations.WEST -> Vec2(this.x + z.toInt(), this.z - x.toInt())
-        Rotations.SOUTH -> Vec2(this.x - x.toInt(), this.z - z.toInt())
-        Rotations.EAST -> Vec2(this.x - z.toInt(), this.z + x.toInt())
-        Rotations.NONE -> this
-    }
-}
-
-fun Vec3.addRotationCoords(rotation: Rotations, x: Number = 0, z: Number = 0): Vec3 {
-    return when(rotation){
-        Rotations.NORTH -> Vec3(this.xCoord + x.toDouble(), this.yCoord, this.zCoord + z.toDouble())
-        Rotations.WEST -> Vec3(this.xCoord + z.toDouble(), this.yCoord, this.zCoord - x.toDouble())
-        Rotations.SOUTH -> Vec3(this.xCoord - x.toDouble(), this.yCoord, this.zCoord - z.toDouble())
-        Rotations.EAST -> Vec3(this.xCoord - z.toDouble(), this.yCoord, this.zCoord + x.toDouble())
-        Rotations.NONE -> this
-    }
-}
-
-fun BlockPos.addRotationCoords(rotation: Rotations, x: Number = 0, z: Number = 0): BlockPos {
-    return when(rotation){
-        Rotations.NORTH -> BlockPos(this.x + x.toInt(), this.y, this.z + z.toInt())
-        Rotations.WEST -> BlockPos(this.x + z.toInt(), this.y, this.z - x.toInt())
-        Rotations.SOUTH -> BlockPos(this.x - x.toInt(), this.y, this.z - z.toInt())
-        Rotations.EAST -> BlockPos(this.x - z.toInt(), this.y, this.z + x.toInt())
-        Rotations.NONE -> this
-    }
-}
-
-/**
- * Displaces a Vec2 by the given rotation, and distance.
- * @param rotation The rotation to offset with
- * @param dist The distance to displace by
- * @return The displaced Vec2
- */
-fun Vec2.addRotationCoords(rotation: EnumFacing, dist: Int = 4): Vec2 {
-    return Vec2(
-        x + rotation.frontOffsetX * dist,
-        z + rotation.frontOffsetZ * dist
-    )
-}
-
-fun Vec2.offset(rotation: Rotations, n: Int): Vec2 {
-    return if (n == 0) this else Vec2(this.x + rotation.x * n, this.z + rotation.z * n)
-}
-
 /**
  * Checks if an axis-aligned bounding box (AABB) is interceptable based on the player's position, range, yaw, and pitch.
  *
@@ -263,16 +206,11 @@ fun Vec2.offset(rotation: Rotations, n: Int): Vec2 {
  * @return `true` if the AABB is interceptable, `false` otherwise.
  */
 private fun isInterceptable(aabb: AxisAlignedBB, range: Float, yaw: Float, pitch: Float): Boolean {
-    val player = mc.thePlayer ?: return false
-    val position = Vec3(player.posX, player.posY + fastEyeHeight(), player.posZ)
-
-    val look = getLook(yaw, pitch)
-
-    return isInterceptable3(
-        position,
-        position.addVector(look.xCoord * range, look.yCoord * range, look.zCoord * range),
-        aabb
-    )
+    mc.thePlayer?.let { player ->
+        val position = Vec3(player.posX, player.posY + fastEyeHeight(), player.posZ)
+        return isInterceptable3(position, position.add(getLook(yaw, pitch).multiply(range)), aabb)
+    }
+    return false
 }
 
 /**
@@ -293,7 +231,7 @@ private fun isInterceptable3(start: Vec3, goal: Vec3, aabb: AxisAlignedBB): Bool
                 isVecInXY(start.getIntermediateWithZValue(goal, aabb.minZ), aabb) ||
                 isVecInXY(start.getIntermediateWithZValue(goal, aabb.maxZ), aabb)
         )
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         false
     }
 }
@@ -358,7 +296,6 @@ operator fun Vec3.plus(vec3: Vec3): Vec3 {
     return this.add(vec3)
 }
 
-
 /**
  * Adds the given coordinates to the Vec3.
  */
@@ -380,7 +317,6 @@ fun Vec3i.addVec(x: Number = .0, y: Number = .0, z: Number = .0): Vec3i {
     return Vec3i(this.x + x.toInt(), this.y + y.toInt(), this.z + z.toInt())
 }
 
-
 /**
  * Floors every coordinate of a Vec3 and turns it into a Vec3i.
  */
@@ -399,16 +335,22 @@ fun Vec3.flooredVec(): Vec3 {
  * @param add Will determine the maximum bounds
  */
 fun BlockPos.toAABB(add: Double = 1.0): AxisAlignedBB {
-    return AxisAlignedBB(this.x.toDouble(), this.y.toDouble(), this.z.toDouble(), this.x + add, this.y + add, this.z + add).expand(0.002, 0.002, 0.002)
+    return AxisAlignedBB(this.x.toDouble(), this.y.toDouble(), this.z.toDouble(), this.x + add, this.y + add, this.z + add).outlineBounds()
 }
 
 /**
  * @param add Will determine the maximum bounds
  */
 fun Vec3.toAABB(add: Double = 1.0): AxisAlignedBB {
-    return AxisAlignedBB(this.xCoord, this.yCoord, this.zCoord, this.xCoord + add, this.yCoord + add, this.zCoord + add).expand(0.002, 0.002, 0.002)
+    return AxisAlignedBB(this.xCoord, this.yCoord, this.zCoord, this.xCoord + add, this.yCoord + add, this.zCoord + add).outlineBounds()
 }
 
+/**
+ * Turns a Vec3 into a BlockPos.
+ */
+fun Vec3.toBlockPos(add: Double = 0.0): BlockPos {
+    return BlockPos(this.xCoord + add, this.yCoord + add, this.zCoord + add)
+}
 
 /**
  * Clones a Vec3 object.
@@ -448,7 +390,7 @@ fun DoubleArray.toVec3(): Vec3 {
  * @see me.odinmain.utils.skyblock.DianaBurrowEstimate.guessPosition
  * @author Soopy
  */
-fun solveEquationThing(x: Vec3, y: Vec3): Triple<Double, Double, Double> {
+fun calculateCoefficientsFromVectors(x: Vec3, y: Vec3): Triple<Double, Double, Double> {
     val a = (-y.xCoord * x.yCoord * x.xCoord - y.yCoord * x.yCoord * x.zCoord + y.yCoord * x.yCoord * x.xCoord + x.yCoord * x.zCoord * y.zCoord + x.xCoord * x.zCoord * y.xCoord - x.xCoord * x.zCoord * y.zCoord) / (x.yCoord * y.xCoord - x.yCoord * y.zCoord + x.xCoord * y.zCoord - y.xCoord * x.zCoord + y.yCoord * x.zCoord - y.yCoord * x.xCoord)
     val b = (y.xCoord - y.yCoord) * (x.xCoord + a) * (x.yCoord + a) / (x.yCoord - x.xCoord)
     val c = y.xCoord - b / (x.xCoord + a)
@@ -487,8 +429,11 @@ fun Vec3.coerceZIn(min: Double, max: Double): Vec3 {
  * Gets the Vec3 position of the given S29PacketSoundEffect.
  * @author Bonsai
  */
-val S29PacketSoundEffect.pos: Vec3
+val S29PacketSoundEffect.positionVector: Vec3
     get() = Vec3(this.x, this.y, this.z)
+
+val S2APacketParticles.positionVector: Vec3
+    get() = Vec3(this.xCoordinate, this.yCoordinate, this.zCoordinate)
 
 val AxisAlignedBB.corners: List<Vec3>
     get() = listOf(
@@ -512,7 +457,7 @@ val AxisAlignedBB.middle: Vec3
  * @author Bonsai
  */
 fun findNearestGrassBlock(pos: Vec3): Vec3 {
-    val chunk = mc.theWorld.getChunkFromBlockCoords(BlockPos(pos))
+    val chunk = mc.theWorld?.getChunkFromBlockCoords(BlockPos(pos)) ?: return pos.coerceYIn(50.0, 110.0)
     if (!chunk.isLoaded) return pos.coerceYIn(50.0, 110.0)
 
     val blocks = List(70) { i -> BlockPos(pos.xCoord, i + 50.0, pos.zCoord) }.filter { chunk.getBlock(it) == Blocks.grass }
@@ -561,14 +506,10 @@ fun getDirectionToVec3(pos: Vec3): Triple<Double, Float, Float> {
  * @see getDirection
  * @author Aton
  */
-fun etherwarpRotateTo(targetPos: BlockPos): Triple<Double, Float, Float>? {
-    val distance = mc.thePlayer.getDistanceSq(targetPos)
-    val dist = 61.0
+fun etherwarpRotateTo(targetPos: BlockPos, dist: Double = 61.0): Triple<Double, Float, Float>? {
+    val distance = mc.thePlayer?.getDistanceSq(targetPos) ?: return null
 
-    if (distance > (dist + 2) * (dist + 2)) {
-        return null
-    }
-
+    if (distance > (dist + 2) * (dist + 2)) return null
 
     // check whether the block can be seen or is to far away
     val targets = listOf(
@@ -595,30 +536,24 @@ fun etherwarpRotateTo(targetPos: BlockPos): Triple<Double, Float, Float>? {
     )
 
     var target: Vec3? = null
+    val eyeVec = getPositionEyes()
+
     for (targetVec in targets) {
-        val eyeVec = getPositionEyes()
-
-        val dirVec = targetVec.subtract(eyeVec).normalize()
-
-        val vec32 = eyeVec.addVector(dirVec.xCoord * dist, dirVec.yCoord * dist, dirVec.zCoord * dist)
+        val vec32 = eyeVec.add(targetVec.subtract(eyeVec).normalize().multiply(dist))
         // TODO: Make this use etherwarp raytracing, not default minecraft (Take from EtherWarpHelper)
-        val obj = mc.theWorld.rayTraceBlocks(eyeVec, vec32, true, false, true) ?: run {
-            return null
-        }
+        val obj = mc.theWorld?.rayTraceBlocks(eyeVec, vec32, true, false, true) ?: return null
         if (obj.blockPos == targetPos) {
             target = targetVec
             break
         }
     }
 
-    if (target == null) {
-        return null
+    return target?.let {
+        getDirection(
+            mc.thePlayer.posX, mc.thePlayer.posY + fastEyeHeight(), mc.thePlayer.posZ,
+            target.xCoord, target.yCoord, target.zCoord
+        )
     }
-
-    return getDirection(
-        mc.thePlayer.posX, mc.thePlayer.posY + fastEyeHeight(), mc.thePlayer.posZ,
-        target.xCoord, target.yCoord, target.zCoord
-    )
 }
 
 /**
@@ -644,8 +579,8 @@ fun smoothRotateTo(yaw: Float, pitch: Float, rotTime: Number, functionToRunWhenD
             val progress = ((currentTime - startTime).toFloat() / duration).coerceIn(0f, 1f)
             val amount = bezier(progress, 0f, 1f, 1f, 1f)
 
-            mc.thePlayer.rotationYaw = initialYaw + (targetYaw - initialYaw) * amount
-            mc.thePlayer.rotationPitch = initialPitch + (targetPitch - initialPitch) * amount
+            mc.thePlayer?.rotationYaw = initialYaw + (targetYaw - initialYaw) * amount
+            mc.thePlayer?.rotationPitch = initialPitch + (targetPitch - initialPitch) * amount
 
             if (progress >= 1f) {
                 tickerChannel.cancel()
@@ -653,8 +588,8 @@ fun smoothRotateTo(yaw: Float, pitch: Float, rotTime: Number, functionToRunWhenD
             }
         }
 
-        mc.thePlayer.rotationYaw = yaw
-        mc.thePlayer.rotationPitch = pitch
+        mc.thePlayer?.rotationYaw = yaw
+        mc.thePlayer?.rotationPitch = pitch
         functionToRunWhenDone.invoke()
     }
 }
@@ -668,4 +603,14 @@ fun wrapAngle(angle: Float): Float {
 
 fun bezier(t: Float, initial: Float, p1: Float, p2: Float, final: Float): Float {
     return (1 - t).pow(3) * initial + 3 * (1 - t).pow(2) * t * p1 + 3 * (1 - t) * t.pow(2) * p2 + t.pow(3) * final
+}
+
+fun Vec3.addRotationCoords(rotation: Rotations, x: Int, z: Int): Vec3 {
+    return when (rotation) {
+        Rotations.NORTH -> Vec3(this.xCoord + x, this.yCoord, this.zCoord + z)
+        Rotations.WEST -> Vec3(this.xCoord + z, this.yCoord, this.zCoord - x)
+        Rotations.SOUTH -> Vec3(this.xCoord - x, this.yCoord, this.zCoord - z)
+        Rotations.EAST -> Vec3(this.xCoord - z, this.yCoord, this.zCoord + x)
+        else -> this
+    }
 }

@@ -8,10 +8,22 @@ import net.minecraftforge.fml.common.gameevent.TickEvent
 
 object Camera : Module(
     name = "Camera",
-    description = "Allows you to change qualities about third person view."
+    description = "Allows you to change camera settings."
 ) {
-    private val frontCamera by BooleanSetting("No Front Camera")
-    private val fov by NumberSetting("FOV", mc.gameSettings.fovSetting, 1f, 180f, 1f)
+    private val frontCamera by BooleanSetting("No Front Camera", description = "Disables the front camera.")
+    private val fov by NumberSetting("FOV", mc.gameSettings.fovSetting, 1f, 180f, 1f, description = "Changes the FOV.")
+
+    private var previousFov = mc.gameSettings.fovSetting
+
+    override fun onEnable() {
+        previousFov = mc.gameSettings.fovSetting
+        super.onEnable()
+    }
+
+    override fun onDisable() {
+        mc.gameSettings.fovSetting = previousFov
+        super.onDisable()
+    }
 
     @SubscribeEvent
     fun onTick(event: TickEvent.ClientTickEvent) {

@@ -1,19 +1,14 @@
 package me.odinmain.features.impl.dungeon.puzzlesolvers
 
-import com.github.stivais.ui.color.Color
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import me.odinmain.OdinMain.logger
-import me.odinmain.events.impl.DungeonEvent.RoomEnterEvent
+import me.odinmain.events.impl.RoomEnterEvent
 import me.odinmain.features.impl.dungeon.puzzlesolvers.PuzzleSolvers.quizDepth
-import me.odinmain.utils.addRotationCoords
-import me.odinmain.utils.addVec
-import me.odinmain.utils.render.RenderUtils
-import me.odinmain.utils.render.Renderer
-import me.odinmain.utils.skyblock.dungeon.DungeonUtils
-import me.odinmain.utils.startsWithOneOf
-import me.odinmain.utils.toAABB
-import net.minecraft.util.Vec3
+import me.odinmain.utils.*
+import me.odinmain.utils.render.*
+import me.odinmain.utils.skyblock.dungeon.DungeonUtils.getRealCoords
+import net.minecraft.util.BlockPos
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
@@ -24,7 +19,7 @@ object QuizSolver {
     private var triviaAnswers: List<String>? = null
 
     private var triviaOptions: MutableList<TriviaAnswer> = MutableList(3) { TriviaAnswer(null, false) }
-    data class TriviaAnswer(var vec3: Vec3?, var correct: Boolean)
+    private data class TriviaAnswer(var blockPos: BlockPos?, var isCorrect: Boolean)
 
     init {
         try {
@@ -38,15 +33,16 @@ object QuizSolver {
     }
 
     fun onMessage(msg: String) {
-        if ((msg.startsWith("[STATUE] Oruo the Omniscient: ") && msg.contains("answered Question #") && msg.endsWith("correctly!")) || msg == "[STATUE] Oruo the Omniscient: I bestow upon you all the power of a hundred years!")
-            triviaOptions.forEach { it.correct = false }
-
+        if (msg.startsWith("[STATUE] Oruo the Omniscient: ") && msg.endsWith("correctly!")) {
+            if (msg.contains("answered the final question")) return reset()
+            if (msg.contains("answered Question #")) triviaOptions.forEach { it.isCorrect = false }
+        }
         if (msg.trim().startsWithOneOf("ⓐ", "ⓑ", "ⓒ", ignoreCase = true)) {
             if (triviaAnswers?.any { msg.endsWith(it) } ?: return) {
                 when (msg.trim()[0]) {
-                    'ⓐ' -> triviaOptions[0].correct = true
-                    'ⓑ' -> triviaOptions[1].correct = true
-                    'ⓒ' -> triviaOptions[2].correct = true
+                    'ⓐ' -> triviaOptions[0].isCorrect = true
+                    'ⓑ' -> triviaOptions[1].isCorrect = true
+                    'ⓒ' -> triviaOptions[2].isCorrect = true
                 }
             }
         }
@@ -57,24 +53,21 @@ object QuizSolver {
         }
     }
 
-    fun enterRoomQuiz(event: RoomEnterEvent) {
-        val room = event.fullRoom?.room ?: return
-        if (room.data.name != "Quiz") return
+    fun onRoomEnter(event: RoomEnterEvent) = with(event.room) {
+        if (this?.data?.name != "Quiz") return
 
-        val rotation = room.rotation
-        val middleAnswerBlock = room.vec3.addRotationCoords(rotation, 0, 6)
-
-        triviaOptions[0].vec3 = middleAnswerBlock.addRotationCoords(rotation, -5, 3)
-        triviaOptions[1].vec3 = middleAnswerBlock
-        triviaOptions[2].vec3 = middleAnswerBlock.addRotationCoords(rotation, 5, 3)
+        triviaOptions[0].blockPos = getRealCoords(BlockPos(20.0, 70.0, 6.0))
+        triviaOptions[1].blockPos = getRealCoords(BlockPos(15.0, 70.0, 9.0))
+        triviaOptions[2].blockPos = getRealCoords(BlockPos(10.0, 70.0, 6.0))
     }
 
-    fun renderWorldLastQuiz() {
-        if (triviaAnswers == null || triviaOptions.isEmpty() || DungeonUtils.inBoss || !DungeonUtils.inDungeons) return
-        triviaOptions.filter { it.correct }.forEach { answer ->
-            answer.vec3?.addVec(y= -1)?.let {
-                Renderer.drawBox(it.toAABB(), Color.MINECRAFT_GREEN, depth = quizDepth)
-                RenderUtils.drawBeaconBeam(it, Color.MINECRAFT_GREEN, depth = quizDepth)
+    fun onRenderWorld() {
+        if (triviaAnswers == null || triviaOptions.isEmpty()) return
+        triviaOptions.forEach { answer ->
+            if (!answer.isCorrect) return@forEach
+            answer.blockPos?.add(0.0, -1.0, 0.0)?.let {
+                Renderer.drawBox(it.toAABB(), PuzzleSolvers.quizColor, depth = quizDepth)
+                RenderUtils.drawBeaconBeam(it.toVec3(), PuzzleSolvers.quizColor, depth = quizDepth)
             }
         }
     }

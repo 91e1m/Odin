@@ -9,7 +9,7 @@ import me.odinmain.events.impl.RealServerTick
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.SelectorSetting
-import me.odinmain.utils.skyblock.itemID
+import me.odinmain.utils.skyblock.skyblockID
 import me.odinmain.utils.ui.TextHUD
 import me.odinmain.utils.ui.and
 import net.minecraft.network.play.server.S29PacketSoundEffect
@@ -50,9 +50,9 @@ object EnrageDisplay : Module(
         onPacket { packet: S29PacketSoundEffect ->
             if (packet.soundName == "mob.zombie.remedy" && packet.pitch == 1.0f && packet.volume == 0.5f) {
                 if (
-                    mc.thePlayer?.getCurrentArmor(0)?.itemID == "REAPER_BOOTS" &&
-                    mc.thePlayer?.getCurrentArmor(1)?.itemID == "REAPER_LEGGINGS" &&
-                    mc.thePlayer?.getCurrentArmor(2)?.itemID == "REAPER_CHESTPLATE"
+                    mc.thePlayer?.getCurrentArmor(0)?.skyblockID == "REAPER_BOOTS" &&
+                    mc.thePlayer?.getCurrentArmor(1)?.skyblockID == "REAPER_LEGGINGS" &&
+                    mc.thePlayer?.getCurrentArmor(2)?.skyblockID == "REAPER_CHESTPLATE"
                 ) {
                     enrageTimer = 120
                     animatable.animate(0.25.seconds, Animations.EaseOutQuint)

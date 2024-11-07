@@ -9,8 +9,10 @@ import me.odinmain.features.settings.impl.ColorSetting
 import me.odinmain.utils.formatTime
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.KuudraUtils
+import me.odinmain.utils.skyblock.KuudraUtils.SupplyPickUpSpot
 import me.odinmain.utils.skyblock.modMessage
 import net.minecraft.util.Vec3
+import net.minecraftforge.client.event.ClientChatReceivedEvent
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import kotlin.math.cos
@@ -20,24 +22,29 @@ object SupplyHelper : Module(
     name = "Supply Helper",
     description = "Helps with supplies in kuudra."
 ) {
-    private val suppliesWaypoints by BooleanSetting("Supplies Waypoints", true, description = "Renders the supply waypoints")
-    private val supplyWaypointColor by ColorSetting("Supply Waypoint Color", Color.MINECRAFT_YELLOW, true, description = "Color of the supply waypoints").withDependency { suppliesWaypoints }
-    private val supplyDropWaypoints by BooleanSetting("Supply Drop Waypoints", true, description = "Renders the supply drop waypoints")
-    private val sendSupplyTime by BooleanSetting("Send Supply Time", true, description = "Sends a message when a supply is collected")
+    private val suppliesWaypoints by BooleanSetting("Supplies Waypoints", true, description = "Renders the supply waypoints.")
+    private val supplyWaypointColor by ColorSetting("Supply Waypoint Color", Color.MINECRAFT_YELLOW, true, description = "Color of the supply waypoints.").withDependency { suppliesWaypoints }
+    private val supplyDropWaypoints by BooleanSetting("Supply Drop Waypoints", true, description = "Renders the supply drop waypoints.")
+    private val sendSupplyTime by BooleanSetting("Send Supply Time", true, description = "Sends a message when a supply is collected.")
 
     private var startRun = 0L
-
+    private val supplyPickUpRegex = Regex("(?:\\[[^]]*])? ?(\\w{1,16}) recovered one of Elle's supplies! \\((\\d)/(\\d)\\)")
+    // https://regex101.com/r/xsDImP/1
     init {
         onMessage(Regex("\\[NPC] Elle: Okay adventurers, I will go and fish up Kuudra!")) {
             startRun = System.currentTimeMillis()
         }
 
-        onMessageCancellable(Regex("(\\[.+])? (\\w+) recovered one of Elle's supplies! \\((\\d/\\d)\\)")) {
-            if (!sendSupplyTime) return@onMessageCancellable
-            val matchResult = Regex("(\\[.+])? (\\w+) recovered one of Elle's supplies! \\((\\d/\\d)\\)").find(it.message) ?: return@onMessageCancellable
-            modMessage("§6${matchResult.groupValues[2]}§a took ${formatTime((System.currentTimeMillis() - startRun))} to recover supply §8(${matchResult.groupValues[3]})!", false)
-            it.isCanceled = true
+        onMessage(supplyPickUpRegex, { sendSupplyTime && enabled }) {
+            val (name, current, total) = supplyPickUpRegex.find(it)?.destructured ?: return@onMessage
+            modMessage("§6$name §a§lrecovered a supply in ${formatTime((System.currentTimeMillis() - startRun))}! §r§8($current/$total)", "")
         }
+    }
+
+    @SubscribeEvent
+    fun onChatMessage(event: ClientChatReceivedEvent) {
+        if (!KuudraUtils.inKuudra || KuudraUtils.phase != 1 && !sendSupplyTime) return
+        if (supplyPickUpRegex.matches(event.message.unformattedText)) event.isCanceled = true
     }
 
     @SubscribeEvent
@@ -49,19 +56,18 @@ object SupplyHelper : Module(
 
     private fun renderSupplyWaypoints() {
         KuudraUtils.giantZombies.forEach {
-            val yaw = it.rotationYaw
             Renderer.drawCustomBeacon("Supply",
-                Vec3(it.posX + (3.7 * cos((yaw + 130) * (Math.PI / 180))), 72.0, it.posZ + (3.7 * sin((yaw + 130) * (Math.PI / 180)))), supplyWaypointColor, increase = false)
+                Vec3(it.posX + (3.7 * cos((it.rotationYaw + 130) * (Math.PI / 180))), 73.0, it.posZ + (3.7 * sin((it.rotationYaw + 130) * (Math.PI / 180)))), supplyWaypointColor, increase = false)
         }
     }
 
     private val locations = listOf(
-        Pair(Vec3(-98.0, 78.0, -112.0), "Shop"),
-        Pair(Vec3(-98.0, 78.0, -99.0), "Equals"),
-        Pair(Vec3(-110.0, 78.0, -106.0), "X Cannon"),
-        Pair(Vec3(-106.0, 78.0, -112.0), "X"),
-        Pair(Vec3(-94.0, 78.0, -106.0), "Triangle"),
-        Pair(Vec3(-106.0, 78.0, -99.0), "Slash")
+        Pair(Vec3(-98.0, 78.0, -112.0), SupplyPickUpSpot.Shop),
+        Pair(Vec3(-98.0, 78.0, -99.0), SupplyPickUpSpot.Equals),
+        Pair(Vec3(-110.0, 78.0, -106.0), SupplyPickUpSpot.xCannon),
+        Pair(Vec3(-106.0, 78.0, -112.0), SupplyPickUpSpot.X ),
+        Pair(Vec3(-94.0, 78.0, -106.0), SupplyPickUpSpot.Triangle),
+        Pair(Vec3(-106.0, 78.0, -99.0), SupplyPickUpSpot.Slash),
     )
 
     private fun renderDropLocations() {

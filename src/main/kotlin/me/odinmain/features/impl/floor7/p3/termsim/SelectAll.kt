@@ -2,15 +2,13 @@ package me.odinmain.features.impl.floor7.p3.termsim
 
 import me.odinmain.events.impl.GuiEvent
 import me.odinmain.features.impl.floor7.p3.TerminalSounds
-import me.odinmain.features.impl.floor7.p3.TerminalSounds.playTerminalSound
+import me.odinmain.features.impl.floor7.p3.TerminalSounds.clickSounds
 import me.odinmain.utils.getRandom
 import me.odinmain.utils.postAndCatch
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.inventory.ContainerChest
 import net.minecraft.inventory.Slot
-import net.minecraft.item.EnumDyeColor
-import net.minecraft.item.Item
-import net.minecraft.item.ItemStack
+import net.minecraft.item.*
 import kotlin.math.floor
 
 class SelectAll(private val color: String) : TermSimGui(
@@ -26,7 +24,6 @@ class SelectAll(private val color: String) : TermSimGui(
     private val items = listOf(clay, glass, wool, dye)
 
     override fun create() {
-        cleanInventory()
         val guaranteed = (10..16).plus(19..25).plus(28..34).plus(37..43).getRandom()
         inventorySlots.inventorySlots.subList(0, size).forEachIndexed { index, it ->
             if (floor(index / 9.0) in 1.0..4.0 && index % 9 in 1..7) {
@@ -54,15 +51,10 @@ class SelectAll(private val color: String) : TermSimGui(
         ) return
 
         slot.stack.addEnchantment(Enchantment.infinity, 1)
-        if (TerminalSounds.enabled) playTerminalSound() else mc.thePlayer.playSound("random.orb", 1f, 1f)
+        if (!TerminalSounds.enabled || !clickSounds) mc.thePlayer.playSound("random.orb", 1f, 1f)
         GuiEvent.Loaded(name, inventorySlots as ContainerChest).postAndCatch()
         if (inventorySlots?.inventorySlots?.subList(0, size)?.none {
                 it?.stack?.isItemEnchanted == false && it.stack?.item in items && if (it.stack?.item == dye) it.stack?.metadata == correctDye else it.stack?.metadata == correctMeta
             } == true) solved(this.name, 4)
-    }
-
-    override fun onGuiClosed() {
-        resetInv()
-        super.onGuiClosed()
     }
 }

@@ -1,10 +1,10 @@
 package me.odinmain.features.impl.render
 
-
 import com.github.stivais.ui.color.*
 import com.google.gson.*
 import kotlinx.coroutines.*
 import me.odinmain.OdinMain.mc
+import me.odinmain.OdinMain.scope
 import me.odinmain.features.impl.render.ClickGUI.devSize
 import me.odinmain.utils.getDataFromServer
 import net.minecraft.client.entity.AbstractClientPlayer
@@ -48,7 +48,7 @@ object DevPlayers {
                 sizeJsonArray?.get(1)?.asFloat ?: 0,
                 sizeJsonArray?.get(2)?.asFloat ?: 0
             )
-            val wings = jsonObject?.get("Wings")?.asBoolean ?: false
+            val wings = jsonObject?.get("Wings")?.asBoolean == true
 
             return DevData(devName ?: "", wingsColorTriple, sizeTriple as Triple<Float, Float, Float>, wings)
         }
@@ -62,9 +62,9 @@ object DevPlayers {
 
     @OptIn(DelicateCoroutinesApi::class)
     fun updateDevs(): HashMap<String, DevPlayer> {
-        GlobalScope.launch {
-            val data = convertDecimalToNumber(getDataFromServer("https://tj4yzotqjuanubvfcrfo7h5qlq0opcyk.lambda-url.eu-north-1.on.aws/"))
-            val gson = GsonBuilder().registerTypeAdapter(DevData::class.java, DevDeserializer()).create()
+        runBlocking(scope.coroutineContext) {
+            val data = convertDecimalToNumber(getDataFromServer("https://tj4yzotqjuanubvfcrfo7h5qlq0opcyk.lambda-url.eu-north-1.on.aws/")).ifEmpty { return@runBlocking }
+            val gson = GsonBuilder().registerTypeAdapter(DevData::class.java, DevDeserializer())?.create() ?: return@runBlocking
             gson.fromJson(data, Array<DevData>::class.java).forEach {
                 devs[it.devName] = DevPlayer(it.size.first, it.size.second, it.size.third, it.wings, Color.RGB(it.wingsColor.first, it.wingsColor.second, it.wingsColor.third))
             }

@@ -1,39 +1,29 @@
 package me.odinmain.features.impl.floor7
 
 import com.github.stivais.ui.color.Color
-import me.odinmain.features.impl.floor7.WitherDragons.textScale
+import me.odinmain.features.impl.floor7.WitherDragons.addUselessDecimal
 import me.odinmain.utils.render.Renderer
+import java.util.Locale
 
 object DragonTimer {
 
-    var toRender: MutableList<Triple<String, Int, WitherDragonsEnum>> = ArrayList()
-
-    private fun updateTime() {
-        toRender = ArrayList()
-
-        WitherDragonsEnum.entries.forEachIndexed { index, dragon ->
-            if (dragon.state == WitherDragonState.SPAWNING && dragon.spawnTime() > 0)
-                toRender.add(Triple("§${dragon.colorCode}${dragon} spawn: ${colorTime(dragon.spawnTime())}ms", index, dragon))
-        }
-    }
-
     fun renderTime() {
-        updateTime()
-        if (toRender.isEmpty()) return
-        toRender.forEach {
+        WitherDragonsEnum.entries.forEachIndexed { index, dragon ->
+            if (dragon.state != WitherDragonState.SPAWNING) return@forEachIndexed
+
             Renderer.drawStringInWorld(
-                it.first, it.third.spawnPos,
+                "§${dragon.colorCode}${dragon.name.first()}: ${colorDragonTimer(dragon.timeToSpawn)}${String.format(Locale.US, "%.2f", dragon.timeToSpawn / 20.0)}${if (addUselessDecimal) "0" else ""}", dragon.spawnPos,
                 color = Color.WHITE, depth = false,
-                scale = textScale / 5
+                scale = 0.16f
             )
         }
     }
 
-    private fun colorTime(spawnTime: Long): String {
+    fun colorDragonTimer(spawnTime: Int): String {
         return when {
-            spawnTime <= 1000 -> "§c$spawnTime"
-            spawnTime <= 3000 -> "§e$spawnTime"
-            else -> "§a$spawnTime"
+            spawnTime <= 20 -> "§c"
+            spawnTime <= 60 -> "§e"
+            else -> "§a"
         }
     }
 }

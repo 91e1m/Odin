@@ -1,8 +1,8 @@
 package me.odinmain.features.impl.floor7.p3.termGUI
 
 object RubixGui : TermGui() {
-    /*override fun render() {
-        setCurrentGui(this)
+    override fun render() {
+      /*  setCurrentGui(this)
         itemIndexMap.clear()
         roundedRectangle(-300, -175, 600, 300, TerminalSolver.customGuiColor, 10f, 1f)
         if (TerminalSolver.customGuiText == 0) {
@@ -12,9 +12,9 @@ object RubixGui : TermGui() {
             text("Change all to same color!", 0, -163, Color.WHITE, 20, align = TextAlign.Middle, verticalAlign = TextPos.Top)
             roundedRectangle(-getTextWidth("Change all to same color!", 20f) / 2, -135, getTextWidth("Change all to same color!", 20f), 3, Color.WHITE, radius = 5f)
         }
-        solution.forEach { pane ->
+        TerminalSolver.currentTerm.solution.forEach { pane ->
             val slot = mc.thePlayer?.inventoryContainer?.inventorySlots?.get(pane) ?: return@forEach
-            val needed = solution.count {it == slot.slotIndex}
+            val needed = TerminalSolver.currentTerm.solution.count {it == slot.slotIndex}
             val text = if (needed < 3) needed else (needed - 5)
 
             val row = pane / 9 - 1
@@ -34,6 +34,6 @@ object RubixGui : TermGui() {
                 box.w.toFloat() * customScale,
                 box.h.toFloat() * customScale
             )
-        }
-    }*/
+        }*/
+    }
 }

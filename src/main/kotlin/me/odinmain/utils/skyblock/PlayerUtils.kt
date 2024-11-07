@@ -8,6 +8,7 @@ import me.odinmain.utils.clock.Executor
 import me.odinmain.utils.clock.Executor.Companion.register
 import me.odinmain.utils.floored
 import me.odinmain.utils.render.Renderer
+import me.odinmain.utils.runOnMCThread
 import net.minecraft.client.entity.EntityPlayerSP
 import net.minecraft.inventory.ContainerChest
 import net.minecraft.item.ItemStack
@@ -26,9 +27,11 @@ object PlayerUtils {
      * @author Aton
      */
     fun playLoudSound(sound: String?, volume: Float, pitch: Float, pos: Vec3? = null) {
-        shouldBypassVolume = true
-        mc.theWorld?.playSound(pos?.xCoord ?: mc.thePlayer.posX, pos?.yCoord ?: mc.thePlayer.posY, pos?.zCoord  ?: mc.thePlayer.posZ, sound, volume, pitch, false)
-        shouldBypassVolume = false
+        runOnMCThread {
+            shouldBypassVolume = true
+            mc.theWorld?.playSound(pos?.xCoord ?: mc.thePlayer.posX, pos?.yCoord ?: mc.thePlayer.posY, pos?.zCoord  ?: mc.thePlayer.posZ, sound, volume, pitch, false)
+            shouldBypassVolume = false
+        }
     }
 
     /**
@@ -44,10 +47,6 @@ object PlayerUtils {
         if (displayText) Renderer.displayTitle(title , time, color = color)
     }
 
-    fun dropItem(dropAll: Boolean = false) {
-        mc.thePlayer.dropOneItem(dropAll)
-    }
-
     inline val posX get() = mc.thePlayer.posX
     inline val posY get() = mc.thePlayer.posY
     inline val posZ get() = mc.thePlayer.posZ
@@ -58,25 +57,22 @@ object PlayerUtils {
         get() = mc.thePlayer.positionVector.floored()
 
     fun EntityPlayerSP?.isHolding(vararg names: String, ignoreCase: Boolean = false, mode: Int = 0): Boolean {
-        val regex = Regex("${if (ignoreCase) "(?i)" else ""}${names.joinToString("|")}")
-        return this.isHolding(regex, mode)
+        return this.isHolding(Regex("${if (ignoreCase) "(?i)" else ""}${names.joinToString("|")}"), mode)
     }
 
     fun EntityPlayerSP?.isHolding(regex: Regex, mode: Int = 0): Boolean {
         return this.isHolding { it?.run {
             when (mode) {
-                0 -> displayName.contains(regex) || itemID.matches(regex)
+                0 -> displayName.contains(regex) || skyblockID.matches(regex)
                 1 -> displayName.contains(regex)
-                2 -> itemID.matches(regex)
+                2 -> skyblockID.matches(regex)
                 else -> false
             } } == true
         }
     }
 
-    private fun EntityPlayerSP?.isHolding(predicate: (ItemStack?) -> Boolean): Boolean {
-        if (this == null) return false
-        return predicate(this.heldItem)
-    }
+    private fun EntityPlayerSP?.isHolding(predicate: (ItemStack?) -> Boolean) =
+        this?.let { predicate(it.heldItem) } == true
 
     sealed class ClickType {
         data object Left : ClickType()
@@ -91,7 +87,7 @@ object PlayerUtils {
 
     init {
         // Used to clear the click queue every 500ms, to make sure it isn't getting filled up.
-        Executor(delay = 500) { windowClickQueue.clear() }.register()
+        Executor(delay = 500, "Click Dispatcher") { windowClickQueue.clear() }.register()
     }
 
     fun windowClick(slotId: Int, button: Int, mode: Int, instant: Boolean = false) {
@@ -118,15 +114,10 @@ object PlayerUtils {
     }
 
     private fun sendWindowClick(slotId: Int, button: Int, mode: Int) {
-        mc.thePlayer.openContainer?.let {
-            if (it !is ContainerChest) return@let
-            mc.playerController.windowClick(it.windowId, slotId, button, mode, mc.thePlayer)
+        mc.thePlayer?.openContainer?.let {
+            if (it is ContainerChest) mc.playerController?.windowClick(it.windowId, slotId, button, mode, mc.thePlayer)
         }
     }
-
-    /**private fun middleClickWindow(slot: Int) {
-        windowClick(slot, 2, 2)
-    }*/
 
     fun windowClick(slotId: Int, clickType: ClickType, instant: Boolean = false) {
         when (clickType) {

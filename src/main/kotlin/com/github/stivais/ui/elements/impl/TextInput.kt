@@ -12,6 +12,7 @@ import com.github.stivais.ui.events.Key
 import com.github.stivais.ui.events.Mouse
 import me.odinmain.utils.*
 import me.odinmain.utils.skyblock.devMessage
+import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.util.ChatAllowedCharacters
 import org.lwjgl.input.Keyboard
@@ -395,5 +396,39 @@ class TextInput(
         // check if start is bigger than end, if so, swap them
         if (start > end) { s = end; e = start } else { s = start; e = end }
         return string.substring(s, max(e, string.length - 1))
+    }
+
+    fun isCtrlKeyDown(): Boolean {
+        return if (Minecraft.isRunningOnMac) Keyboard.isKeyDown(219) || Keyboard.isKeyDown(220) else Keyboard.isKeyDown(
+            29
+        ) || Keyboard.isKeyDown(157)
+    }
+
+    fun isShiftKeyDown(): Boolean {
+        return Keyboard.isKeyDown(42) || Keyboard.isKeyDown(54)
+    }
+
+    private fun isAltKeyDown(): Boolean {
+        return Keyboard.isKeyDown(56) || Keyboard.isKeyDown(184)
+    }
+
+    fun isKeyComboCtrlX(keyID: Int): Boolean {
+        return keyID == 45 && isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown()
+    }
+
+    fun isKeyComboCtrlV(keyID: Int): Boolean {
+        return keyID == 47 && isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown()
+    }
+
+    fun isKeyComboCtrlC(keyID: Int): Boolean {
+        return keyID == 46 && isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown()
+    }
+
+    fun isKeyComboCtrlA(keyID: Int): Boolean {
+        return keyID == 30 && isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown()
+    }
+
+    fun isKeyComboCtrlZ(keyID: Int): Boolean {
+        return keyID == Keyboard.KEY_Z && isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown()
     }
 }
