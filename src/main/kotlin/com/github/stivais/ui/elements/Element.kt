@@ -5,7 +5,6 @@ import com.github.stivais.ui.UI.Companion.logger
 import com.github.stivais.ui.color.Color
 import com.github.stivais.ui.constraints.Constraints
 import com.github.stivais.ui.constraints.Type
-import com.github.stivais.ui.constraints.measurements.Animatable
 import com.github.stivais.ui.constraints.measurements.Undefined
 import com.github.stivais.ui.constraints.positions.Center
 import com.github.stivais.ui.elements.scope.ElementScope
@@ -58,20 +57,6 @@ abstract class Element(constraints: Constraints?, var color: Color? = null) {
             field = value.coerceAtLeast(0f)
         }
 
-    //
-
-
-    // todo: move to different element
-    var scrollY: Animatable.Raw? = null
-
-    var sy = 0f
-        set(value) {
-            if (field == value) return
-            redraw = true
-            field = value
-        }
-    //
-
     private var transforms: ArrayList<Transforms>? = null
 
     // this is needed to track current scale
@@ -98,7 +83,7 @@ abstract class Element(constraints: Constraints?, var color: Color? = null) {
         if (!enabled) return
         preSize()
         if (!constraints.width.reliesOnChild()) width = constraints.width.get(this, Type.W)
-        if (!constraints.height.reliesOnChild()) height = constraints.height.get(this, Type.H) + sy
+        if (!constraints.height.reliesOnChild()) height = constraints.height.get(this, Type.H)
         elements?.loop { it.size() }
     }
 
@@ -113,12 +98,11 @@ abstract class Element(constraints: Constraints?, var color: Color? = null) {
             it.position(x, y)
             it.positionChildren()
         }
+        // this causes it to redraw every frame, it will be fixed when official repo comes out with code reorganization
         val widthRelies = constraints.width.reliesOnChild()
         val heightRelies = constraints.height.reliesOnChild()
-
         if (widthRelies) width = constraints.width.get(this, Type.W)
-        if (heightRelies) height = constraints.height.get(this, Type.H) + sy
-
+        if (heightRelies) height = constraints.height.get(this, Type.H)
         if (widthRelies || heightRelies) parent?.redrawInternal = true
     }
 
@@ -268,7 +252,7 @@ abstract class Element(constraints: Constraints?, var color: Color? = null) {
     fun isInside(x: Float, y: Float): Boolean {
         val tx = this.x
         val ty = this.y
-        return x in tx..tx + (width) * scale && y in ty..ty + (height - sy) * scale
+        return x in tx..tx + (width) * scale && y in ty..ty + (height) * scale
     }
 
     fun intersects(other: Element): Boolean {

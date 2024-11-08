@@ -162,9 +162,9 @@ object ClickGUI: Module(
                     data.x = element.x
                     data.y = element.y
                 }
-                onScroll { (amount) ->
-                    child(1)!!.scroll(amount, 0.1.seconds, Animations.Linear); true
-                }
+//                onScroll { (amount) ->
+//                    child(1)!!.scroll(amount, 0.1.seconds, Animations.Linear); true
+//                }
                 // panel header
                 block(
                     size(240.px, 40.px),

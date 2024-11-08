@@ -60,6 +60,27 @@ class Animatable(
         return from.get(element, type)
     }
 
+    override fun animate(duration: Float, type: Animations): Animation? {
+        if (duration == 0f) {
+            swap()
+        } else {
+            if (animation != null) {
+                before = current
+                swap()
+                animation = Animation(duration * animation!!.get(), type)
+            } else {
+                animation = Animation(duration, type)
+            }
+        }
+        return animation
+    }
+
+    override fun swap() {
+        val temp = to
+        to = from
+        from = temp
+    }
+
     override fun reliesOnChild(): Boolean {
         return from.reliesOnChild() || to.reliesOnChild()
     }
