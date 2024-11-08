@@ -65,11 +65,6 @@ object ModuleManager {
     )
 
     data class MessageFunction(val filter: Regex, val shouldRun: () -> Boolean, val function: (String) -> Unit)
-    data class MessageFunctionCancellable(
-        val filter: Regex,
-        val shouldRun: () -> Boolean,
-        val function: (ChatPacketEvent) -> Unit
-    )
 
     // todo: cleanup
     data class TickTask(var ticksLeft: Int, val server: Boolean, val function: () -> Unit)
@@ -77,12 +72,8 @@ object ModuleManager {
     // todo: cleanup
     val packetFunctions = mutableListOf<PacketFunction<Packet<*>>>()
     val messageFunctions = mutableListOf<MessageFunction>()
-    val cancellableMessageFunctions = mutableListOf<MessageFunctionCancellable>()
     val worldLoadFunctions = mutableListOf<() -> Unit>()
     val tickTasks = mutableListOf<TickTask>()
-
-    // todo: cleanup
-    val executors = ArrayList<Pair<Module, Executor>>()
 
     val modules: ArrayList<Module> = arrayListOf(
         // dungeon
@@ -124,10 +115,20 @@ object ModuleManager {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(receiveCanceled = true)
     fun onTick(event: TickEvent.ClientTickEvent) {
         if (event.phase != TickEvent.Phase.START) return
+        tickTaskTick()
+    }
+
+    @SubscribeEvent(receiveCanceled = true)
+    fun onServerTick(event: RealServerTick) {
+        tickTaskTick(true)
+    }
+
+    private fun tickTaskTick(server: Boolean = false) {
         tickTasks.removeAll {
+            if (it.server != server) return@removeAll false
             if (it.ticksLeft <= 0) {
                 it.function()
                 return@removeAll true
@@ -137,29 +138,25 @@ object ModuleManager {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(receiveCanceled = true)
     fun onReceivePacket(event: PacketReceivedEvent) {
-        packetFunctions
-            .filter { it.type.isInstance(event.packet) && it.shouldRun.invoke() }
-            .forEach { it.function(event.packet) }
+        packetFunctions.forEach {
+            if (it.type.isInstance(event.packet) && it.shouldRun.invoke()) it.function(event.packet)
+        }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(receiveCanceled = true)
     fun onSendPacket(event: PacketSentEvent) {
-        packetFunctions
-            .filter { it.type.isInstance(event.packet) && it.shouldRun.invoke() }
-            .forEach { it.function(event.packet) }
+        packetFunctions.forEach {
+            if (it.type.isInstance(event.packet) && it.shouldRun.invoke()) it.function(event.packet)
+        }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(receiveCanceled = true)
     fun onChatPacket(event: ChatPacketEvent) {
-        messageFunctions
-            .filter { event.message matches it.filter && it.shouldRun() }
-            .forEach { it.function(event.message) }
-
-        cancellableMessageFunctions
-            .filter { event.message matches it.filter && it.shouldRun() }
-            .forEach { it.function(event) }
+        messageFunctions.forEach {
+            if (event.message matches it.filter && it.shouldRun()) it.function(event.message)
+        }
     }
 
     @SubscribeEvent
@@ -186,16 +183,6 @@ object ModuleManager {
                 if (setting is KeybindSetting && setting.value.key + 100 == event.button) {
                     setting.value.onPress?.invoke()
                 }
-            }
-        }
-    }
-
-    @SubscribeEvent
-    fun onRenderWorld(event: RenderWorldLastEvent) {
-        profile("Executors") {
-            executors.removeAll {
-                if (!it.first.enabled && !it.first.alwaysActive) return@removeAll false // pls test i cba
-                it.second.run()
             }
         }
     }
