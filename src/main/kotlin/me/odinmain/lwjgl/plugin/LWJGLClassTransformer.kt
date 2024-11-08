@@ -1,7 +1,9 @@
 package me.odinmain.lwjgl.plugin
 
 import net.minecraft.launchwrapper.IClassTransformer
-import org.objectweb.asm.*
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
 
 class LWJGLClassTransformer : IClassTransformer {
