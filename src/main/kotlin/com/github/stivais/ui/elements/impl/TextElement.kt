@@ -1,31 +1,34 @@
 package com.github.stivais.ui.elements.impl
 
-import com.github.stivais.ui.UI
 import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.constraints.Positions
-import com.github.stivais.ui.constraints.Size
-import com.github.stivais.ui.constraints.Type
+import com.github.stivais.ui.constraints.*
 import com.github.stivais.ui.constraints.measurements.Pixel
-import com.github.stivais.ui.constraints.px
+import com.github.stivais.ui.constraints.measurements.Undefined
 import com.github.stivais.ui.elements.Element
 import com.github.stivais.ui.elements.scope.ElementScope
 import com.github.stivais.ui.renderer.Font
-import com.github.stivais.ui.utils.replaceUndefined
 
 open class TextElement(
-    text: String,
-    val font: Font = UI.defaultFont,
-    color: Color = Color.WHITE,
-    constraints: Positions? = null,
+    string: String,
+    val font: Font,
+    color: Color,
+    constraints: Positions = at(Undefined, Undefined),
     size: Size,
-) : Element(constraints.replaceUndefined(w = 0.px, h = size), color) {
+) : Element(constraints, color) {
 
-    open var text: String = text
+    private val textWidth = 0.px
+
+    init {
+        constraints.width = textWidth
+        constraints.height = size
+    }
+
+    open var text: String = string
         set(value) {
             if (field == value) return
             field = value
             redraw = true
-            previousHeight = 0f // forces recalculation
+            previousHeight = 0f
         }
 
     // uses to check if width should be recalculated as it is expensive to do so
@@ -52,7 +55,7 @@ open class TextElement(
         val supplier: () -> Any?,
         font: Font,
         color: Color,
-        constraints: Positions?,
+        constraints: Positions = at(Undefined, Undefined),
         size: Size
     ) : TextElement(supplier().toString(), font, color, constraints, size) {
 
@@ -64,6 +67,7 @@ open class TextElement(
 }
 
 class TextScope(text: TextElement) : ElementScope<TextElement>(text) {
+
     var string: String
         get() = element.text
         set(value) {

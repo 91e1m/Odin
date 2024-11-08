@@ -6,14 +6,18 @@ import com.github.stivais.ui.constraints.measurements.Animatable
 import com.github.stivais.ui.constraints.measurements.Pixel
 import com.github.stivais.ui.constraints.px
 import com.github.stivais.ui.constraints.size
+import com.github.stivais.ui.constraints.sizes.Bounding
+import com.github.stivais.ui.constraints.sizes.Copying
 import com.github.stivais.ui.elements.Element
 import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.elements.scope.ElementScope
-import com.github.stivais.ui.utils.animate
+import com.github.stivais.ui.elements.scope.LayoutScope
+import com.github.stivais.ui.events.Event
+import com.github.stivais.ui.transforms.Transforms
 import com.github.stivais.ui.utils.seconds
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import me.odinmain.features.Module
+import me.odinmain.features.settings.Setting.Renders.Companion.elementWidth
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -27,6 +31,7 @@ import kotlin.reflect.KProperty
  * @param hidden If setting shouldn't ever appear in the UI
  * @param description Description for the setting
  */
+// todo: remove hidden param
 abstract class Setting<T> (
     val name: String,
     var hidden: Boolean = false,
@@ -46,7 +51,7 @@ abstract class Setting<T> (
     /**
      * Dependency for if it should be shown in the UI
      *
-     * @see Drawable
+     * @see DrawableOld
      */
     var visibilityDependency: (() -> Boolean)? = null
 
@@ -79,9 +84,6 @@ abstract class Setting<T> (
 
     companion object {
 
-        // temp
-        var elementWidth: Pixel = 240.px
-
         /**
          * [Gson] for saving and loading settings
          */
@@ -90,7 +92,7 @@ abstract class Setting<T> (
         /**
          * Adds a dependency for a setting, for it to only be rendered if it matches true
          *
-         * @see Drawable
+         * @see DrawableOld
          */
         fun <K : Setting<T>, T> K.withDependency(dependency: () -> Boolean): K {
             visibilityDependency = dependency
@@ -98,58 +100,72 @@ abstract class Setting<T> (
         }
     }
 
-    /**
-     * Creates the elements required for the [UI][me.odinmain.features.impl.render.ClickGUI.clickGUI]
-     *
-     * It is highly recommended to use [setting] as your base element,
-     * because it handles complex features that isn't feasible without
-     *
-     * ```
-     * // Do:
-     *  override fun ElementDSL.createElement() {
-     *      setting(height) {
-     *          // actual elements inside
-     *      }
-     *  }
-     *
-     *  // Don't do:
-     *  override fun ElementDSL.createElement() {
-     *      // elements
-     *  }
-     * ```
-     *
-     * @see [setting]
-     */
-    open fun ElementDSL.createElement() {}
+    interface Renders {
 
-    /**
-     * Intended to be used as a base in [createElement] to easily provide animations for settings with potential requirements
-     */
-    protected fun ElementDSL.setting(height: Size, block: ElementDSL.() -> Unit = {}): ElementScope<*> {
-        return create(ElementScope(Drawable(height)), block)
+        fun ElementDSL.create()
+
+        companion object {
+            /**
+             * Creates a group (or column) with the current width needed according the UIs it's used in.
+             */
+            fun ElementDSL.setting(
+                height: Size = 40.px,
+                scope: ElementDSL.() -> Unit
+            ) {
+                group(size(Copying, height), scope)
+            }
+
+            fun ElementDSL.settingColumn(
+                height: Size = Bounding,
+                scope: LayoutScope.() -> Unit
+            ) {
+                column(size(Copying, height), null, scope)
+            }
+
+            /**
+             * Current width for settings elements inside the UIs it's used in
+             */
+            var elementWidth: Pixel = 240.px
+
+            inline fun ElementDSL.onValueChanged(crossinline block: () -> Unit) {
+                element.registerEvent(ValueUpdated) {
+                    block()
+                    redraw()
+                    false
+                }
+            }
+        }
+
+
+        data object ValueUpdated : Event
     }
 
-    // TODO: Find out why ClickGUI runs 2x slower until a setting visibility changes
-    // TODO: Make custom event to tell if value has changed so it can update visually if it was changed externally
-    protected inner class Drawable(height: Size) : Element(size(elementWidth, Animatable(from = height, to = 0.px))) {
+    inner class Drawable : Element(size(elementWidth, Animatable(from = Bounding, to = 0.px))) {
 
-        private var visible: Boolean = visibilityDependency?.invoke() ?: true
+        private var visible = visibilityDependency?.invoke() ?: true
+
+        private var lastValue: T = value
+
+        private var alphaAnimation = Transforms.Alpha.Animated(to = 0f, from = 1f)
 
         init {
-            alphaAnim = Animatable(from = 1.px, to = 0.px)
-            scissors = true
+            addTransform(alphaAnimation)
             if (!visible) {
                 (constraints.height as Animatable).swap()
-                (alphaAnim as Animatable).swap()
+                alphaAnimation.swap()
             }
         }
 
         override fun draw() {
             if ((visibilityDependency?.invoke() != false) != visible) {
                 visible = !visible
-                constraints.height.animate(0.25.seconds, Animations.EaseInOutQuint)
-                alphaAnim!!.animate(0.25.seconds, Animations.EaseInOutQuint)
+                (constraints.height as Animatable).animate(0.25.seconds, Animations.EaseInOutQuint)
+                alphaAnimation.animate(0.25.seconds, Animations.EaseInOutQuint)
                 redraw = true
+            }
+            if (lastValue != value) {
+                lastValue = value
+                ui.eventManager.dispatchToAll(Renders.ValueUpdated, this)
             }
         }
     }

@@ -7,7 +7,6 @@ import me.odinmain.features.impl.dungeon.LeapMenu.leapMenu
 
 val `ui command` = commodore("ui") {
     literal("test").runs {
-        open(basic())
     }
     literal("leap").runs {
         open(leapMenu())

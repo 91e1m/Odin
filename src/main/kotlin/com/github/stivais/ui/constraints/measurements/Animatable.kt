@@ -3,7 +3,9 @@ package com.github.stivais.ui.constraints.measurements
 import com.github.stivais.ui.animation.Animating
 import com.github.stivais.ui.animation.Animation
 import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.constraints.*
+import com.github.stivais.ui.constraints.Constraint
+import com.github.stivais.ui.constraints.Measurement
+import com.github.stivais.ui.constraints.Type
 import com.github.stivais.ui.elements.Element
 
 /**
@@ -17,7 +19,10 @@ import com.github.stivais.ui.elements.Element
  *
  * @see Animatable.Raw
  */
-class Animatable(var from: Constraint, var to: Constraint): Measurement, Animating.Swapping {
+class Animatable(
+    var from: Constraint,
+    var to: Constraint
+): Measurement, Animating.Swapping by Animating.Swapping.Impl {
 
     constructor(from: Constraint, to: Constraint, swapIf: Boolean) : this(from, to) {
         if (swapIf) {
@@ -53,27 +58,6 @@ class Animatable(var from: Constraint, var to: Constraint): Measurement, Animati
             return current
         }
         return from.get(element, type)
-    }
-
-    override fun animate(duration: Float, type: Animations): Animation? {
-        if (duration == 0f) {
-            swap()
-        } else {
-            if (animation != null) {
-                before = current
-                swap()
-                animation = Animation(duration * animation!!.get(), type)
-            } else {
-                animation = Animation(duration, type)
-            }
-        }
-        return animation
-    }
-
-    override fun swap() {
-        val temp = to
-        to = from
-        from = temp
     }
 
     override fun reliesOnChild(): Boolean {

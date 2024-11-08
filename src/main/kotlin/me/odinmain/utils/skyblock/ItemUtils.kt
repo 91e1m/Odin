@@ -11,7 +11,9 @@ import net.minecraft.client.renderer.RenderHelper
 import net.minecraft.entity.Entity
 import net.minecraft.inventory.ContainerChest
 import net.minecraft.item.ItemStack
-import net.minecraft.nbt.*
+import net.minecraft.nbt.NBTTagCompound
+import net.minecraft.nbt.NBTTagList
+import net.minecraft.nbt.NBTTagString
 import net.minecraftforge.common.util.Constants
 
 /**
@@ -160,7 +162,7 @@ private val rarityRegex: Regex = Regex("§l(?<rarity>${ItemRarity.entries.joinTo
 fun getRarity(lore: List<String>): ItemRarity? {
     // Start from the end since the rarity is usually the last line or one of the last.
     for (i in lore.indices.reversed()) {
-        val rarity = rarityRegex.find(lore[i])?.groups["rarity"]?.value ?: continue
+        val rarity = rarityRegex.find(lore[i])?.groups?.get("rarity")?.value ?: continue
         return ItemRarity.entries.find { it.loreName == rarity }
     }
     return null

@@ -1,17 +1,15 @@
 package me.odinmain.features.impl.render
 
 import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.constraints.percent
-import com.github.stivais.ui.constraints.px
+import me.odinmain.events.impl.PacketSentEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.ColorSetting
 import me.odinmain.features.settings.impl.DropdownSetting
 import me.odinmain.features.settings.impl.SelectorSetting
-import me.odinmain.utils.ui.TextHUD
-import me.odinmain.utils.ui.and
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
 
 object CPSDisplay : Module(
@@ -29,34 +27,23 @@ object CPSDisplay : Module(
     private val leftClicks = mutableListOf<Long>()
     private val rightClicks = mutableListOf<Long>()
 
-    // todo: make it look somewhat how it used to
 
-    private val HUD by TextHUD(
-        2.5.percent,
-        2.5.percent,
-    ) { color, font ->
-        text(
-            "CPS ",
-            color = color,
-            font = font,
-            size = 30.px
-        ) and text({ rightClicks.size }, font = font)
-    }.setting("CPS")
-
-    init {
-        onEvent<ClientTickEvent> {
-            if (leftClicks.isNotEmpty() && System.currentTimeMillis() - leftClicks.first() > 1000) {
-                leftClicks.removeFirst()
-            }
-            if (rightClicks.isNotEmpty() && System.currentTimeMillis() - rightClicks.first() > 1000) {
-                rightClicks.removeFirst()
-            }
+    @SubscribeEvent
+    fun onTick(event: ClientTickEvent) {
+        if (leftClicks.size != 0 && System.currentTimeMillis() - leftClicks.first() > 1000) {
+            leftClicks.removeFirst()
         }
-        onPacket<C08PacketPlayerBlockPlacement> {
-            if (countPackets) {
-                if (rightClicks.isEmpty() || System.currentTimeMillis() - rightClicks.last() > 5) {
-                    onRightClick()
-                }
+        if (rightClicks.size != 0 && System.currentTimeMillis() - rightClicks.first() > 1000) {
+            rightClicks.removeFirst()
+        }
+    }
+
+    @SubscribeEvent
+    fun onPacket(event: PacketSentEvent) {
+        if (event.packet !is C08PacketPlayerBlockPlacement) return
+        if (countPackets) {
+            if (rightClicks.size == 0 || System.currentTimeMillis() - rightClicks.last() > 5) {
+                onRightClick()
             }
         }
     }

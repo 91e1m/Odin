@@ -1,14 +1,7 @@
 package me.odinmain.features
 
-import com.github.stivais.ui.constraints.Constraints
-import com.github.stivais.ui.constraints.measurements.Percent
-import com.github.stivais.ui.elements.Element
-import com.github.stivais.ui.elements.scope.ElementScope
 import me.odinmain.OdinMain
-import me.odinmain.events.dsl.EventDSL
-import me.odinmain.events.impl.PacketReceivedEvent
-import me.odinmain.events.impl.PacketSentEvent
-import me.odinmain.features.ModuleManager.setupHUD
+import me.odinmain.features.huds.HUDScope
 import me.odinmain.features.impl.render.ClickGUI
 import me.odinmain.features.settings.AlwaysActive
 import me.odinmain.features.settings.Setting
@@ -17,14 +10,11 @@ import me.odinmain.features.settings.impl.Keybinding
 import me.odinmain.utils.clock.Executable
 import me.odinmain.utils.clock.Executor
 import me.odinmain.utils.clock.Executor.Companion.register
-import me.odinmain.utils.clock.Executor.LimitedExecutor
 import me.odinmain.utils.skyblock.modMessage
 import net.minecraft.network.Packet
 import net.minecraftforge.common.MinecraftForge
 import org.lwjgl.input.Keyboard
-import kotlin.reflect.KProperty0
 import kotlin.reflect.full.hasAnnotation
-import kotlin.reflect.jvm.isAccessible
 
 /**
  * Class that represents a module. And handles all the settings.
@@ -36,7 +26,7 @@ abstract class Module(
     @Transient var description: String = "",
     @Transient val tag: TagType = TagType.NONE,
     toggled: Boolean = false,
-) : EventDSL() {
+) {
 
     /**
      * Category for this module.
@@ -120,8 +110,6 @@ abstract class Module(
         }
     }
 
-    operator fun <K : Setting<*>> K.unaryPlus(): K = register(this)
-
     fun getSettingByName(name: String?): Setting<*>? {
         for (setting in settings) {
             if (setting.name.equals(name, ignoreCase = true)) {
@@ -131,20 +119,6 @@ abstract class Module(
         return null
     }
 
-    inline fun <reified T : Packet<*>> onPacket(crossinline block: (packet: T) -> Unit) {
-        onEvent<PacketSentEvent> { (packet) ->
-            if (T::class.java.isInstance(packet)) {
-                block(packet as T)
-            }
-        }
-        onEvent<PacketReceivedEvent> { (packet) ->
-            if (T::class.java.isInstance(packet)) {
-                block(packet as T)
-            }
-        }
-    }
-
-    // todo: replace
     /**
      * Helper function to make cleaner code, and more performance, since we don't need multiple registers for packet received events.
      *
@@ -173,13 +147,36 @@ abstract class Module(
         ModuleManager.messageFunctions.add(ModuleManager.MessageFunction(filter, shouldRun, func))
     }
 
-    // todo: use new event stuff
+    /**
+     * Runs the given function when a Chat Packet is sent with the same message as the given text (or contains the given text) (Case Sensitive!)
+     *
+     * @param text The text to look for.
+     * @param contains If the function should run when the message only contains the text but does not necessarily equal it.
+     * @param shouldRun Boolean getter to decide if the function should run at any given time, could check if the option is enabled for instance.
+     * @param func The function to run if the message matches or contains the given text and shouldRun returns true.
+     *
+     * @author Bonsai
+     */
+    fun onMessage(text: String, contains: Boolean, shouldRun: () -> Boolean = { alwaysActive || enabled }, func: (String) -> Unit) {
+        val regex =
+            if (contains)
+                ".*${Regex.escape(text)}.*".toRegex()
+            else
+                Regex.escape(text).toRegex()
+
+        ModuleManager.messageFunctions.add(ModuleManager.MessageFunction(regex, shouldRun, func))
+    }
+
+//    fun onMessageCancellable(filter: Regex, shouldRun: () -> Boolean = { alwaysActive || enabled }, func: (ChatPacketEvent) -> Unit) {
+//        ModuleManager.cancellableMessageFunctions.add(ModuleManager.MessageFunctionCancellable(filter, shouldRun, func))
+//    }
+
     fun onWorldLoad(func: () -> Unit) {
         ModuleManager.worldLoadFunctions.add(func)
     }
 
     fun execute(delay: Long, repeats: Int, profileName: String = "${this.name} Executor", shouldRun: () -> Boolean = { this.enabled || this.alwaysActive }, func: Executable) {
-        LimitedExecutor(delay, repeats, profileName, shouldRun, func).register()
+        Executor.LimitedExecutor(delay, repeats, profileName, shouldRun, func).register()
     }
 
     fun execute(delay: () -> Long, profileName: String = "${this.name} Executor", shouldRun: () -> Boolean = { this.enabled || this.alwaysActive }, func: Executable) {
@@ -190,10 +187,20 @@ abstract class Module(
         Executor(delay, profileName, shouldRun, func).register()
     }
 
-    fun HUD.setting(name: String, desciption: String = ""): HUDSetting {
-        return HUDSetting(name, this, desciption)
+    @Suppress("FunctionName")
+    fun HUD(
+        name: String,
+        description: String,
+        block: HUDScope.() -> Unit
+    ): HUDSetting {
+        val setting = HUDSetting(
+            name,
+            me.odinmain.features.huds.HUD(name, this, block),
+            description
+        )
+        register(setting)
+        return setting
     }
-
 
     // this is unused
     @Deprecated("remove")
@@ -212,85 +219,6 @@ abstract class Module(
                 `package`.contains("nether") -> Category.NETHER
                 else -> null
             }
-        }
-    }
-
-    // figure way to separate from module file while still having reference to it
-    // make related settings get taken from module and placed in hud and make it save there
-    open inner class HUD(
-        val x: Percent,
-        val y: Percent,
-        var enabled: Boolean = true,
-        val builder: HUDScope.() -> Unit
-    ) {
-        val defaultX: Float = x.percent
-        val defaultY: Float = y.percent
-
-        val settings: ArrayList<Setting<*>> = arrayListOf()
-
-        fun setting(vararg settings: KProperty0<*>): HUD {
-            for (property in settings) {
-                property.isAccessible = true
-                val delegate = property.getDelegate() as? Setting<*> ?: throw IllegalArgumentException(
-                    "Invalid Arguments. Must use a delegated setting as the argument for the HUD setting."
-                )
-                this.settings.add(delegate)
-                delegate.hide()
-            }
-            return this
-        }
-
-        var scale = 1f
-            set(value) {
-                field = value.coerceAtLeast(1f)
-            }
-
-        init {
-            ModuleManager.HUDs.add(this)
-            setupHUD(this)
-        }
-
-        inner class Drawable(constraints: Constraints, val preview: Boolean) : Element(constraints) {
-
-            override var enabled: Boolean = true
-                get() = field && this@HUD.enabled && this@Module.enabled
-
-            init {
-                scaledCentered = false
-                scale = this@HUD.scale
-
-            }
-
-            fun refresh(scope: HUDScope) {
-                removeAll()
-                builder.invoke(scope)
-            }
-
-            override fun draw() {
-                scale = this@HUD.scale
-            }
-            override fun onElementAdded(element: Element) {
-            }
-        }
-    }
-
-    class HUDScope(element: HUD.Drawable) : ElementScope<HUD.Drawable>(element) {
-
-        inline val preview: Boolean get() = element.preview
-
-        inline fun needs(crossinline block: () -> Boolean) {
-            if (!element.preview) {
-                operation {
-                    element.enabled = block()
-                    false
-                }
-            }
-        }
-
-        fun refreshHUD() {
-            element.removeAll()
-            element.refresh(this)
-            element.redraw = true
         }
     }
 }

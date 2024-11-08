@@ -5,7 +5,7 @@ import com.github.stivais.ui.constraints.Size
 import com.github.stivais.ui.constraints.Type
 import com.github.stivais.ui.elements.Element
 
-class Aspect(private val ratio: Float) : Size {
+class AspectRatio(private val ratio: Float) : Size {
     override fun get(element: Element, type: Type): Float {
         return if (type.axis == HORIZONTAL) element.height * ratio else element.width / ratio
     }

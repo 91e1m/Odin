@@ -1,25 +1,23 @@
 package me.odinmain.features.settings.impl
 
 import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.color.*
+import com.github.stivais.ui.color.Color
+import com.github.stivais.ui.color.colorFrom
+import com.github.stivais.ui.color.toHSB
+import com.github.stivais.ui.color.toHexString
 import com.github.stivais.ui.constraints.*
 import com.github.stivais.ui.constraints.measurements.Animatable
-import com.github.stivais.ui.constraints.sizes.Aspect
-import com.github.stivais.ui.constraints.sizes.Bounding
-import com.github.stivais.ui.constraints.sizes.Copying
+import com.github.stivais.ui.constraints.sizes.AspectRatio
 import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.elements.scope.ElementScope
 import com.github.stivais.ui.elements.scope.slider
 import com.github.stivais.ui.renderer.Gradient.LeftToRight
 import com.github.stivais.ui.renderer.Gradient.TopToBottom
-import com.github.stivais.ui.utils.radii
+import com.github.stivais.ui.utils.radius
 import com.github.stivais.ui.utils.seconds
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
 import me.odinmain.features.settings.Saving
 import me.odinmain.features.settings.Setting
-import me.odinmain.utils.skyblock.modMessage
-import java.awt.Color.HSBtoRGB
 
 class ColorSetting(
     name: String,
@@ -45,75 +43,75 @@ class ColorSetting(
         return JsonPrimitive(value.toHexString())
     }
 
-    override fun ElementScope<*>.createElement() {
-        val size = Animatable(from = 40.px, to = Bounding)
-        val alpha = Animatable(0.px, 1.px)
-
-        val hueMax = color { HSBtoRGB(value.hue, 1f, 1f) }
-
-        setting(size) {
-            group(constrain(0.px, 0.px, w = Copying, h = 40.px)) {
-                text(
-                    text = name,
-                    pos = at(x = 6.px),
-                    size = 40.percent
-                )
-                // color preview + dropdown button thingy
-                block(
-                    constraints = constrain(x = -(6.px), w = 30.px, h = 50.percent),
-                    color = transparentFix,
-                    radius = 5.radii()
-                ) {
-                    outline(color = color { value.withAlpha(255).rgba })
-                    block(
-                        constraints = indent(2),
-                        color = value,
-                        radius = 4.radii()
-                    )
-                    onClick {
-                        size.animate(0.25.seconds, Animations.EaseInOutQuint)
-                        alpha.animate(0.25.seconds, Animations.Linear)
-                        this@setting.redraw()
-                        true
-                    }
-                }
-            }
-
-            column(constraints = constrain(0.px, 40.px, w = Copying)) {
-                element.alphaAnim = alpha
-                text("wip, need popup color picker", size = 10.px)
-                saturationAndBrightness(hueMax)
-                divider(10.px)
-                hueSlider()
-                if (allowAlpha) {
-                    modMessage("a")
-                    divider(10.px)
-                    alphaSlider(hueMax)
-                }
-            }
-        }
-    }
+//    override fun ElementScope<*>.createElement() {
+//        val size = Animatable(from = 40.px, to = Bounding)
+//        val alpha = Animatable(0.px, 1.px)
+//
+//        val hueMax = color { HSBtoRGB(value.hue, 1f, 1f) }
+//
+//        settingOld(size) {
+//            group(constrain(0.px, 0.px, w = Copying, h = 40.px)) {
+//                text(
+//                    text = name,
+//                    pos = at(x = 6.px),
+//                    size = 40.percent
+//                )
+//                // color preview + dropdown button thingy
+//                block(
+//                    constraints = constrain(x = -(6.px), w = 30.px, h = 50.percent),
+//                    color = transparentFix,
+//                    radius = 5.radius()
+//                ) {
+//                    outline(color = color { value.withAlpha(255).rgba })
+//                    block(
+//                        constraints = indent(2),
+//                        color = value,
+//                        radius = 4.radius()
+//                    )
+//                    onClick {
+//                        size.animate(0.25.seconds, Animations.EaseInOutQuint)
+//                        alpha.animate(0.25.seconds, Animations.Linear)
+//                        this@settingOld.redraw()
+//                        true
+//                    }
+//                }
+//            }
+//
+//            column(constraints = constrain(0.px, 40.px, w = Copying)) {
+//                element.alphaAnim = alpha
+//                text("wip, need popup color picker", size = 10.px)
+//                saturationAndBrightness(hueMax)
+//                divider(10.px)
+//                hueSlider()
+//                if (allowAlpha) {
+//                    modMessage("a")
+//                    divider(10.px)
+//                    alphaSlider(hueMax)
+//                }
+//            }
+//        }
+//    }
 
     private fun ElementDSL.saturationAndBrightness(hueMax: Color) {
         val x = Animatable.Raw((228f * value.saturation).coerceIn(8f, 220f))
         val y = Animatable.Raw((170f * (1f - value.brightness)).coerceIn(8f, 220f))
         block(
-            size(w = 95.percent, h = Aspect(228f / 170f)),
+            size(w = 95.percent, h = AspectRatio(228f / 170f)),
             colors = Color.WHITE to hueMax,
-            radius = 5.radii(),
+            radius = 5.radius(),
             gradient = LeftToRight
         ) {
             block(
                 constraints = copies(),
                 // temp fix until I figure out why nanovg doesn't render anything under 0.2f alpha
                 colors = transparentFix to Color.BLACK,
-                radius = 5.radii(),
+                radius = 5.radius(),
                 gradient = TopToBottom
             ) {
                 block(
                     constraints = constrain(x.center, y.center, w = 10.px, h = 10.px),
                     color = value,
-                    radius = 5.radii()
+                    radius = 5.radius()
                 ).outline(Color.WHITE)
             }
             slider(
@@ -141,12 +139,12 @@ class ColorSetting(
         image(
             "/assets/odinmain/clickgui/HueGradient.png",
             size(w = 95.percent, h = 15.px),
-            radius = 5.radii()
+            radius = 5.radius()
         ) {
             block(
                 constraints = constrain(x.center, w = 10.px, h = 10.px),
                 color = value,
-                radius = 5.radii()
+                radius = 5.radius()
             ).outline(Color.WHITE)
             slider(
                 accepts = true,
@@ -165,13 +163,13 @@ class ColorSetting(
         block(
             size(w = 95.percent, h = 15.px),
             colors = transparentFix to hueMax,
-            radius = 5.radii(),
+            radius = 5.radius(),
             gradient = LeftToRight
         ) {
             block(
                 constraints = constrain(x.center, w = 10.px, h = 10.px),
                 color = value,
-                radius = 5.radii()
+                radius = 5.radius()
             ).outline(Color.WHITE)
             slider(
                 accepts = true,

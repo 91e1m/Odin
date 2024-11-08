@@ -8,10 +8,9 @@ import com.github.stivais.ui.constraints.measurements.Animatable
 import com.github.stivais.ui.constraints.percent
 import com.github.stivais.ui.constraints.px
 import com.github.stivais.ui.constraints.sizes.Copying
-import com.github.stivais.ui.elements.scope.ElementScope
+import com.github.stivais.ui.elements.scope.ElementDSL
 import com.github.stivais.ui.elements.scope.hoverEffect
-import com.github.stivais.ui.elements.scope.slider
-import com.github.stivais.ui.utils.radii
+import com.github.stivais.ui.utils.radius
 import com.github.stivais.ui.utils.seconds
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
@@ -19,6 +18,9 @@ import me.odinmain.features.impl.render.ClickGUI
 import me.odinmain.features.impl.render.ClickGUI.`gray 26`
 import me.odinmain.features.settings.Saving
 import me.odinmain.features.settings.Setting
+import me.odinmain.features.settings.Setting.Renders.Companion.elementWidth
+import me.odinmain.features.settings.Setting.Renders.Companion.onValueChanged
+import me.odinmain.features.settings.Setting.Renders.Companion.setting
 import me.odinmain.utils.round
 import kotlin.math.floor
 import kotlin.math.round
@@ -31,7 +33,6 @@ import kotlin.math.round
  * @param increment The increment for the setting
  * @param unit The suffix for value in the UI (It is recommended to set this for better UX)
  */
-// TODO: Option to use a text field that only accepts numbers instead of slider
 @Suppress("UNCHECKED_CAST")
 class NumberSetting<E>(
     name: String,
@@ -42,7 +43,7 @@ class NumberSetting<E>(
     hidden: Boolean = false,
     description: String = "",
     val unit: String = "",
-) : Setting<E>(name, hidden, description), Saving where E : Number, E : Comparable<E> {
+) : Setting<E>(name, hidden, description), Saving, Setting.Renders where E : Number, E : Comparable<E> {
 
     override var value: E = default
 
@@ -62,44 +63,62 @@ class NumberSetting<E>(
             return "$number$unit"
         }
 
-    override fun ElementScope<*>.createElement() {
-        setting(44.px) {
-            text(
-                text = name,
-                pos = at(6.px, 10.px),
-                size = 35.percent
-            )
-            val display = text(
-                text = text,
-                pos = at(x = -(6.px), y = 10.px),
-                size = 35.percent
-            )
+    override fun ElementDSL.create() = setting(45.px) {
+        text(
+            name,
+            pos = at(6.px, 10.px),
+            size = 35.percent
+        )
+        val display = text(
+            text,
+            pos = at(x = -(6.px), y = 10.px),
+            size = 35.percent
+        )
 
-            val sliderAmount = Animatable.Raw((((value.toDouble() - min) / (max - min)) * (elementWidth.pixels * 0.95)).toFloat())
+        val sliderWidth = Animatable.Raw((((value.toDouble() - min) / (max - min)) * (elementWidth.pixels * 0.95)).toFloat())
+
+        block(
+            constraints = constrain(y = 75.percent, w = 95.percent, h = 20.percent),
+            color = `gray 26`,
+            radius = 4.radius()
+        ) {
             block(
-                constraints = constrain(y = 75.percent, w = 95.percent, h = 20.percent),
-                color = `gray 26`,
-                radius = 4.radii()
-            ) {
-                block(
-                    constraints = constrain(0.px, 0.px, sliderAmount, Copying),
-                    color = ClickGUI.color,
-                    radius = 4.radii()
-                ).hoverEffect(handler = this@block)
+                constraints = constrain(0.px, 0.px, sliderWidth, Copying),
+                color = ClickGUI.color,
+                radius = 4.radius()
+            ).hoverEffect(handler = this@block)
 
-                slider(
-                    onChange = { percent, _, wasClick ->
-                        val to = percent * element.width
-                        if (wasClick) {
-                            sliderAmount.animate(to = to, 0.75.seconds, Animations.EaseOutQuint)
-                        } else {
-                            sliderAmount.to(to = to)
-                        }
-                        this@setting.redraw()
-                        set(percent * (max - min) + min)
-                        display.string = text
-                    }
-                )
+            var dragging = false
+            // used to animate on only click
+            var first = true
+
+            onClick {
+                first = true
+                dragging = true
+                val percent = ((ui.mx - element.x).coerceIn(0f, element.width) / element.width).round(2).toFloat()
+                set(percent * (max - min) + min)
+                true
+            }
+            onMouseMove {
+                if (dragging) {
+                    val percent = ((ui.mx - element.x).coerceIn(0f, element.width) / element.width).round(2).toFloat()
+                    set(percent * (max - min) + min)
+                }
+                dragging
+            }
+            onRelease {
+                dragging = false
+            }
+
+            onValueChanged {
+                val to = ((value.toDouble() - min) / (max - min) * element.width).toFloat()
+                if (first || !dragging) {
+                    first = false
+                    sliderWidth.animate(to = to, 0.75.seconds, Animations.EaseOutQuint)
+                } else {
+                    sliderWidth.to(to = to)
+                }
+                display.string = text
             }
         }
     }

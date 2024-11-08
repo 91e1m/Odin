@@ -1,10 +1,5 @@
 package me.odinmain.features
 
-import com.github.stivais.ui.UI
-import com.github.stivais.ui.UIScreen.Companion.init
-import com.github.stivais.ui.constraints.constrain
-import com.github.stivais.ui.constraints.sizes.Bounding
-import me.odinmain.OdinMain.mc
 import me.odinmain.events.impl.*
 import me.odinmain.features.impl.dungeon.*
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints
@@ -17,10 +12,7 @@ import me.odinmain.features.impl.nether.*
 import me.odinmain.features.impl.render.*
 import me.odinmain.features.impl.skyblock.*
 import me.odinmain.features.settings.impl.KeybindSetting
-import me.odinmain.utils.clock.Executor
-import me.odinmain.utils.profile
 import net.minecraft.network.Packet
-import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
@@ -32,32 +24,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent
  */
 object ModuleManager {
 
-    val HUDs = arrayListOf<Module.HUD>()
-
-    internal val hudUI = UI().init()
-
-    fun setupHUD(hud: Module.HUD) {
-        val drawable = hud.Drawable(constrain(hud.x, hud.y, Bounding, Bounding), preview = false)
-        hudUI.main.addElement(drawable)
-        hud.builder(Module.HUDScope(drawable))
-    }
-
-    private var previousWidth: Int = 0
-    private var previousHeight: Int = 0
-
-    @SubscribeEvent
-    fun onRender(event: RenderWorldLastEvent) {
-        val w = mc.framebuffer.framebufferWidth
-        val h = mc.framebuffer.framebufferHeight
-        if (w != previousWidth || h != previousHeight) {
-            hudUI.resize(w, h)
-            previousWidth = w
-            previousHeight = h
-        }
-        hudUI.render()
-    }
-
-    // todo: cleanup
     data class PacketFunction<T : Packet<*>>(
         val type: Class<T>,
         val function: (T) -> Unit,
@@ -66,10 +32,8 @@ object ModuleManager {
 
     data class MessageFunction(val filter: Regex, val shouldRun: () -> Boolean, val function: (String) -> Unit)
 
-    // todo: cleanup
     data class TickTask(var ticksLeft: Int, val server: Boolean, val function: () -> Unit)
 
-    // todo: cleanup
     val packetFunctions = mutableListOf<PacketFunction<Packet<*>>>()
     val messageFunctions = mutableListOf<MessageFunction>()
     val worldLoadFunctions = mutableListOf<() -> Unit>()

@@ -1,5 +1,7 @@
 package me.odinmain
 
+import com.github.stivais.ui.UIScreen
+import com.github.stivais.ui.impl.`ui command`
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -13,6 +15,7 @@ import me.odinmain.config.DungeonWaypointConfig
 import me.odinmain.config.PBConfig
 import me.odinmain.events.EventDispatcher
 import me.odinmain.features.ModuleManager
+import me.odinmain.features.huds.HUDManager
 import me.odinmain.features.impl.render.ClickGUI
 import me.odinmain.features.impl.render.DevPlayers
 import me.odinmain.features.impl.render.WaypointManager
@@ -60,7 +63,7 @@ object OdinMain {
             EventDispatcher, Executor, ModuleManager,
             WaypointManager, DevPlayers, SkyblockPlayer,
             ScanUtils, HighlightRenderer, //OdinUpdater,
-            SplitsManager, RenderUtils2D,
+            SplitsManager, RenderUtils2D, UIScreen,
             this
         ).forEach { MinecraftForge.EVENT_BUS.register(it) }
 
@@ -69,7 +72,8 @@ object OdinMain {
             termSimCommand, chatCommandsCommand,
             devCommand, highlightCommand,
             waypointCommand, dungeonWaypointsCommand,
-            petCommand, visualWordsCommand, PosMsgCommand
+            petCommand, visualWordsCommand, PosMsgCommand,
+            `ui command`
         )
     }
 
@@ -87,6 +91,7 @@ object OdinMain {
             }
         }
 
+        HUDManager.setupHUDs()
 
         val name = mc.session?.username?.takeIf { !it.matches(Regex("Player\\d{2,3}")) } ?: return
         scope.launch(Dispatchers.IO) {

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.MustBeInvokedByOverriders
 // todo: delete
 open class Layout(
     constraints: Constraints?,
-    protected val padding: Size?,
+    var padding: Size?,
 ) : Element(constraints?.replaceUndefined(w = Bounding, h = Bounding)) {
 
     protected var lastLink: OldLinked? = null
@@ -30,8 +30,8 @@ open class Layout(
                 lastLink = link
 
                 if (padding != null && element !is Divider) {
-                    val padding = if (padding !is Percent) padding else percentFix(padding)
-                    createDivider(amount = padding)
+                    val padding = padding as? Percent
+                    if (padding != null) createDivider(amount = padding)
                 }
             }
             if (c.y is Undefined) {
@@ -54,8 +54,8 @@ open class Layout(
                 lastLink = link
 
                 if (padding != null && element !is Divider && elements != null) {
-                    val padding = if (padding !is Percent) padding else percentFix(padding)
-                    createDivider(amount = padding)
+                    val padding = padding as? Percent
+                    if (padding != null) createDivider(amount = padding)
                 }
             }
             super.onElementAdded(element)

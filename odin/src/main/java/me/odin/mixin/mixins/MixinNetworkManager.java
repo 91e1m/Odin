@@ -24,7 +24,7 @@ public class MixinNetworkManager {
 
     @Inject(method = {"sendPacket(Lnet/minecraft/network/Packet;)V"}, at = {@At("HEAD")}, cancellable = true)
     private void onSendPacket(Packet<?> packet, CallbackInfo ci) {
-        if (!ServerUtils.INSTANCE.handleSendPacket(packet)) {
+        if (!ServerUtils.handleSendPacket(packet)) {
             if (postAndCatch(new PacketSentEvent(packet)) && !ci.isCancelled())
                 ci.cancel();
         }

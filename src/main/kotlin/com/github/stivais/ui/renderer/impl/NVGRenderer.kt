@@ -310,8 +310,6 @@ class NVGRenderer(private val wrapper: Lwjgl3Wrapper) : Renderer, Lwjgl3Wrapper 
     }
 
     private fun getIDFromFont(font: Font): Int {
-//		return fonts.computeIfAbsent(font) {nvgCreateFontMem(vg, font.name, font.buffer, 0)}
-
         return fonts[font] ?: nvgCreateFontMem(vg, font.name, font.buffer, 0).also {
             fonts[font] = it
         }

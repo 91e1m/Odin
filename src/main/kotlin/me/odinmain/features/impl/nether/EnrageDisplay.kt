@@ -1,10 +1,10 @@
 package me.odinmain.features.impl.nether
 
 import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.constraints.measurements.Animatable
-import com.github.stivais.ui.constraints.percent
 import com.github.stivais.ui.constraints.px
+import com.github.stivais.ui.transforms.Transforms
 import com.github.stivais.ui.utils.seconds
+import me.odinmain.events.impl.PacketReceivedEvent
 import me.odinmain.events.impl.RealServerTick
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
@@ -13,29 +13,30 @@ import me.odinmain.utils.skyblock.skyblockID
 import me.odinmain.utils.ui.TextHUD
 import me.odinmain.utils.ui.and
 import net.minecraft.network.play.server.S29PacketSoundEffect
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object EnrageDisplay : Module(
     name = "Enrage Display",
-    description = "Timer for cooldown of reaper armor enrage"
+    description = "Displays the Reaper armor's ability duration."
 ) {
     private val unit by SelectorSetting("Unit", arrayListOf("Seconds", "Ticks"))
     private val showUnit by BooleanSetting("Show unit", default = false)
 
     // test
-    private val animatable = Animatable(0.0.px, 1.px)
+    private val animation = Transforms.Alpha.Animated(from = 0f, to = 1f)
 
-    private val HUD = TextHUD(2.5.percent, 2.5.percent) { color, font ->
-        if (!preview) element.alphaAnim = animatable
+    private val HUD = TextHUD(
+        "Enrage Display",
+        "Displays the duration on screen."
+    ) { color, font ->
+        if (!preview) transform(animation)
         text(
             "Enrage ",
             color = color,
             font = font,
             size = 30.px
         ) and text({ getDisplay(if (preview) 120 else enrageTimer) }, font = font)
-    }.setting(
-        ::showUnit,
-        ::unit,
-    ).setting("Enrage Display")
+    }
 
     private fun getDisplay(ticks: Int): String {
         return when (unit) {
@@ -46,24 +47,26 @@ object EnrageDisplay : Module(
 
     private var enrageTimer = -1
 
-    init {
-        onPacket { packet: S29PacketSoundEffect ->
-            if (packet.soundName == "mob.zombie.remedy" && packet.pitch == 1.0f && packet.volume == 0.5f) {
-                if (
-                    mc.thePlayer?.getCurrentArmor(0)?.skyblockID == "REAPER_BOOTS" &&
-                    mc.thePlayer?.getCurrentArmor(1)?.skyblockID == "REAPER_LEGGINGS" &&
-                    mc.thePlayer?.getCurrentArmor(2)?.skyblockID == "REAPER_CHESTPLATE"
-                ) {
-                    enrageTimer = 120
-                    animatable.animate(0.25.seconds, Animations.EaseOutQuint)
-                }
+    @SubscribeEvent
+    fun onPacket(event: PacketReceivedEvent) {
+        val packet = event.packet as? S29PacketSoundEffect ?: return
+        if (packet.soundName == "mob.zombie.remedy" && packet.pitch == 1.0f && packet.volume == 0.5f) {
+            if (
+                mc.thePlayer?.getCurrentArmor(0)?.skyblockID == "REAPER_BOOTS" &&
+                mc.thePlayer?.getCurrentArmor(1)?.skyblockID == "REAPER_LEGGINGS" &&
+                mc.thePlayer?.getCurrentArmor(2)?.skyblockID == "REAPER_CHESTPLATE"
+            ) {
+                enrageTimer = 120
+                animation.animate(0.25.seconds, Animations.EaseOutQuint)
             }
         }
-        onEvent<RealServerTick> {
-            enrageTimer--
-            if (enrageTimer == 0) {
-                animatable.animate(0.25.seconds, Animations.EaseOutQuint)
-            }
+    }
+
+    @SubscribeEvent
+    fun onTick(event: RealServerTick) {
+        enrageTimer--
+        if (enrageTimer == 0) {
+            animation.animate(0.25.seconds, Animations.EaseOutQuint)
         }
     }
 }

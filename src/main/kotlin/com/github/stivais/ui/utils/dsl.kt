@@ -6,7 +6,7 @@ import com.github.stivais.ui.constraints.Constraint
 import com.github.stivais.ui.constraints.measurements.Animatable
 
 @JvmName("radiiThis")
-fun Number.radii() = radius(this)
+fun Number.radius() = radius(this)
 
 /**
  * Takes 4 numbers, and creates a [FloatArray] with those values

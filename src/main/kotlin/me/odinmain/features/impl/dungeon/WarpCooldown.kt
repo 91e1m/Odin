@@ -1,6 +1,5 @@
 package me.odinmain.features.impl.dungeon
 
-import com.github.stivais.ui.constraints.percent
 import com.github.stivais.ui.constraints.px
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
@@ -14,8 +13,8 @@ object WarpCooldown : Module (
     private val showUnit by BooleanSetting("Show unit", default = false, description = "Displays unit of time for the cooldown.").hide()
 
     private val HUD by TextHUD(
-        2.5.percent,
-        2.5.percent,
+        "Warp HUD",
+        description = "Displays the cooldown."
     ) { color, font ->
         if (preview) {
             text(
@@ -33,9 +32,7 @@ object WarpCooldown : Module (
                 size = 30.px
             ) and text({ "${(lastUpdate - System.currentTimeMillis()) / 1000}${if (showUnit) "s" else ""}" }, font = font)
         }
-    }.setting(
-        ::showUnit
-    ).setting("Warp HUD")
+    }
 
     private var lastUpdate: Long = System.currentTimeMillis()
 

@@ -93,7 +93,6 @@ interface Key : Event {
 
 interface Focused : Event {
 
-    // todo: migrate
     data class Clicked(val button: Int = 0 /* this doesn't matter for accepting event */) : Focused {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true

@@ -1,4 +1,4 @@
-package com.github.stivais.ui.elements.impl
+package me.odinmain.utils.ui.elements
 
 import com.github.stivais.ui.UI
 import com.github.stivais.ui.color.Color
@@ -7,11 +7,14 @@ import com.github.stivais.ui.color.darker
 import com.github.stivais.ui.constraints.Positions
 import com.github.stivais.ui.constraints.Size
 import com.github.stivais.ui.constraints.Type
+import com.github.stivais.ui.constraints.at
+import com.github.stivais.ui.elements.impl.TextElement
+import com.github.stivais.ui.events.Event
 import com.github.stivais.ui.events.Focused
 import com.github.stivais.ui.events.Key
 import com.github.stivais.ui.events.Mouse
-import me.odinmain.utils.*
 import me.odinmain.utils.skyblock.devMessage
+import me.odinmain.utils.writeToClipboard
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.util.ChatAllowedCharacters
@@ -20,34 +23,36 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-/*
-* TODO
-* - needs cleanup
-*/
+// odin exclusive
+// official element will come when keyboard input gets redone
 class TextInput(
     text: String,
     private val placeholder: String,
     position: Positions? = null,
     size: Size,
-    val widthLimit: Size? = null,
+    private val widthLimit: Size? = null,
     censor: Boolean = false,
-    val onlyNumbers: Boolean = false,
-    val onTextChange: (string: String) -> Unit = {}
-) : TextElement(text, UI.defaultFont, Color.WHITE, position, size) {
+    private val onlyNumbers: Boolean = false,
+    onTextChange: (event: TextChanged) -> Unit
+) : TextElement(text, UI.defaultFont, Color.WHITE, position ?: at(), size) {
 
     override var text: String = text
         set(value) {
             if (field == value) return
-            field = value
-            redraw = true
-            previousHeight = 0f
 
-            // text input stuff
-            if (history.last() != value) history.add(value)
-            if (censorInput) censorCache = buildString { repeat(text.length) { append('*') } }
+            val event = TextChanged(value)
+            accept(event)
+            if (!event.cancelled) {
+                field = value
+                redraw = true
+                previousHeight = 0f
 
-            updateCaret()
-            onTextChange(value)
+                // text input stuff
+                if (history.last() != value) history.add(value)
+                if (censorInput) censorCache = buildString { repeat(text.length) { append('*') } }
+
+                updateCaret()
+            }
         }
 
     private val _text: String
@@ -138,6 +143,11 @@ class TextInput(
     }
 
     init {
+        TextChanged().register {
+            onTextChange(it)
+            false
+        }
+
         Focused.Gained register {
             Keyboard.enableRepeatEvents(true)
             setCaretPositionBasedOnMouse()
@@ -430,5 +440,23 @@ class TextInput(
 
     fun isKeyComboCtrlZ(keyID: Int): Boolean {
         return keyID == Keyboard.KEY_Z && isCtrlKeyDown() && !isShiftKeyDown() && !isAltKeyDown()
+    }
+
+    data class TextChanged(val string: String = "") : Event {
+
+        var cancelled: Boolean = false
+
+        fun cancel() {
+            cancelled = true
+        }
+
+        override fun hashCode(): Int {
+            return 9999
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            return other is TextChanged
+        }
     }
 }

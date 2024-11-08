@@ -14,6 +14,7 @@ import com.github.stivais.ui.events.Lifetime
 import com.github.stivais.ui.events.Mouse
 import com.github.stivais.ui.operation.UIOperation
 import com.github.stivais.ui.renderer.Renderer
+import com.github.stivais.ui.transforms.Transforms
 import com.github.stivais.ui.utils.loop
 
 abstract class Element(constraints: Constraints?, var color: Color? = null) {
@@ -71,25 +72,10 @@ abstract class Element(constraints: Constraints?, var color: Color? = null) {
         }
     //
 
+    private var transforms: ArrayList<Transforms>? = null
 
-    // todo: rework
-
-    var alphaAnim: Animatable? = null
-    var rotateAnim: Animatable? = null
-
-    var alpha = 1f
-        set(value) {
-            field = value.coerceIn(0f, 1f)
-        }
-
+    // this is needed to track current scale
     var scale = 1f
-        set(value) {
-            field = value.coerceAtLeast(0f)
-        }
-
-    var scaledCentered = true
-
-    var rotation = 0f
 
     //
 
@@ -127,18 +113,23 @@ abstract class Element(constraints: Constraints?, var color: Color? = null) {
             it.position(x, y)
             it.positionChildren()
         }
-        if (constraints.width.reliesOnChild()) width = constraints.width.get(this, Type.W)
-        if (constraints.height.reliesOnChild()) height = constraints.height.get(this, Type.H) + sy
+        val widthRelies = constraints.width.reliesOnChild()
+        val heightRelies = constraints.height.reliesOnChild()
+
+        if (widthRelies) width = constraints.width.get(this, Type.W)
+        if (heightRelies) height = constraints.height.get(this, Type.H) + sy
+
+        if (widthRelies || heightRelies) parent?.redrawInternal = true
     }
 
-    private var _redraw = true
+    var redrawInternal = true
 
     var redraw: Boolean
-        get() = _redraw
+        get() = redrawInternal
         set(value) {
             if (value) {
                 val element = getElementToRedraw()
-                element._redraw = true
+                element.redrawInternal = true
             }
         }
 
@@ -168,8 +159,8 @@ abstract class Element(constraints: Constraints?, var color: Color? = null) {
 
     // IDK is it worth
     fun preRender() {
-        if (_redraw) {
-            _redraw = false
+        if (redrawInternal) {
+            redrawInternal = false
             size()
             positionChildren()
             clip()
@@ -187,30 +178,8 @@ abstract class Element(constraints: Constraints?, var color: Color? = null) {
     fun render() {
         if (!renders) return
         renderer.push()
-        if (alphaAnim != null) {
-            alpha = alphaAnim!!.get(this, Type.X)
-        }
-        if (rotateAnim != null) {
-            rotation = rotateAnim!!.get(this, Type.X)
-        }
-        if (alpha != 1f) {
-            renderer.globalAlpha(alpha)
-        }
-        if (scale != 1f) {
-            var x = x
-            var y = y
-            if (scaledCentered) {
-                x += width / 2f
-                y += height / 2f
-            }
-            renderer.translate(x, y)
-            renderer.scale(scale, scale)
-            renderer.translate(-x, -y)
-        }
-        if (rotation != 0f) {
-            renderer.translate(x + width / 2f, y + height / 2f)
-            renderer.rotate(rotation)
-            renderer.translate(-(x + width / 2f), -(y + height / 2f))
+        transforms?.loop {
+            it.apply(this, renderer)
         }
         draw()
         if (scissors) renderer.pushScissor(x, y, width, height)
@@ -241,6 +210,11 @@ abstract class Element(constraints: Constraints?, var color: Color? = null) {
     fun addOperation(operation: UIOperation) {
         if (ui.operations == null) ui.operations = arrayListOf()
         ui.operations!!.add(operation)
+    }
+
+    fun addTransform(transform: Transforms) {
+        if (transforms == null) transforms = arrayListOf()
+        transforms!!.add(transform)
     }
 
     fun addElement(element: Element) {

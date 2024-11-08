@@ -5,6 +5,8 @@ import com.github.stivais.ui.animation.Animations
 import com.github.stivais.ui.color.Color
 import com.github.stivais.ui.constraints.*
 import com.github.stivais.ui.constraints.measurements.Animatable
+import com.github.stivais.ui.constraints.measurements.Undefined
+import com.github.stivais.ui.constraints.sizes.Copying
 import com.github.stivais.ui.elements.Element
 import com.github.stivais.ui.elements.impl.*
 import com.github.stivais.ui.events.*
@@ -12,7 +14,8 @@ import com.github.stivais.ui.operation.UIOperation
 import com.github.stivais.ui.renderer.Font
 import com.github.stivais.ui.renderer.Gradient
 import com.github.stivais.ui.renderer.Image
-import com.github.stivais.ui.utils.radii
+import com.github.stivais.ui.transforms.Transforms
+import com.github.stivais.ui.utils.radius
 
 open class ElementScope<E: Element>(val element: E) {
 
@@ -93,9 +96,11 @@ open class ElementScope<E: Element>(val element: E) {
     fun block(
         constraints: Constraints? = null,
         color: Color,
+        outlineColor: Color? = null,
+        outlineThickness: Measurement? = null,
         radius: FloatArray? = null,
         block: BlockScope.() -> Unit = {}
-    ) = create(BlockScope(Block(constraints, color, radius)), block)
+    ) = create(BlockScope(Block(constraints, color, outlineColor, outlineThickness, radius)), block)
 
     @DSL
     fun block(
@@ -110,7 +115,7 @@ open class ElementScope<E: Element>(val element: E) {
     fun text(
         text: String,
         font: Font = UI.defaultFont,
-        pos: Positions? = null,
+        pos: Positions = at(Undefined, Undefined),
         size: Size = 50.percent,
         color: Color = Color.WHITE,
         block: TextScope.() -> Unit = {}
@@ -121,27 +126,16 @@ open class ElementScope<E: Element>(val element: E) {
         text: () -> Any?,
         font: Font = UI.defaultFont,
         color: Color = Color.WHITE,
-        pos: Positions? = null,
+        pos: Positions = at(Undefined, Undefined),
         size: Size = 50.percent,
         block: TextScope.() -> Unit = {}
     ) = create(TextScope(TextElement.Supplied(text, font, color, pos, size)), block)
 
     @DSL
-    fun textInput(
-        text: String = "",
-        placeholder: String = "",
-        constraints: Positions? = null,
-        size: Size = 50.percent,
-        maxWidth: Size? = null,
-        censored: Boolean = false,
-        onTextChange: (string: String) -> Unit
-    ) = create(TextScope(TextInput(text, placeholder, constraints, size, maxWidth, censored, onTextChange = onTextChange)))
-
-    @DSL
     fun image(
         image: Image,
         constraints: Constraints? = null,
-        radius: FloatArray = 0.radii(),
+        radius: FloatArray = 0.radius(),
         dsl: ElementScope<ImageElement>.() -> Unit = {}
     ) = create(ElementScope(ImageElement(image, constraints, radius)), dsl)
 
@@ -149,7 +143,7 @@ open class ElementScope<E: Element>(val element: E) {
     fun image(
         image: String,
         constraints: Constraints? = null,
-        radius: FloatArray = 0.radii(),
+        radius: FloatArray = 0.radius(),
         dsl: ElementScope<ImageElement>.() -> Unit = {}
     ) = create(ElementScope(ImageElement(Image(image), constraints, radius)), dsl)
 
@@ -280,6 +274,10 @@ open class ElementScope<E: Element>(val element: E) {
         element.addOperation(this)
     }
 
+    fun transform(transform: Transforms) {
+        element.addTransform(transform)
+    }
+
     fun Element.scope(block: ElementScope<*>.() -> Unit) {
         add()
         block(createScope())
@@ -292,12 +290,12 @@ open class BlockScope(block: Block) : ElementScope<Block>(block) {
         get() = element.outlineColor
 
     val outline: Measurement?
-        get() = element.outline
+        get() = element.outlineThickness
 
     @DSL
     fun outline(color: Color, thickness: Measurement = 1.px) {
         element.outlineColor = color
-        element.outline = thickness
+        element.outlineThickness = thickness
     }
 }
 
@@ -312,6 +310,9 @@ open class LayoutScope(layout: Layout) : ElementScope<Layout>(layout) {
     fun divider(amount: Size) {
         element.createDivider(amount)
     }
+
+    @DSL
+    fun section(size: Size, block: ElementScope<Group>.() -> Unit) = group(size(Copying, size), block)
 }
 
 @DslMarker

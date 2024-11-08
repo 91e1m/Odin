@@ -14,8 +14,10 @@ import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object ServerUtils {
+
     private val packets = ArrayList<Packet<*>>()
 
+    @JvmStatic
     fun handleSendPacket(packet: Packet<*>): Boolean {
         return packets.remove(packet)
     }

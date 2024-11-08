@@ -1,9 +1,7 @@
 package me.odinmain.features.impl.render
 
 import com.github.stivais.ui.UI
-import com.github.stivais.ui.UIScreen
 import com.github.stivais.ui.UIScreen.Companion.open
-import com.github.stivais.ui.animation.Animation
 import com.github.stivais.ui.animation.Animations
 import com.github.stivais.ui.color.Color
 import com.github.stivais.ui.color.blue
@@ -15,10 +13,13 @@ import com.github.stivais.ui.constraints.sizes.Bounding
 import com.github.stivais.ui.elements.impl.Popup
 import com.github.stivais.ui.elements.impl.popup
 import com.github.stivais.ui.elements.scope.ElementDSL
+import com.github.stivais.ui.elements.scope.ElementScope
 import com.github.stivais.ui.elements.scope.draggable
 import com.github.stivais.ui.elements.scope.hoverEffect
-import com.github.stivais.ui.operation.AnimationOperation
-import com.github.stivais.ui.utils.*
+import com.github.stivais.ui.utils.animate
+import com.github.stivais.ui.utils.loop
+import com.github.stivais.ui.utils.radius
+import com.github.stivais.ui.utils.seconds
 import kotlinx.coroutines.launch
 import me.odinmain.OdinMain
 import me.odinmain.OdinMain.scope
@@ -26,9 +27,11 @@ import me.odinmain.config.Config
 import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.ModuleManager
+import me.odinmain.features.huds.HUDManager
 import me.odinmain.features.settings.AlwaysActive
-import me.odinmain.features.settings.Setting.Companion.elementWidth
+import me.odinmain.features.settings.Setting
 import me.odinmain.features.settings.Setting.Companion.withDependency
+import me.odinmain.features.settings.Setting.Renders.Companion.elementWidth
 import me.odinmain.features.settings.impl.*
 import me.odinmain.utils.capitalizeFirst
 import me.odinmain.utils.sendDataToServer
@@ -36,6 +39,9 @@ import me.odinmain.utils.skyblock.LocationUtils
 import me.odinmain.utils.skyblock.createClickStyle
 import me.odinmain.utils.skyblock.getChatBreak
 import me.odinmain.utils.skyblock.modMessage
+import me.odinmain.utils.ui.lifetimeAnimations
+import me.odinmain.utils.ui.onHover
+import me.odinmain.utils.ui.textInput
 import net.minecraft.event.ClickEvent
 import net.minecraft.util.ChatComponentText
 import org.lwjgl.input.Keyboard
@@ -46,14 +52,17 @@ object ClickGUI: Module(
     key = Keyboard.KEY_RSHIFT,
     description = "Allows you to customize the UI."
 ) {
-    val color by ColorSetting("Color", Color.RGB(50, 150, 220), allowAlpha = false, description = "Color mainly used within the UI")
+    /**
+     * Main color used within the mod.
+     */
+    val color by ColorSetting("Color", Color.RGB(50, 150, 220), allowAlpha = false, description = "Main color theme for Odin.")
 
     val enableNotification by BooleanSetting("Enable chat notifications", true, description = "Sends a message when you toggle a module with a keybind")
 
     val forceHypixel by BooleanSetting("Force Hypixel", false, description = "Forces the hypixel check to be on (Mainly used for development. Only use if you know what you're doing)")
 
     // make useful someday
-    val updateMessage by SelectorSetting("Update Message", "Beta", arrayListOf("Beta", "Full", "None")).hide()
+    val updateMessage by SelectorSetting("Update Message", arrayListOf("Full", "Beta", "None")).hide()
 
     val devMessages by BooleanSetting("Dev Messages", true, description = "Enables dev messages in chat.").withDependency { DevPlayers.isDev } // make dev-specific modules and put this there
     val devSize by BooleanSetting("Dev Size", true, description = "Toggles client side dev size.").withDependency { DevPlayers.isDev }
@@ -75,17 +84,19 @@ object ClickGUI: Module(
         }
     }.withDependency { DevPlayers.isDev }
 
-    val action by ActionSetting("Open HUD Editor", description = "Opens the HUD Editor, allowing you to reposition HUDs") { /*OdinMain.display = EditHUDGui*/ }
+    val action by ActionSetting("Open HUD Editor", description = "Opens the HUD Editor, allowing you to reposition HUDs") {
+        HUDManager.makeHUDEditor().open()
+    }
+
+    private val panelSettings by MapSetting("panel.data", mutableMapOf<Category, PanelData>()).also { setting ->
+        Category.entries.forEach { setting.value[it] = PanelData(x = 10f + 260f * it.ordinal, y = 10f, extended = true) }
+    }
 
     private var joined by BooleanSetting("first.join", false).hide()
     private var warned by BooleanSetting("ui.branch.warning", false).hide()
     var lastSeenVersion by StringSetting("last.seen.version", "1.0.0").hide()
 
     var firstTimeOnVersion = false
-
-    private val panelSettings by MapSetting("panel.data", mutableMapOf<Category, PanelData>()).also { setting ->
-        Category.entries.forEach { setting.value[it] = PanelData(x = 10f + 260f * it.ordinal, y = 10f, extended = true) }
-    }
 
     init {
         // todo: cleanup
@@ -170,7 +181,10 @@ object ClickGUI: Module(
                     }
                     draggable(moves = parent!!)
                 }
-                // modules
+
+                //---------//
+                // modules //
+                //---------//
                 column(size(h = Animatable(from = Bounding, to = 0.px, swapIf = !data.extended))) {
                     background(color = Color.RGB(38, 38, 38, 0.7f))
                     scissors()
@@ -189,11 +203,13 @@ object ClickGUI: Module(
             }
         }
 
-        // search bar
-        block(constrain(y = 80.percent, w = 25.percent, h = 5.percent), color = `gray 38`, radius = 10.radii()) {
-            textInput(placeholder = "Search") { str ->
+        //------------//
+        // search bar //
+        //------------//
+        block(constrain(y = 80.percent, w = 25.percent, h = 5.percent), color = `gray 38`, radius = 10.radius()) {
+            textInput(placeholder = "Search") { (str) ->
                 moduleElements.loop { (module, element) ->
-                    element.enabled = module.name.contains(str, true) // do we want to add an option for search bar to also find setting names
+                    element.enabled = module.name.contains(str, true)
                 }
                 this@UI.redraw()
             }
@@ -204,24 +220,20 @@ object ClickGUI: Module(
             draggable(button = 1)
         }
 
-        openAnim(0.5.seconds, Animations.EaseOutQuint)
-        closeAnim(0.5.seconds, Animations.EaseInBack)
-
-        // for fun icl
-        if (!warned) {
-            uiBranchWarning()
-        }
+        lifetimeAnimations(duration = 0.5.seconds, Animations.EaseOutQuint, Animations.EaseInBack)
+        if (!warned) uiBranchWarning()
     }
 
     private fun ElementDSL.module(module: Module) = column(size(h = Animatable(from = 32.px, to = Bounding))) {
-        // used to lazily load setting elements, as they're not visible until clicked and most of them go unsee n
+        // used to lazily load setting elements, as they're not visible until clicked and most of them go unseen
         var loaded = false
+
         val color = Color.Animated(from = `gray 26`, to = this@ClickGUI.color, swapIf = module.enabled)
         block(
             size(240.px, 32.px),
             color = color
         ) {
-            hoverInfo(description = module.description)
+            hoverInformation(description = module.description)
             hoverEffect(0.1.seconds)
             text(
                 text = module.name,
@@ -235,7 +247,15 @@ object ClickGUI: Module(
                 // load settings if haven't yet
                 if (!loaded) {
                     loaded = true
-                    module.settings.loop { if (!it.hidden) it.apply { this@column.createElement() } }
+                    module.settings.loop {
+                        if (!it.hidden && it is Setting.Renders) {
+                            it.apply {
+                                val drawableScope = ElementScope(it.Drawable())
+                                drawableScope.hoverInformation(it.description)
+                                this@column.create(drawableScope).create()
+                            }
+                        }
+                    }
                     redraw()
                 }
                 parent()!!.height.animate(0.25.seconds, Animations.EaseOutQuint); true
@@ -243,84 +263,43 @@ object ClickGUI: Module(
         }
     }
 
-    // todo: move out and cleanup
-    fun ElementDSL.openAnim(
-        duration: Float,
-        animation: Animations,
-    ) {
-        onCreation {
-            // test
-            AnimationOperation(Animation(duration, animation)) {
-                element.alpha = it
-                element.scale = it
-            }.add()
-        }
-    }
-
-    // todo: move out and cleanup
-    fun ElementDSL.closeAnim(duration: Float, animation: Animations) {
-        onRemove {
-            UIScreen.closeAnimHandler = ui.window as UIScreen
-            // test
-            AnimationOperation(Animation(duration, animation).onFinish {
-                UIScreen.closeAnimHandler = null
-            }) {
-                element.alpha = 1f - it
-                element.scale = 1f - it
-            }.add()
-        }
-    }
-
-    fun ElementDSL.hoverInfo(description: String) {
+    fun ElementDSL.hoverInformation(description: String) {
         if (description.isEmpty()) return
 
         var popup: Popup? = null
-        onHover(1.seconds) {
+
+        onHover(duration = 1.seconds) {
             if (popup != null) return@onHover
+
             val x = if (element.x >= ui.main.width / 2f) (element.x - 5).px.alignRight else (element.x + element.width + 5).px
             val y = (element.y + 5).px
-            popup = popup(at(x, y)) {
+
+            popup = popup(constrain(x, y, Bounding, Bounding), smooth = true) {
                 block(
                     constraints = constrain(0.px, 0.px, Bounding + 10.px, 30.px),
                     color = `gray 38`,
-                    radius = 5.radii()
+                    radius = 5.radius()
                 ) {
                     outline(this@ClickGUI.color, 2.px)
-                    text(text = description)
+                    text(description, pos = at(x = 6.px))
                 }
-                element.alphaAnim = Animatable(0.px, 1.px).apply { animate(0.25.seconds) }
             }
         }
         onMouseExit {
             popup?.let {
-                it.element.alphaAnim?.animate(0.25.seconds, Animations.Linear)?.onFinish {
-                    it.closePopup()
-                    popup = null
-                }
+                it.closePopup()
+                popup = null
             }
         }
     }
 
-    fun ElementDSL.onHover(duration: Float, block: () -> Unit) {
-        onMouseEnter {
-            val start = System.nanoTime()
-            operation {
-                if (System.nanoTime() - start >= duration) {
-                    block()
-                    return@operation true
-                }
-                !element.isInside(ui.mx, ui.my) || !element.renders
-            }
-        }
-    }
 
     // for ui branch warning
-
     private fun ElementDSL.uiBranchWarning() {
-        popup(copies()) {
+        popup(copies(), smooth = true) {
             column(size(Bounding + 50.px, Bounding + 10.px), padding = 5.px) {
                 // background
-                block(copies(), color = `gray 38`, radius = 10.radii()).outline(this@ClickGUI.color, thickness = 3.px)
+                block(copies(), color = `gray 38`, radius = 10.radius()).outline(this@ClickGUI.color, thickness = 3.px)
 
                 divider(15.px)
                 text("WARNING", size = 30.px)
@@ -329,11 +308,11 @@ object ClickGUI: Module(
                 text("If you downloaded this from GitHub Actions, ensure you don't download from the ui branch accidentally.", size = 20.px)
 
                 divider(10.px)
-                block(size(Bounding + 30.px, Bounding + 10.px), this@ClickGUI.color, radius = 5.radii()) {
+                block(size(Bounding + 30.px, Bounding + 10.px), this@ClickGUI.color, radius = 5.radius()) {
                     text("I understand", size = 25.px)
                     hoverEffect(0.1.seconds)
                     onClick {
-                        closePopup(smooth = true)
+                        closePopup()
                         warned = true; true
                     }
                 }
