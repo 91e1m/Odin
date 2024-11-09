@@ -6,7 +6,9 @@ import com.github.stivais.ui.color.Color
 import com.github.stivais.ui.constraints.*
 import com.github.stivais.ui.constraints.positions.Linked
 import com.github.stivais.ui.elements.impl.TextScope
+import com.github.stivais.ui.elements.scope.BlockScope
 import com.github.stivais.ui.elements.scope.ElementDSL
+import com.github.stivais.ui.events.Event
 import com.github.stivais.ui.renderer.Font
 import com.github.stivais.ui.transforms.alpha
 import com.github.stivais.ui.transforms.scale
@@ -30,9 +32,10 @@ fun ElementDSL.outline(
     constraints: Constraints,
     color: Color,
     thickness: Measurement = 1.px,
-    radius: FloatArray? = null
+    radius: FloatArray? = null,
+    block: BlockScope.() -> Unit = {}
 ) {
-    block(constraints, Color.TRANSPARENT, color, thickness, radius)
+    block(constraints, Color.TRANSPARENT, color, thickness, radius, block)
 }
 
 /**
@@ -107,11 +110,15 @@ fun ElementDSL.lifetimeAnimations(
 }
 
 fun ElementDSL.textInput(
-    text: String = "",
+    default: String = "",
     placeholder: String = "",
-    constraints: Positions? = null,
+    pos: Positions? = null,
     size: Size = 50.percent,
     maxWidth: Size? = null,
     censored: Boolean = false,
     onTextChange: (event: TextInput.TextChanged) -> Unit
-) = create(TextScope(TextInput(text, placeholder, constraints, size, maxWidth, censored, onTextChange = onTextChange)))
+) = create(TextScope(TextInput(default, placeholder, pos, size, maxWidth, censored, onTextChange = onTextChange)))
+
+fun ElementDSL.passEvent(event: Event, to: ElementDSL) {
+    ui.eventManager.dispatchToAll(event, to.element)
+}

@@ -58,6 +58,8 @@ interface Color {
 
         constructor(hsb: FloatArray, alpha: Float = 1f) : this(hsb[0], hsb[1], hsb[2], alpha)
 
+        constructor(other: HSB) : this(other.hue, other.saturation, other.brightness, other.alpha)
+
         var hue = hue
             set(value) {
                 field = value
@@ -82,6 +84,7 @@ interface Color {
                 needsUpdate = true
             }
 
+        @Transient
         private var needsUpdate: Boolean = true
 
         override var rgba: Int = 0
@@ -93,6 +96,26 @@ interface Color {
                 }
                 return field
             }
+            set(value) {
+                if (field != value) {
+                    field = value
+                    val hsb = FloatArray(3)
+                    JColor.RGBtoHSB(value.red, value.blue, value.green, hsb)
+                    hue = hsb[0]
+                    saturation = hsb[1]
+                    brightness = hsb[2]
+                    alpha = value.alpha / 255f
+                }
+            }
+
+
+        override fun equals(other: Any?): Boolean {
+            return other is Color && other.rgba == this.rgba
+        }
+
+        override fun hashCode(): Int {
+            return rgba.hashCode()
+        }
     }
 
     /**

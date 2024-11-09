@@ -31,11 +31,13 @@ object BPSDisplay : Module(
         ::roundNumber
     ).setting("Displays the BPS on screen.")
 
+    private var bps = 0.0
+        get() = field.coerceIn(0.0, 20.0)
+
     private var startTime = 0L
     private var isBreaking = false
     private var blocksBroken = 0
     private var lastBrokenBlock = 0L
-    private var bps = 0.0
 
     @SubscribeEvent
     fun onPacket(event: PacketSentEvent) {

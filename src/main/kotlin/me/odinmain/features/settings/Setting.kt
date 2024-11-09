@@ -127,9 +127,9 @@ abstract class Setting<T> (
              */
             var elementWidth: Pixel = 240.px
 
-            inline fun ElementDSL.onValueChanged(crossinline block: () -> Unit) {
+            inline fun ElementDSL.onValueChanged(crossinline block: (ValueUpdated) -> Unit) {
                 element.registerEvent(ValueUpdated) {
-                    block()
+                    block(this)
                     redraw()
                     false
                 }
@@ -144,7 +144,9 @@ abstract class Setting<T> (
 
         private var visible = visibilityDependency?.invoke() ?: true
 
-        private var lastValue: T = value
+//        private var lastValue: T = value
+
+        private var lastValue: Int = value.hashCode()
 
         private var alphaAnimation = Transforms.Alpha.Animated(to = 0f, from = 1f)
 
@@ -163,8 +165,9 @@ abstract class Setting<T> (
                 alphaAnimation.animate(0.25.seconds, Animations.EaseInOutQuint)
                 redraw = true
             }
-            if (lastValue != value) {
-                lastValue = value
+            val hashCode = value.hashCode()
+            if (lastValue != hashCode) {
+                lastValue = hashCode
                 ui.eventManager.dispatchToAll(Renders.ValueUpdated, this)
             }
         }

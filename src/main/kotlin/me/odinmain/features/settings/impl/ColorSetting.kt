@@ -1,23 +1,35 @@
 package me.odinmain.features.settings.impl
 
 import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.colorFrom
-import com.github.stivais.ui.color.toHSB
-import com.github.stivais.ui.color.toHexString
+import com.github.stivais.ui.color.*
 import com.github.stivais.ui.constraints.*
 import com.github.stivais.ui.constraints.measurements.Animatable
 import com.github.stivais.ui.constraints.sizes.AspectRatio
+import com.github.stivais.ui.constraints.sizes.Bounding
+import com.github.stivais.ui.constraints.sizes.Copying
+import com.github.stivais.ui.elements.impl.Popup
+import com.github.stivais.ui.elements.impl.popup
 import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.elements.scope.slider
+import com.github.stivais.ui.elements.scope.LayoutScope
+import com.github.stivais.ui.elements.scope.draggable
+import com.github.stivais.ui.elements.scope.hoverEffect
 import com.github.stivais.ui.renderer.Gradient.LeftToRight
 import com.github.stivais.ui.renderer.Gradient.TopToBottom
+import com.github.stivais.ui.transforms.Transforms
 import com.github.stivais.ui.utils.radius
 import com.github.stivais.ui.utils.seconds
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
+import me.odinmain.features.impl.render.ClickGUI.favoriteColors
+import me.odinmain.features.impl.render.ClickGUI.`gray 38`
 import me.odinmain.features.settings.Saving
 import me.odinmain.features.settings.Setting
+import me.odinmain.features.settings.Setting.Renders.Companion.onValueChanged
+import me.odinmain.features.settings.Setting.Renders.Companion.setting
+import me.odinmain.utils.ui.outline
+import me.odinmain.utils.ui.passEvent
+import me.odinmain.utils.ui.textInput
+import java.awt.Color.HSBtoRGB
 
 class ColorSetting(
     name: String,
@@ -25,11 +37,16 @@ class ColorSetting(
     val allowAlpha: Boolean = true,
     description: String = "",
     hidden: Boolean = false
-) : Setting<Color.HSB>(name, hidden, description), Saving {
+) : Setting<Color.HSB>(name, hidden, description), Saving, Setting.Renders {
 
     override val default: Color.HSB = color.toHSB()
 
     override var value: Color.HSB = default
+
+    /**
+     * Reference for the color picker popup.
+     */
+    private var popup: Popup? = null
 
     override fun read(element: JsonElement?) {
         if (element?.asString?.startsWith("#") == true) {
@@ -43,143 +60,363 @@ class ColorSetting(
         return JsonPrimitive(value.toHexString())
     }
 
-//    override fun ElementScope<*>.createElement() {
-//        val size = Animatable(from = 40.px, to = Bounding)
-//        val alpha = Animatable(0.px, 1.px)
-//
-//        val hueMax = color { HSBtoRGB(value.hue, 1f, 1f) }
-//
-//        settingOld(size) {
-//            group(constrain(0.px, 0.px, w = Copying, h = 40.px)) {
-//                text(
-//                    text = name,
-//                    pos = at(x = 6.px),
-//                    size = 40.percent
-//                )
-//                // color preview + dropdown button thingy
-//                block(
-//                    constraints = constrain(x = -(6.px), w = 30.px, h = 50.percent),
-//                    color = transparentFix,
-//                    radius = 5.radius()
-//                ) {
-//                    outline(color = color { value.withAlpha(255).rgba })
-//                    block(
-//                        constraints = indent(2),
-//                        color = value,
-//                        radius = 4.radius()
-//                    )
-//                    onClick {
-//                        size.animate(0.25.seconds, Animations.EaseInOutQuint)
-//                        alpha.animate(0.25.seconds, Animations.Linear)
-//                        this@settingOld.redraw()
-//                        true
-//                    }
-//                }
-//            }
-//
-//            column(constraints = constrain(0.px, 40.px, w = Copying)) {
-//                element.alphaAnim = alpha
-//                text("wip, need popup color picker", size = 10.px)
-//                saturationAndBrightness(hueMax)
-//                divider(10.px)
-//                hueSlider()
-//                if (allowAlpha) {
-//                    modMessage("a")
-//                    divider(10.px)
-//                    alphaSlider(hueMax)
-//                }
-//            }
-//        }
-//    }
 
-    private fun ElementDSL.saturationAndBrightness(hueMax: Color) {
-        val x = Animatable.Raw((228f * value.saturation).coerceIn(8f, 220f))
-        val y = Animatable.Raw((170f * (1f - value.brightness)).coerceIn(8f, 220f))
+    override fun ElementDSL.create() = setting(40.px) {
+        text(
+            name,
+            pos = at(x = 6.px),
+            size = 40.percent
+        )
+        outline(
+            constrain(-(6.px), w = 30.px, h = 50.percent),
+            color { value.withAlpha(255).rgba },
+            thickness = 1.px,
+            radius = 5.radius()
+        ) {
+            block(
+                constraints = indent(2),
+                color = value,
+                radius = 4.radius()
+            )
+            onClick {
+                popup?.closePopup()
+                popup = colorPicker()
+                true
+            }
+            onValueChanged { event ->
+                popup?.let {
+                    passEvent(event, it)
+                }
+            }
+        }
+    }
+
+    private fun ElementDSL.colorPicker() = popup(smooth = true) {
+        val mainColor = color { HSBtoRGB(value.hue, value.saturation, 1f) }
+        val colorHue = color { HSBtoRGB(value.hue, 1f, 1f) }
+
+        // used to consume event
+        onClick { false; }
+        draggable(button = 1)
+
         block(
-            size(w = 95.percent, h = AspectRatio(228f / 170f)),
-            colors = Color.WHITE to hueMax,
-            radius = 5.radius(),
+            copies(),
+            color = Color.RGB(22, 22, 22),
+            radius = 10.radius()
+        ) {
+            outline(
+                mainColor,
+                thickness = 1.px
+            )
+        }
+
+        // padding in constructor doesn't work, ill fix it in rewrite
+        column(size(Bounding, Bounding)) {
+            divider(10.px)
+            //------------------------//
+            // title and close button //
+            //------------------------//
+            section(20.px) {
+                text(
+                    name,
+                    pos = at(5.percent),
+                    size = 75.percent
+                )
+                image(
+                    "/assets/odinmain/clickgui/close_icon.svg",
+                    constrain(x = 95.percent.alignRight, w = AspectRatio(1f), h = 80.percent)
+                ) {
+                    onClick {
+                        closePopup()
+                        popup = null
+                        true
+                    }
+                }
+            }
+            divider(7.5.px)
+
+            row(at(x = 12.5.px)) {
+                saturationBrightness(mainColor, colorHue)
+                divider(7.5.px)
+                hueSlider(mainColor)
+                if (allowAlpha) {
+                    divider(7.5.px)
+                    alphaSlider(mainColor, colorHue)
+                }
+                divider(7.5.px)
+            }
+            divider(7.5.px)
+            hexTextInput(mainColor)
+            divider(7.5.px)
+            favoriteColors(mainColor)
+
+            divider(12.5.px)
+        }
+    }
+
+    private fun ElementDSL.saturationBrightness(mainColor: Color, colorHue: Color) = outline(
+        size(w = 175.px, h = 175.px),
+        mainColor,
+        thickness = 1.px,
+        radius = 7.5.radius()
+    ) {
+        block(
+            constraints = indent(2),
+            colors = Color.WHITE to colorHue,
+            radius = 6.radius(),
             gradient = LeftToRight
         ) {
             block(
                 constraints = copies(),
-                // temp fix until I figure out why nanovg doesn't render anything under 0.2f alpha
                 colors = transparentFix to Color.BLACK,
-                radius = 5.radius(),
+                radius = 6.radius(),
                 gradient = TopToBottom
-            ) {
-                block(
-                    constraints = constrain(x.center, y.center, w = 10.px, h = 10.px),
-                    color = value,
-                    radius = 5.radius()
-                ).outline(Color.WHITE)
-            }
-            slider(
-                accepts = true,
-                onChange = { px, py, isClick ->
-                    val toX = (px * element.width).coerceIn(8f, element.width - 8f)
-                    val toY = (py * element.height).coerceIn(8f, element.height - 8f)
-                    if (isClick) {
-                        x.animate(to = toX, 0.1.seconds, Animations.EaseOutQuad)
-                        y.animate(to = toY, 0.1.seconds, Animations.EaseOutQuad)
-                    } else {
-                        x.to(toX)
-                        y.to(toY)
-                        redraw()
-                    }
-                    value.saturation = px
-                    value.brightness = 1f - py
-                }
             )
         }
+
+        val pointerX = Animatable.Raw((175 * value.saturation).coerceIn(8f, 167f))
+        val pointerY = Animatable.Raw((175 * (1f - value.brightness)).coerceIn(8f, 167f))
+
+        block(
+            constrain(pointerX.center, pointerY.center, 10.px, 10.px),
+            color = value,
+            radius = 5.radius()
+        ).outline(Color.WHITE)
+
+        pointerHandler(
+            pointerX,
+            pointerY,
+            apply = { px, py ->
+                value.saturation = px
+                value.brightness = 1f - py
+            },
+            block = {
+                value.saturation to 1f - value.brightness
+            }
+        )
     }
 
-    private fun ElementDSL.hueSlider() {
-        val x = Animatable.Raw((228f * value.hue).coerceIn(8f, 220f))
+    private fun ElementDSL.hueSlider(mainColor: Color) = outline(
+        size(w = 16.px, h = 175.px),
+        mainColor,
+        thickness = 1.px,
+        radius = 6.radius()
+    ) {
         image(
             "/assets/odinmain/clickgui/HueGradient.png",
-            size(w = 95.percent, h = 15.px),
+            constraints = indent(2),
             radius = 5.radius()
+        )
+
+        val pointerY = Animatable.Raw((175 * (1f - value.hue)).coerceIn(8f, 167f))
+
+        block(
+            constrain(y = pointerY.center, w = 10.px, h = 10.px),
+            color = value,
+            radius = 5.radius()
+        ).outline(Color.WHITE)
+
+        pointerHandler(
+            pointerX = null,
+            pointerY,
+            apply = { _, py ->
+                value.hue = 1f - py
+            },
+            block = {
+                0f to 1f - value.hue
+            }
+        )
+    }
+
+    private fun ElementDSL.alphaSlider(mainColor: Color, colorHue: Color) = outline(
+        size(w = 16.px, h = 175.px),
+        mainColor,
+        thickness = 1.px,
+        radius = 6.radius()
+    ) {
+        block(
+            constraints = indent(2),
+            colors = colorHue to transparentFix,
+            gradient = TopToBottom,
+            radius = 5.radius(),
+        )
+
+        val pointerY = Animatable.Raw((175 * value.alpha).coerceIn(8f, 167f))
+
+        block(
+            constrain(y = pointerY.center, w = 10.px, h = 10.px),
+            color = value,
+            radius = 5.radius()
+        ).outline(Color.WHITE)
+
+        pointerHandler(
+            pointerX = null,
+            pointerY,
+            apply = { _, py ->
+                value.alpha = 1f - py
+            },
+            block = {
+                0f to 1f - value.alpha
+            }
+        )
+    }
+
+    /**
+     * Creates a text input that lets you edit this color via hexadecimal input
+     */
+    private fun LayoutScope.hexTextInput(mainColor: Color) = section(30.px) {
+        text(
+            "Hex",
+            pos = at(x = 5.percent),
+        )
+        block(
+            constrain(x = 95.5.percent.alignRight, w = 70.percent, h = 90.percent),
+            color = `gray 38`,
+            radius = 6.radius()
         ) {
-            block(
-                constraints = constrain(x.center, w = 10.px, h = 10.px),
-                color = value,
-                radius = 5.radius()
-            ).outline(Color.WHITE)
-            slider(
-                accepts = true,
-                onChange = { px, _, isClick ->
-                    val to = (px * element.width).coerceIn(8f, 220f)
-                    if (isClick) x.animate(to = to, 0.75.seconds, Animations.EaseOutQuint) else x.to(to)
-                    value.hue = px
-                    redraw()
-                }
+            hoverEffect(0.25.seconds)
+            outline(
+                mainColor,
+                thickness = 1.px
             )
+            val input = textInput(
+                default = "#FFFFFF",
+//              default = color.toHexString(),
+                pos = at(x = 5.percent),
+                onTextChange = { event ->
+                    val str = event.string
+                    val hexLength = if (allowAlpha) 9 else 7 // extra 2 for allowAlpha for alpha values (crazy)
+                    // add extra checks so it will be valid hexadecimal
+                    if (str.length > hexLength || (str.isNotEmpty() && !str.startsWith("#"))) {
+                        event.cancel()
+                    }
+                }
+            ).apply {
+                onValueChanged {
+                    // change hex if value changed externally
+                }
+                onFocusLost {
+                    // change color here and like ensure hex correct
+                }
+            }
+            onClick {
+                input.focusThis()
+                true
+            }
         }
     }
 
-    private fun ElementDSL.alphaSlider(hueMax: Color) {
-        val x = Animatable.Raw((228f * value.alpha).coerceIn(8f, 220f))
+    /**
+     * Lets you favorite colors, so you can reuse them for other settings
+     */
+    private fun LayoutScope.favoriteColors(mainColor: Color) = row(constrain(x = 12.5.px, w = Copying)) {
         block(
-            size(w = 95.percent, h = 15.px),
-            colors = transparentFix to hueMax,
-            radius = 5.radius(),
-            gradient = LeftToRight
+            size(w = 12.5.percent, h = AspectRatio(1f)),
+            color = `gray 38`,
+            radius = 6.radius()
         ) {
-            block(
-                constraints = constrain(x.center, w = 10.px, h = 10.px),
-                color = value,
-                radius = 5.radius()
-            ).outline(Color.WHITE)
-            slider(
-                accepts = true,
-                onChange = { px, _, isClick ->
-                    val to = (px * element.width).coerceIn(8f, 220f)
-                    if (isClick) x.animate(to = to, 0.75.seconds, Animations.EaseOutQuint) else x.to(to)
-                    value.alpha = px
-                    redraw()
+            hoverEffect(0.25.seconds)
+            outline(mainColor)
+
+            // for "pulse" effect
+            var clicked = false
+            val transform = Transforms.Scale.Animated(from = 1f, to = 0.9f,)
+            image(
+                "/assets/odinmain/clickgui/heart_icon.svg",
+                constraints = size(70.percent, 70.percent),
+            ).transform(transform)
+
+            onClick {
+                if (!favoriteColors.contains(value)) {
+                    if (favoriteColors.size == 5) favoriteColors.removeLast()
+                    favoriteColors.add(0, Color.HSB(value))
                 }
-            )
+                clicked = true
+                transform.animate(0.1.seconds, Animations.EaseInQuint)
+                true
+            }
+            onRelease {
+                if (clicked) {
+                    transform.animate(0.15.seconds, Animations.EaseInQuint)
+                    clicked = false
+                }
+            }
+        }
+
+        repeat(5) { index ->
+            divider(3.percent)
+
+            block(
+                size(w = 12.5.percent, h = AspectRatio(1f)),
+                color = Color.RGB(22, 22, 22),
+                radius = 6.radius()
+            ) {
+                outline(
+                    color { (favoriteColors.getOrNull(index) ?: `gray 38`).rgba }
+                )
+                block(
+                    indent(2),
+                    color { (favoriteColors.getOrNull(index) ?: Color.TRANSPARENT).rgba },
+                    radius = 5.radius()
+                )
+                onClick {
+                    val favoriteColor = favoriteColors.getOrNull(index)
+                    if (favoriteColor != null) {
+                        value.hue = favoriteColor.hue
+                        value.saturation = favoriteColor.saturation
+                        value.brightness = favoriteColor.brightness
+                        if (allowAlpha) value.alpha = favoriteColor.alpha
+                    }
+                    true
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Utility for making sliders
+     */
+    private inline fun ElementDSL.pointerHandler(
+        pointerX: Animatable.Raw?,
+        pointerY: Animatable.Raw?,
+        crossinline apply: (px: Float, py: Float) -> Unit,
+        crossinline block: () -> Pair<Float, Float>
+    ) {
+        var first = false
+        var dragging = false
+
+        onClick {
+            val (px, py) = element.getMousePosPercent()
+            apply(px, py)
+            first = true
+            dragging = true
+            true
+        }
+        onMouseMove {
+            if (dragging) {
+                val (px, py) = element.getMousePosPercent()
+                apply(px, py)
+            }
+            dragging
+        }
+        onRelease {
+            dragging = false
+        }
+
+        onValueChanged {
+            val (x, y) = block()
+
+            val toX = (x * element.width).coerceIn(8f, element.width - 8f)
+            val toY = (y * element.height).coerceIn(8f, element.height - 8f)
+            if (first || !dragging) {
+                pointerX?.animate(toX, 0.1.seconds, Animations.EaseOutQuad)
+                pointerY?.animate(toY, 0.1.seconds, Animations.EaseOutQuad)
+            } else {
+                pointerX?.to(toX)
+                pointerY?.to(toY)
+            }
+            redraw()
         }
     }
 

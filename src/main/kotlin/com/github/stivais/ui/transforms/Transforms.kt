@@ -52,7 +52,7 @@ fun interface Transforms {
             constructor(
                 from: Float,
                 to: Float,
-                centered: Boolean
+                centered: Boolean = true
             ) : this(Animating.Swapping.Impl(from, to), centered)
 
             override fun apply(element: Element, renderer: Renderer) {

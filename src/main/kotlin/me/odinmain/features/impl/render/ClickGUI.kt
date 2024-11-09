@@ -99,6 +99,11 @@ object ClickGUI: Module(
     private var warned by BooleanSetting("ui.branch.warning", false).hide()
     var lastSeenVersion by StringSetting("last.seen.version", "1.0.0").hide()
 
+    /**
+     * @see ColorSetting.favoriteColors
+     */
+    val favoriteColors by ListSetting("favorite.colors", mutableListOf<Color.HSB>())
+
     var firstTimeOnVersion = false
 
     init {

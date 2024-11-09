@@ -89,7 +89,7 @@ class UI(val renderer: Renderer = NVGRenderer(OdinMain.wrapper)) {
             lastUpdate = System.nanoTime()
             val sb = StringBuilder()
             sb.append("elements: ${getStats(main, false)}, elements rendering: ${getStats(main, true)},")
-            sb.append("frame-time avg: ${((frameTime / frames) / 1_000_000.0).round(4)}s")
+            sb.append("frame-time avg: ${((frameTime / frames) / 1_000_000.0).round(4)}ms")
             performance = sb.toString()
             frames = 0
             frameTime = 0

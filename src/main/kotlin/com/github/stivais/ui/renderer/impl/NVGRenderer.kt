@@ -212,7 +212,7 @@ class NVGRenderer(private val wrapper: Lwjgl3Wrapper) : Renderer, Lwjgl3Wrapper 
         nvgFontFaceId(vg, getIDFromFont(font))
         color(color)
         nvgFillColor(vg, nvgColor)
-        nvgText(vg, x, y, text)
+        nvgText(vg, x, y + 1f, text)
         nvgClosePath(vg)
     }
 

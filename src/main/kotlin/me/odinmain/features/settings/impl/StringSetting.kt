@@ -57,8 +57,8 @@ class StringSetting(
         }
     }
 
-    override fun ElementDSL.create() = setting(70.px) {
-        column(size(w = Copying), padding = 5.px) {
+    override fun ElementDSL.create() = setting(60.px) {
+        column(size(w = Copying)) {
             section(size = 20.px) {
                 text(
                     name,
@@ -68,6 +68,8 @@ class StringSetting(
             }
             val thickness = Animatable(from = 1.px, to = 1.75.px)
             val hover = Color.Animated(from = `gray 38`, to = color { `gray 38`.rgba.brighter(1.2) })
+
+            divider(3.px)
 
             block(
                 size(w = 95.percent, h = 30.px),
@@ -86,8 +88,8 @@ class StringSetting(
 
                 val maxWidth = if (censors) 80.percent else 95.percent
                 val input = textInput(
-                    text = value,
-                    constraints = at(x = 6.px),
+                    default = value,
+                    pos = at(x = 6.px),
                     size = 50.percent,
                     maxWidth = maxWidth,
                     censored = censors,

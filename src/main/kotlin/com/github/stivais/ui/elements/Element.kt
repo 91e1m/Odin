@@ -215,7 +215,7 @@ abstract class Element(constraints: Constraints?, var color: Color? = null) {
         if (element == null) return logger.warning("Tried removing element, but it doesn't exist")
         if (elements.isNullOrEmpty()) return logger.warning("Tried calling \"removeElement\" while there is no elements")
         ui.eventManager.remove(element)
-        element.accept(Lifetime.Uninitialized)
+        ui.eventManager.dispatchToAll(Lifetime.Uninitialized, element)
         elements!!.remove(element)
         element.parent = null
     }
@@ -273,5 +273,10 @@ abstract class Element(constraints: Constraints?, var color: Color? = null) {
 
     fun screenHeight(): Float {
         return height * scale
+    }
+
+    // i dont like name
+    fun getMousePosPercent(): Pair<Float, Float> {
+        return ((ui.mx - x) / width).coerceIn(0f, 1f) to ((ui.my - y) / height).coerceIn(0f, 1f)
     }
 }
