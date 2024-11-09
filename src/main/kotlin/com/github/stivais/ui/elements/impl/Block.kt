@@ -52,17 +52,13 @@ open class Block(
     ) : Block(constraints, color1, null, null, radius) {
         override fun draw() {
             if (radius == null) {
-                if (color!!.alpha != 0) {
-                    renderer.gradientRect(x, y, width, height, color!!.get(this), color2.get(this), gradient)
-                }
+                renderer.gradientRect(x, y, width, height, color!!.get(this), color2.get(this), gradient)
                 if (outlineColor != null && outlineColor!!.alpha != 0) {
                     val thickness = outlineThickness!!.get(this, Type.W)
                     renderer.hollowRect(x, y, width, height, thickness, outlineColor!!.get(this), 0f)
                 }
             } else {
-                if (color!!.alpha != 0) {
-                    renderer.gradientRect(x, y, width, height, color!!.rgba, color2.rgba, gradient, radius[0], radius[1], radius[2], radius[3])
-                }
+                renderer.gradientRect(x, y, width, height, color!!.rgba, color2.rgba, gradient, radius[0], radius[1], radius[2], radius[3])
                 if (outlineColor != null && outlineColor!!.alpha != 0) {
                     val thickness = outlineThickness!!.get(this, Type.W)
                     renderer.hollowRect(x, y, width, height, thickness, outlineColor!!.rgba, radius[0], radius[1], radius[2], radius[3])

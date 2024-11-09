@@ -9,6 +9,7 @@ import com.github.stivais.ui.color.green
 import com.github.stivais.ui.color.red
 import com.github.stivais.ui.constraints.*
 import com.github.stivais.ui.constraints.measurements.Animatable
+import com.github.stivais.ui.constraints.positions.Linked
 import com.github.stivais.ui.constraints.sizes.Bounding
 import com.github.stivais.ui.elements.impl.Popup
 import com.github.stivais.ui.elements.impl.popup
@@ -16,6 +17,7 @@ import com.github.stivais.ui.elements.scope.ElementDSL
 import com.github.stivais.ui.elements.scope.ElementScope
 import com.github.stivais.ui.elements.scope.draggable
 import com.github.stivais.ui.elements.scope.hoverEffect
+import com.github.stivais.ui.renderer.Gradient
 import com.github.stivais.ui.utils.animate
 import com.github.stivais.ui.utils.loop
 import com.github.stivais.ui.utils.radius
@@ -45,6 +47,7 @@ import me.odinmain.utils.ui.textInput
 import net.minecraft.event.ClickEvent
 import net.minecraft.util.ChatComponentText
 import org.lwjgl.input.Keyboard
+import kotlin.math.sign
 
 @AlwaysActive
 object ClickGUI: Module(
@@ -162,11 +165,8 @@ object ClickGUI: Module(
                     data.x = element.x
                     data.y = element.y
                 }
-//                onScroll { (amount) ->
-//                    child(1)!!.scroll(amount, 0.1.seconds, Animations.Linear); true
-//                }
                 // panel header
-                block(
+                val header = block(
                     size(240.px, 40.px),
                     color = `gray 26`,
                     radius = radius(tl = 5, tr = 5)
@@ -185,13 +185,15 @@ object ClickGUI: Module(
                 //---------//
                 // modules //
                 //---------//
-                column(size(h = Animatable(from = Bounding, to = 0.px, swapIf = !data.extended))) {
-                    background(color = Color.RGB(38, 38, 38, 0.7f))
-                    scissors()
-                    for (module in ModuleManager.modules.sortedByDescending { ui.renderer.textWidth(it.name, 16f) }) {
-                        if (module.category != panel) continue
-                        val it = module(module)
-                        moduleElements.add(module to it)
+                val scrollable = scrollable {
+                    column(size(h = Animatable(from = Bounding, to = 0.px, swapIf = !data.extended))) {
+                        background(color = Color.RGB(38, 38, 38, 0.7f))
+//                        scissors()
+                        for (module in ModuleManager.modules.sortedByDescending { ui.renderer.textWidth(it.name, 16f) }) {
+                            if (module.category != panel) continue
+                            val it = module(module)
+                            moduleElements.add(module to it)
+                        }
                     }
                 }
                 // tail
@@ -200,6 +202,18 @@ object ClickGUI: Module(
                     color = `gray 26`,
                     radius = radius(br = 5, bl = 5)
                 )
+
+                // used for smoother transition between header and modules when they're scrolled
+                block(
+                    constrain(y = Linked(header.element), w = 240.px, h = 3.px),
+                    colors = `gray 26` to Color.TRANSPARENT,
+                    gradient = Gradient.TopToBottom
+                )
+
+                onScroll { (amount) ->
+                    scrollable.scroll(amount.sign * 30f)
+                    true
+                }
             }
         }
 

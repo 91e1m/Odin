@@ -7,7 +7,7 @@ class Animation(
     var to: Float = 1f,
 ) {
 
-    private var time: Long = System.nanoTime()
+    var time: Long = System.nanoTime()
 
     private var onFinish: (() -> Unit)? = null
 

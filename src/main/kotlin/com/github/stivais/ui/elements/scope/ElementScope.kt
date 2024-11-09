@@ -4,6 +4,7 @@ import com.github.stivais.ui.UI
 import com.github.stivais.ui.color.Color
 import com.github.stivais.ui.constraints.*
 import com.github.stivais.ui.constraints.measurements.Undefined
+import com.github.stivais.ui.constraints.sizes.Bounding
 import com.github.stivais.ui.constraints.sizes.Copying
 import com.github.stivais.ui.elements.Element
 import com.github.stivais.ui.elements.impl.*
@@ -94,7 +95,7 @@ open class ElementScope<E: Element>(val element: E) {
     fun block(
         constraints: Constraints? = null,
         colors: Pair<Color, Color>,
-        radius: FloatArray?,
+        radius: FloatArray? = null,
         gradient: Gradient,
         block: BlockScope.() -> Unit = {}
     ) = create(BlockScope(Block.Gradient(constraints, colors.first, colors.second, radius, gradient)), block)
@@ -134,6 +135,12 @@ open class ElementScope<E: Element>(val element: E) {
         radius: FloatArray = 0.radius(),
         dsl: ElementScope<ImageElement>.() -> Unit = {}
     ) = create(ElementScope(ImageElement(Image(image), constraints, radius)), dsl)
+
+    @ScopeDSL
+    fun scrollable(
+        constraints: Constraints = size(Bounding, Bounding),
+        dsl: ScrollableScope.() -> Unit
+    ) = create(ScrollableScope(Scrollable(constraints)), dsl)
 
     fun onCreation(block: () -> Unit) {
         element.registerEvent(Lifetime.Initialized) {

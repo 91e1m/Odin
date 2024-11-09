@@ -8,6 +8,7 @@ import com.github.stivais.ui.constraints.sizes.Copying
 import com.github.stivais.ui.elements.Element
 import com.github.stivais.ui.elements.scope.ElementScope
 import com.github.stivais.ui.elements.scope.ScopeDSL
+import com.github.stivais.ui.events.Mouse
 import com.github.stivais.ui.utils.loop
 import com.github.stivais.ui.utils.replaceUndefined
 
@@ -24,7 +25,13 @@ class Column(
             width += paddingX
             height += paddingY
         }
+        Mouse.Scrolled(0f).register { (amount) ->
+            start += amount / 12
+            true
+        }
     }
+
+    var start = 0f
 
     override fun onElementAdded(element: Element) {
         val constraints = element.constraints
@@ -39,7 +46,7 @@ class Column(
         val px = paddingX?.get(this, Type.W) ?: 0f
         val py = paddingY?.get(this, Type.H) ?: 0f
 
-        var increment = 0f
+        var increment = start
         elements?.loop {
             if (positionedElements.contains(it)) {
                 it.position(x + px, y + py + increment)

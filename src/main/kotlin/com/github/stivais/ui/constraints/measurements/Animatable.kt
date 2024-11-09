@@ -99,7 +99,15 @@ class Animatable(
         private var animation: Animation? = null
 
         fun animate(to: Float, duration: Float, type: Animations = Animations.Linear) {
-            if (duration != 0f) animation = Animation(duration, type, animation?.get() ?: current, to) else current = to
+            if (animation == null) {
+                if (duration == 0f) current = to else animation = Animation(duration, type, current, to)
+            } else {
+                // continues current animation
+                animation!!.from = animation!!.get()
+                animation!!.to = to
+                animation!!.time = System.nanoTime()
+                animation!!.duration = duration
+            }
         }
 
         fun to(to: Float) = if (animation != null) animation!!.to = to else current = to
