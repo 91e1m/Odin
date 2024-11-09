@@ -62,7 +62,7 @@ object ClickGUI: Module(
 
     val enableNotification by BooleanSetting("Enable chat notifications", true, description = "Sends a message when you toggle a module with a keybind")
 
-    val forceHypixel by BooleanSetting("Force Hypixel", false, description = "Forces the hypixel check to be on (Mainly used for development. Only use if you know what you're doing)")
+    val forceHypixel by BooleanSetting("Force Hypixel", false, description = "Forces the Hypixel check to be on (Mainly used for development. Only use if you know what you're doing)")
 
     // make useful someday
     val updateMessage by SelectorSetting("Update Message", arrayListOf("Full", "Beta", "None")).hide()
@@ -74,13 +74,11 @@ object ClickGUI: Module(
     private val devSizeX by NumberSetting("Dev Size X", 1f, -1f, 3f, 0.1, description = "X scale of the dev size.").withDependency { DevPlayers.isDev && devSize }
     private val devSizeY by NumberSetting("Dev Size Y", 1f, -1f, 3f, 0.1, description = "Y scale of the dev size.").withDependency { DevPlayers.isDev && devSize }
     private val devSizeZ by NumberSetting("Dev Size Z", 1f, -1f, 3f, 0.1, description = "Z scale of the dev size.").withDependency { DevPlayers.isDev && devSize }
-    private var showHidden by DropdownSetting("Show Hidden", false).withDependency { DevPlayers.isDev }
 
     // todo: censored option for textinput, max length, etc idk man its so much work
-    private val passcode: String by StringSetting("Passcode", "odin", description = "Passcode for dev features.").withDependency { DevPlayers.isDev && showHidden }
+    private val passcode by StringSetting("Passcode", "odin", description = "Passcode for dev features.").withDependency { DevPlayers.isDev }.censors()
 
     val reset by ActionSetting("Send Dev Data") {
-        showHidden = false
         scope.launch {
             modMessage(sendDataToServer(body = "${mc.thePlayer.name}, [${devWingsColor.red},${devWingsColor.green},${devWingsColor.blue}], [$devSizeX,$devSizeY,$devSizeZ], $devWings, $passcode", "https://tj4yzotqjuanubvfcrfo7h5qlq0opcyk.lambda-url.eu-north-1.on.aws/"))
             DevPlayers.updateDevs()
@@ -140,6 +138,7 @@ object ClickGUI: Module(
     }
 
     override fun onKeybind() {
+        open(clickGUI())
         this.toggle()
     }
 
