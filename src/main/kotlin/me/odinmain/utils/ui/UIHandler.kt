@@ -3,6 +3,7 @@ package me.odinmain.utils.ui
 import com.github.stivais.ui.UI
 import com.github.stivais.ui.Window
 import me.odinmain.OdinMain.mc
+import me.odinmain.events.impl.GuiEvent
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
@@ -51,5 +52,18 @@ class UIHandler(private val ui: UI, private val onlyRender: Boolean = false) : W
         ui.render()
     }
 
-    // todo: add mouse click and other stuff
+    @SubscribeEvent
+    fun onMouseClick(event: GuiEvent.GuiMouseClickEvent) {
+        ui.eventManager.onMouseClick(event.button)
+    }
+
+    @SubscribeEvent
+    fun onMouseReleased(event: GuiEvent.GuiMouseReleaseEvent) {
+        ui.eventManager.onMouseRelease(event.button)
+    }
+
+    @SubscribeEvent
+    fun onKeyboardClick(event: GuiEvent.GuiKeyPressEvent) {
+        ui.eventManager.onKeyType(event.char)
+    }
 }

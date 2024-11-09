@@ -26,6 +26,14 @@ public class MixinGuiScreen {
         }
     }
 
+    @Inject(method = "handleMouseInput", at = @At(value = "INVOKE", target = "net/minecraft/client/gui/GuiScreen.mouseReleased(III)V"), cancellable = true)
+    private void onReleaseMouseInput(CallbackInfo ci){
+        if (!Mouse.getEventButtonState()) {
+            if (postAndCatch(new GuiEvent.GuiMouseReleaseEvent(odin$gui, Mouse.getEventButton(), Mouse.getEventX(), Mouse.getEventY())))
+                ci.cancel();
+        }
+    }
+
     @Inject(method = "handleKeyboardInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiScreen;keyTyped(CI)V"), cancellable = true)
     private void onHandleKeyboardInput(CallbackInfo ci) {
         if (Keyboard.getEventKeyState()) {
