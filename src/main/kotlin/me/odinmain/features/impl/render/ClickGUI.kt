@@ -157,6 +157,8 @@ object ClickGUI: Module(
         val moduleElements = arrayListOf<Pair<Module, ElementDSL>>()
         onRemove {
             Config.save()
+            HUDManager.UI?.close()
+            HUDManager.setupHUDs()
         }
         for (panel in Category.entries) {
             val data = panelSettings[panel] ?: throw NullPointerException("This should never happen")
@@ -165,6 +167,9 @@ object ClickGUI: Module(
                     data.x = element.x
                     data.y = element.y
                 }
+
+                val height = Animatable(from = Bounding, to = 0.px, swapIf = !data.extended)
+
                 // panel header
                 val header = block(
                     size(240.px, 40.px),
@@ -176,7 +181,7 @@ object ClickGUI: Module(
                         size = 20.px
                     )
                     onClick(1) {
-                        sibling()!!.height.animate(0.5.seconds, Animations.EaseInOutQuint)
+                        height.animate(0.5.seconds, Animations.EaseInOutQuint)
                         data.extended = !data.extended; true
                     }
                     draggable(moves = parent!!)
@@ -186,9 +191,8 @@ object ClickGUI: Module(
                 // modules //
                 //---------//
                 val scrollable = scrollable {
-                    column(size(h = Animatable(from = Bounding, to = 0.px, swapIf = !data.extended))) {
+                    column(size(h = height)) {
                         background(color = Color.RGB(38, 38, 38, 0.7f))
-//                        scissors()
                         for (module in ModuleManager.modules.sortedByDescending { ui.renderer.textWidth(it.name, 16f) }) {
                             if (module.category != panel) continue
                             val it = module(module)

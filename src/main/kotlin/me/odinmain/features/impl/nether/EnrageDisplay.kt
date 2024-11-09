@@ -25,10 +25,7 @@ object EnrageDisplay : Module(
     // test
     private val animation = Transforms.Alpha.Animated(from = 0f, to = 1f)
 
-    private val HUD = TextHUD(
-        "Enrage Display",
-        "Displays the duration on screen."
-    ) { color, font ->
+    private val HUD = TextHUD("Enrage Display") { color, font ->
         if (!preview) transform(animation)
         text(
             "Enrage ",
@@ -36,7 +33,10 @@ object EnrageDisplay : Module(
             font = font,
             size = 30.px
         ) and text({ getDisplay(if (preview) 120 else enrageTimer) }, font = font)
-    }
+    }.registerSettings(
+        ::unit,
+        ::showUnit
+    ).setting("Displays the duration on screen.")
 
     private fun getDisplay(ticks: Int): String {
         return when (unit) {

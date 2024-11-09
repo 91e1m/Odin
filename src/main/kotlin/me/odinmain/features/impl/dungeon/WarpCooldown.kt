@@ -12,10 +12,7 @@ object WarpCooldown : Module (
 ) {
     private val showUnit by BooleanSetting("Show unit", default = false, description = "Displays unit of time for the cooldown.").hide()
 
-    private val HUD by TextHUD(
-        "Warp HUD",
-        description = "Displays the cooldown."
-    ) { color, font ->
+    private val HUD by TextHUD("Warp HUD") { color, font ->
         if (preview) {
             text(
                 "Warp ",
@@ -32,7 +29,9 @@ object WarpCooldown : Module (
                 size = 30.px
             ) and text({ "${(lastUpdate - System.currentTimeMillis()) / 1000}${if (showUnit) "s" else ""}" }, font = font)
         }
-    }
+    }.registerSettings(
+        ::showUnit
+    ).setting("Displays the cooldown.")
 
     private var lastUpdate: Long = System.currentTimeMillis()
 

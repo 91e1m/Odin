@@ -11,9 +11,9 @@ import com.github.stivais.ui.renderer.Font
 import com.github.stivais.ui.transforms.alpha
 import com.github.stivais.ui.transforms.scale
 import me.odinmain.features.Module
+import me.odinmain.features.huds.HUD
 import me.odinmain.features.huds.HUDScope
 import me.odinmain.features.settings.impl.ColorSetting
-import me.odinmain.features.settings.impl.HUDSetting
 import me.odinmain.features.settings.impl.SelectorSetting
 import me.odinmain.utils.ui.elements.TextInput
 
@@ -43,26 +43,24 @@ fun ElementDSL.outline(
 @Suppress("FunctionName")
 inline fun Module.TextHUD(
     name: String,
-    description: String,
     color: Color = Color.RGB(50, 150, 220),
     crossinline block: HUDScope.(Color, Font) -> Unit
-): HUDSetting {
+): HUD {
     val colorSetting = ColorSetting("Color", color, allowAlpha = false)
     val fontSetting = SelectorSetting("Font", arrayListOf("Regular", "Minecraft"))
     // copy of selector setting, where each entry is a different font representing it
-
-    val hudSetting = HUD(name, description) {
+    val hud = HUD(name) {
         val font = when (fontSetting.value) {
             1 -> mcFont
             else -> regularFont
         }
         block(colorSetting.value, font)
     }
-    hudSetting.value.registerSettings(
+    hud.registerSettings(
         colorSetting,
         fontSetting,
     )
-    return hudSetting
+    return hud
 }
 
 /**

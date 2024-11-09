@@ -9,6 +9,8 @@ import com.github.stivais.ui.transforms.Transforms
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting
 import me.odinmain.features.settings.impl.NumberSetting
+import kotlin.reflect.KProperty0
+import kotlin.reflect.jvm.isAccessible
 
 class HUD(
     val name: String,
@@ -35,6 +37,21 @@ class HUD(
             }
             this.settings.add(setting)
         }
+    }
+
+    fun registerSettings(vararg settings: KProperty0<*>): HUD {
+        for (property in settings) {
+            property.isAccessible = true
+            val delegate = property.getDelegate() as? Setting<*> ?: throw IllegalArgumentException(
+                "Invalid Arguments. Must use a delegated setting as the argument for the HUD setting."
+            )
+            if (module.settings.contains(delegate)) {
+                module.settings.remove(delegate)
+            }
+            this.settings.add(delegate)
+            delegate.hide()
+        }
+        return this
     }
 
     inner class Representation(

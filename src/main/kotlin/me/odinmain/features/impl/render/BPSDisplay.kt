@@ -1,8 +1,6 @@
 package me.odinmain.features.impl.render
 
-import com.github.stivais.ui.color.Color
 import com.github.stivais.ui.constraints.px
-import com.github.stivais.ui.constraints.size
 import me.odinmain.events.impl.PacketSentEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
@@ -22,21 +20,16 @@ object BPSDisplay : Module(
 ) {
     private val roundNumber by BooleanSetting("Round number", true, description = "If the number should be rounded.")
 
-    private val hud by TextHUD("HUD", description = "Display") { color, font ->
+    private val hud by TextHUD("HUD") { color, font ->
         text(
             text = "BPS ",
             font = font,
             color = color,
             size = 30.px
         ) and text({ if (roundNumber) bps.roundToInt() else bps.round(1) }, font = font)
-    }
-
-    val hudTest = me.odinmain.features.huds.HUD(
-        "HUD",
-        this
-    ) {
-        block(size(100.px, 100.px), Color.RED)
-    }
+    }.registerSettings(
+        ::roundNumber
+    ).setting("Displays the BPS on screen.")
 
     private var startTime = 0L
     private var isBreaking = false

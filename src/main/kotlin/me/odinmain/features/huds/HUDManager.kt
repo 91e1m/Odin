@@ -31,7 +31,7 @@ object HUDManager {
 
     val HUDs = arrayListOf<HUD>()
 
-    private var UI: UIHandler? = null
+    var UI: UIHandler? = null
 
     private var selected: Popup? = null
     private var snapLineX: Float = -1f

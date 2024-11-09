@@ -1,6 +1,7 @@
 package me.odinmain.features
 
 import me.odinmain.OdinMain
+import me.odinmain.features.huds.HUD
 import me.odinmain.features.huds.HUDScope
 import me.odinmain.features.impl.render.ClickGUI
 import me.odinmain.features.settings.AlwaysActive
@@ -187,19 +188,23 @@ abstract class Module(
         Executor(delay, profileName, shouldRun, func).register()
     }
 
-    @Suppress("FunctionName")
     fun HUD(
         name: String,
-        description: String,
         block: HUDScope.() -> Unit
-    ): HUDSetting {
-        val setting = HUDSetting(
+    ): HUD {
+        return HUD(
             name,
-            me.odinmain.features.huds.HUD(name, this, block),
+            this,
+            block
+        )
+    }
+
+    fun HUD.setting(description: String): HUDSetting {
+        return HUDSetting(
+            name,
+            this,
             description
         )
-        register(setting)
-        return setting
     }
 
     // this is unused
