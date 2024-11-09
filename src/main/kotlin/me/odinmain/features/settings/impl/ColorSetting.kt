@@ -60,7 +60,6 @@ class ColorSetting(
         return JsonPrimitive(value.toHexString())
     }
 
-
     override fun ElementDSL.create() = setting(40.px) {
         text(
             name,
@@ -280,23 +279,35 @@ class ColorSetting(
                 thickness = 1.px
             )
             val input = textInput(
-                default = "#FFFFFF",
-//              default = color.toHexString(),
+                default = value.toHexString(),
                 pos = at(x = 5.percent),
                 onTextChange = { event ->
                     val str = event.string
-                    val hexLength = if (allowAlpha) 9 else 7 // extra 2 for allowAlpha for alpha values (crazy)
-                    // add extra checks so it will be valid hexadecimal
-                    if (str.length > hexLength || (str.isNotEmpty() && !str.startsWith("#"))) {
+                    val hexLength = if (allowAlpha) 9 else 7
+                    // Validate hex input
+                    if (str.length > hexLength || (str.isNotEmpty() && !str.startsWith("#")) || (str.length > 1 && !str.substring(1).all { it.isDigit() || it.lowercaseChar() in 'a'..'f' })) {
                         event.cancel()
+                    } else if (str.length == hexLength) {
+                        try {
+                            // Parse and update color from hex immediately
+                            val newColor = colorFrom(str).toHSB()
+                            value.hue = newColor.hue
+                            value.saturation = newColor.saturation
+                            value.brightness = newColor.brightness
+                            if (allowAlpha) {
+                                value.alpha = newColor.alpha
+                            }
+                        } catch (_: Exception) {}
                     }
                 }
             ).apply {
                 onValueChanged {
-                    // change hex if value changed externally
+                    this@apply.string = value.toHexString()
                 }
                 onFocusLost {
-                    // change color here and like ensure hex correct
+                    if (this@apply.string.length != (if (allowAlpha) 9 else 7)) {
+                        this@apply.string = value.toHexString()
+                    }
                 }
             }
             onClick {
