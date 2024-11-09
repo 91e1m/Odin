@@ -258,8 +258,8 @@ class TextInput(
     }
 
     private fun insertText(str: String) {
-        val start = min(caretPosition, selectionStart)
-        val end = max(caretPosition, selectionStart)
+        val start = min(caretPosition, selectionStart).coerceIn(0, text.length)
+        val end = max(caretPosition, selectionStart).coerceIn(0, text.length)
 
         text = text.substring(0, start) + str + text.substring(end)
         caretPosition = start + str.length
