@@ -5,6 +5,7 @@ import me.odinmain.OdinMain.mc
 import net.minecraft.client.gui.GuiScreen
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
 import org.lwjgl.opengl.Display
 
@@ -12,6 +13,7 @@ open class UIScreen(val ui: UI) : GuiScreen(), Window {
 
     private var previousWidth: Int = 0
     private var previousHeight: Int = 0
+    private val pressedKeys = mutableSetOf<Int>()
 
     fun close() {
         if (mc.currentScreen == null) {
@@ -52,6 +54,13 @@ open class UIScreen(val ui: UI) : GuiScreen(), Window {
             }
             ui.render()
         }
+
+        for (key in pressedKeys.toList()) {
+            if (!Keyboard.isKeyDown(key)) {
+                ui.eventManager.onKeyReleased(key)
+                pressedKeys.remove(key)
+            }
+        }
     }
 
     override fun handleMouseInput() {
@@ -72,17 +81,12 @@ open class UIScreen(val ui: UI) : GuiScreen(), Window {
 
     override fun keyTyped(typedChar: Char, keyCode: Int) {
         if (ui.eventManager.onKeyType(typedChar)) return
-        if (ui.eventManager.onKeycodePressed(keyCode)) return
+        if (ui.eventManager.onKeycodePressed(keyCode)) {
+            pressedKeys.add(keyCode)
+            return
+        }
         super.keyTyped(typedChar, keyCode)
     }
-
-//    no key released because 1.8.9 doesn't have it and I don't want to manually recreate it
-//    override fun keyReleased(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
-//        if (ui.eventManager?.onKeyReleased(keyCode) == true) {
-//            return true
-//        }
-//        return super.keyPressed(keyCode, scanCode, modifiers)
-//    }
 
     override fun doesGuiPauseGame(): Boolean = false
 
