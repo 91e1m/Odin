@@ -12,8 +12,8 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.util.ChatAllowedCharacters
 import org.lwjgl.input.Keyboard
-import kotlin.math.min
 import kotlin.math.max
+import kotlin.math.min
 
 class TextInput(
     text: String,
@@ -68,6 +68,7 @@ class TextInput(
     private val history by lazy { mutableListOf(text) }
     private var lastClickTime = 0L
     private var clickCount = 0
+    private var scrollOfset = 0f
 
     init {
         TextChanged().register {
@@ -127,7 +128,7 @@ class TextInput(
         if (selectionStart != caretPosition) {
             val startX = x + min(selectionX, caretX)
             val endX = x + max(selectionX, caretX)
-            renderer.rect(startX, y + 2, endX - startX, height - 2, Color.RGB(0, 120, 215, 0.4f).rgba)
+            renderer.rect(startX - scrollOfset, y + 2, endX - startX, height - 2, Color.RGB(0, 120, 215, 0.4f).rgba)
         }
 
         // Draw text or placeholder
@@ -139,13 +140,13 @@ class TextInput(
                 renderer.text(censorCache!!, x, y, height, color!!.get(this))
             }
             else -> {
-                renderer.text(text, x, y, height, color!!.get(this))
+                renderer.text(text, x - scrollOfset, y, height, color!!.get(this))
             }
         }
 
         // Draw cursor
         if (ui.isFocused(this) && cursorVisible) {
-            renderer.rect(x + caretX, y + 2, 1f, height - 4, Color.WHITE.rgba)
+            renderer.rect(x + caretX - scrollOfset, y + 2, 1f, height - 4, Color.WHITE.rgba)
         }
     }
 
@@ -157,18 +158,29 @@ class TextInput(
         }
     }
 
-//    override fun preSize() {
-//        super.preSize()
-//        if (widthLimit != null) {
-//            val maxW = widthLimit.get(this, Type.W)
-//            if (width >= maxW) {
-//                offs = width - maxW
-//                width = maxW
-//            } else {
-//                offs = 0f
-//            }
-//        }
-//    }
+    override fun preSize() {
+        super.preSize()
+        if (widthLimit != null) {
+            val maxW = widthLimit.get(this, Type.W)
+            if (width >= maxW) {
+                scrollOfset = width - maxW
+                width = maxW
+            } else {
+                scrollOfset = 0f
+            }
+        }
+        // Adjust scroll offset to work both left and right
+        val textWidth = getTextWidth()
+        if (textWidth > width) {
+            if (caretX - scrollOfset < 0) {
+                scrollOfset = caretX
+            } else if (caretX - scrollOfset > width) {
+                scrollOfset = caretX - width
+            }
+        } else {
+            scrollOfset = 0f
+        }
+    }
 
     private fun updateCaret() {
         val visibleText = if (censorInput) censorCache!! else text
@@ -190,7 +202,7 @@ class TextInput(
 
         for (i in visibleText.indices) {
             val charWidth = renderer.textWidth(visibleText[i].toString(), height)
-            if (currentWidth + (charWidth / 2) > mouseX) break
+            if ((currentWidth - scrollOfset) + (charWidth / 2) > mouseX) break
             currentWidth += charWidth
             newPos = i + 1
         }
@@ -239,13 +251,9 @@ class TextInput(
     }
 
     private fun handleMouseClick() {
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastClickTime < 500) {
-            clickCount++
-        } else {
-            clickCount = 1
-        }
-        lastClickTime = currentTime
+        val current = System.currentTimeMillis()
+        if (current - lastClickTime < 300) clickCount++ else clickCount = 1
+        lastClickTime = current
 
         when (clickCount) {
             1 -> {
