@@ -3,7 +3,8 @@ package me.odinmain.features.impl.floor7.p3
 import com.github.stivais.ui.color.Color
 import com.github.stivais.ui.color.withAlpha
 import io.github.moulberry.notenoughupdates.NEUApi
-import me.odinmain.events.impl.*
+import me.odinmain.events.impl.GuiEvent
+import me.odinmain.events.impl.TerminalEvent
 import me.odinmain.features.Module
 import me.odinmain.features.impl.floor7.p3.termGUI.CustomTermGui
 import me.odinmain.features.settings.AlwaysActive
@@ -21,7 +22,9 @@ import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.entity.player.InventoryPlayer
 import net.minecraft.inventory.ContainerChest
 import net.minecraft.inventory.ContainerPlayer
-import net.minecraft.item.*
+import net.minecraft.item.EnumDyeColor
+import net.minecraft.item.Item
+import net.minecraft.item.ItemStack
 import net.minecraft.network.play.server.S2FPacketSetSlot
 import net.minecraftforge.event.entity.player.ItemTooltipEvent
 import net.minecraftforge.fml.common.Loader
@@ -60,6 +63,7 @@ object TerminalSolver : Module(
 
     val customGuiColor by ColorSetting("Custom Gui Color", Color.MINECRAFT_DARK_GRAY.withAlpha(.8f), true, description = "Color of the custom gui.").withDependency { renderType == 3 && showColors }
     val textColor by ColorSetting("Text Color", Color.RGB(220, 220, 220), true, description = "Text color of the terminal solver.").withDependency { showColors }
+
     val panesColor by ColorSetting("Panes Color", Color.RGB(0, 170, 170), true, description = "Color of the panes terminal solver.").withDependency { showColors }
 
     val rubixColor1 by ColorSetting("Rubix Color 1", Color.RGB(0, 170, 170), true, description = "Color of the rubix terminal solver for 1 click.").withDependency { showColors }
