@@ -1,6 +1,6 @@
 package me.odinclient.features.impl.floor7.p3
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinclient.utils.skyblock.PlayerUtils.rightClick
 import me.odinmain.events.impl.BlockChangeEvent
 import me.odinmain.events.impl.RealServerTick
@@ -14,7 +14,9 @@ import me.odinmain.utils.render.RenderUtils.renderY
 import me.odinmain.utils.render.RenderUtils.renderZ
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.*
-import me.odinmain.utils.skyblock.dungeon.*
+import me.odinmain.utils.skyblock.dungeon.DungeonClass
+import me.odinmain.utils.skyblock.dungeon.DungeonUtils
+import me.odinmain.utils.skyblock.dungeon.M7Phases
 import net.minecraft.client.gui.inventory.GuiChest
 import net.minecraft.client.settings.KeyBinding
 import net.minecraft.entity.item.EntityArmorStand

@@ -1,16 +1,24 @@
 package me.odinmain.features.impl.floor7
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.utils.addVec
 import me.odinmain.utils.render.RenderUtils.renderVec
 import me.odinmain.utils.render.Renderer
-import java.util.Locale
+import java.util.*
 
 object DragonHealth{
     fun renderHP() {
         DragonCheck.dragonEntityList.forEach {
-            if (it.health > 0)
-                Renderer.drawStringInWorld(colorHealth(it.health), it.renderVec.addVec(y = 1.5), Color.WHITE, depth = false, scale = 0.2f, shadow = true)
+            if (it.health > 0) {
+                Renderer.drawStringInWorld(
+                    colorHealth(it.health),
+                    it.renderVec.addVec(y = 1.5),
+                    Color.WHITE,
+                    depth = false,
+                    scale = 0.2f,
+                    shadow = true
+                )
+            }
         }
     }
 

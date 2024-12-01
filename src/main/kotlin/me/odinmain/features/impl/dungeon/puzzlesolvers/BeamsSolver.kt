@@ -1,23 +1,30 @@
 package me.odinmain.features.impl.dungeon.puzzlesolvers
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.withAlpha
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import me.odinmain.OdinMain.logger
 import me.odinmain.events.impl.BlockChangeEvent
 import me.odinmain.events.impl.RoomEnterEvent
 import me.odinmain.features.impl.dungeon.puzzlesolvers.PuzzleSolvers.beamsAlpha
-import me.odinmain.utils.*
+import me.odinmain.utils.addVec
+import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.getRealCoords
 import me.odinmain.utils.skyblock.getBlockIdAt
+import me.odinmain.utils.toAABB
+import me.odinmain.utils.toVec3
+import me.odinmain.utils.ui.Colors
 import net.minecraft.init.Blocks
 import net.minecraft.util.BlockPos
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 object BeamsSolver {
     private var scanned = false
@@ -60,8 +67,14 @@ object BeamsSolver {
             Renderer.drawStyledBox(positions.key.toAABB(), color, depth = true, style = PuzzleSolvers.beamStyle)
             Renderer.drawStyledBox(positions.value.first.toAABB(), color, depth = true, style = PuzzleSolvers.beamStyle)
 
-            if (PuzzleSolvers.beamsTracer)
-                Renderer.draw3DLine(listOf(positions.key.toVec3().addVec(0.5, 0.5, 0.5), positions.value.first.toVec3().addVec(0.5, 0.5, 0.5)), color = color.withAlpha(beamsAlpha), depth = false, lineWidth = 2f)
+            if (PuzzleSolvers.beamsTracer) {
+                Renderer.draw3DLine(
+                    listOf(
+                        positions.key.toVec3().addVec(0.5, 0.5, 0.5),
+                        positions.value.first.toVec3().addVec(0.5, 0.5, 0.5)
+                    ), color = color.withAlpha(beamsAlpha), depth = false, lineWidth = 2f
+                )
+            }
         }
     }
 
@@ -70,7 +83,8 @@ object BeamsSolver {
         currentLanternPairs.forEach { (key, value) ->
             if (event.pos.equalsOneOf(key, value.first) &&
                 event.update.block != Blocks.sea_lantern &&
-                event.old.block == Blocks.sea_lantern) currentLanternPairs.remove(key)
+                event.old.block == Blocks.sea_lantern
+            ) currentLanternPairs.remove(key)
         }
     }
 
@@ -80,7 +94,14 @@ object BeamsSolver {
     }
 
     private val colors = listOf(
-        Color.MINECRAFT_GOLD, Color.GREEN, Color.MINECRAFT_LIGHT_PURPLE, Color.MINECRAFT_AQUA, Color.MINECRAFT_YELLOW, Color.MINECRAFT_DARK_RED, Color.WHITE, Color.MINECRAFT_DARK_PURPLE
+        Colors.MINECRAFT_GOLD,
+        Color.GREEN,
+        Colors.MINECRAFT_LIGHT_PURPLE,
+        Colors.MINECRAFT_AQUA,
+        Colors.MINECRAFT_YELLOW,
+        Colors.MINECRAFT_DARK_RED,
+        Color.WHITE,
+        Colors.MINECRAFT_DARK_PURPLE
     )
 }
 

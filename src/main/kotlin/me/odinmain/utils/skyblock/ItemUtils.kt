@@ -1,10 +1,11 @@
 package me.odinmain.utils.skyblock
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.OdinMain.mc
 import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.noControlCodes
 import me.odinmain.utils.render.RenderUtils.bind
+import me.odinmain.utils.ui.Colors
 import net.minecraft.client.entity.EntityPlayerSP
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.client.renderer.RenderHelper
@@ -142,14 +143,14 @@ enum class ItemRarity(
     val color: Color
 ) {
     COMMON("COMMON", "§f", Color.WHITE),
-    UNCOMMON("UNCOMMON", "§2", Color.MINECRAFT_GREEN),
-    RARE("RARE", "§9", Color.MINECRAFT_BLUE),
-    EPIC("EPIC", "§5", Color.MINECRAFT_DARK_PURPLE),
-    LEGENDARY("LEGENDARY", "§6", Color.MINECRAFT_GOLD),
-    MYTHIC("MYTHIC", "§d", Color.MINECRAFT_LIGHT_PURPLE),
-    DIVINE("DIVINE", "§b", Color.MINECRAFT_AQUA),
-    SPECIAL("SPECIAL", "§c", Color.MINECRAFT_RED),
-    VERY_SPECIAL("VERY SPECIAL", "§c", Color.MINECRAFT_DARK_RED);
+    UNCOMMON("UNCOMMON", "§2", Colors.MINECRAFT_GREEN),
+    RARE("RARE", "§9", Colors.MINECRAFT_BLUE),
+    EPIC("EPIC", "§5", Colors.MINECRAFT_DARK_PURPLE),
+    LEGENDARY("LEGENDARY", "§6", Colors.MINECRAFT_GOLD),
+    MYTHIC("MYTHIC", "§d", Colors.MINECRAFT_LIGHT_PURPLE),
+    DIVINE("DIVINE", "§b", Colors.MINECRAFT_AQUA),
+    SPECIAL("SPECIAL", "§c", Colors.MINECRAFT_RED),
+    VERY_SPECIAL("VERY SPECIAL", "§c", Colors.MINECRAFT_DARK_RED);
 }
 
 private val rarityRegex: Regex = Regex("§l(?<rarity>${ItemRarity.entries.joinToString("|") { it.loreName }}) ?(?<type>[A-Z ]+)?(?:§[0-9a-f]§l§ka)?$")

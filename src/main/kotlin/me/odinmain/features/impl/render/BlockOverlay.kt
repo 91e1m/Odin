@@ -1,9 +1,12 @@
 package me.odinmain.features.impl.render
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.ColorSetting
+import me.odinmain.features.settings.impl.NumberSetting
+import me.odinmain.features.settings.impl.SelectorSetting
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.getBlockAt
 import net.minecraft.block.material.Material

@@ -1,11 +1,13 @@
 package me.odinmain.features.impl.dungeon.puzzlesolvers
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import me.odinmain.OdinMain.logger
 import me.odinmain.events.impl.RoomEnterEvent
-import me.odinmain.utils.*
+import me.odinmain.utils.Vec2
+import me.odinmain.utils.add
+import me.odinmain.utils.addVec
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.IceFillFloors
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
@@ -13,7 +15,10 @@ import me.odinmain.utils.skyblock.dungeon.DungeonUtils.getRealCoords
 import me.odinmain.utils.skyblock.dungeon.tiles.Rotations
 import me.odinmain.utils.skyblock.isAir
 import me.odinmain.utils.skyblock.modMessage
-import net.minecraft.util.*
+import me.odinmain.utils.toVec3
+import net.minecraft.util.BlockPos
+import net.minecraft.util.Vec3
+import net.minecraft.util.Vec3i
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 

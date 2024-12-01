@@ -1,22 +1,25 @@
 package me.odinclient.features.impl.render
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.utils.withAlpha
 import me.odinmain.events.impl.RenderEntityModelEvent
-import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.*
-import me.odinmain.utils.*
-import me.odinmain.utils.render.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.ColorSetting
+import me.odinmain.features.settings.impl.NumberSetting
+import me.odinmain.utils.addVec
+import me.odinmain.utils.render.OutlineUtils
+import me.odinmain.utils.render.RenderUtils
 import me.odinmain.utils.render.RenderUtils.renderVec
 import me.odinmain.utils.render.RenderUtils.renderX
 import me.odinmain.utils.render.RenderUtils.renderY
 import me.odinmain.utils.render.RenderUtils.renderZ
+import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.isHolding
 import me.odinmain.utils.skyblock.isLeap
 import me.odinmain.utils.skyblock.isShortbow
+import me.odinmain.utils.ui.Colors
 import net.minecraft.entity.Entity
 import net.minecraft.entity.boss.EntityWither
 import net.minecraft.entity.item.EntityArmorStand
@@ -24,11 +27,16 @@ import net.minecraft.entity.monster.EntityBlaze
 import net.minecraft.entity.projectile.EntityArrow
 import net.minecraft.item.ItemBow
 import net.minecraft.item.ItemEnderPearl
-import net.minecraft.util.*
+import net.minecraft.util.AxisAlignedBB
+import net.minecraft.util.EnumFacing
 import net.minecraft.util.MathHelper.sqrt_double
+import net.minecraft.util.MovingObjectPosition
+import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import kotlin.math.*
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 object Trajectories : Module(
     name = "Trajectories",
@@ -43,7 +51,7 @@ object Trajectories : Module(
     private val width by NumberSetting("Line Width", 1f, 0.1f, 5.0, 0.1f, description = "The width of the line.")
     private val planeSize by NumberSetting("Plane Size", 2f, 0.1f, 5.0, 0.1f, description = "The size of the plane.").withDependency { plane }
     private val boxSize by NumberSetting("Box Size", 0.5f, 0.5f, 3.0f, 0.1f, description = "The size of the box.").withDependency { boxes }
-    private val color by ColorSetting("Color", Color.MINECRAFT_AQUA, true, description = "The color of the trajectory.")
+    private val color by ColorSetting("Color", Colors.MINECRAFT_AQUA, true, description = "The color of the trajectory.")
 
     private var boxRenderQueue: MutableList<AxisAlignedBB> = mutableListOf()
     private var entityRenderQueue = mutableListOf<Entity>()

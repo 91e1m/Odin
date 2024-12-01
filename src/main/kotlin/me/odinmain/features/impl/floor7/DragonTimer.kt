@@ -1,9 +1,9 @@
 package me.odinmain.features.impl.floor7
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.features.impl.floor7.WitherDragons.addUselessDecimal
 import me.odinmain.utils.render.Renderer
-import java.util.Locale
+import java.util.*
 
 object DragonTimer {
 

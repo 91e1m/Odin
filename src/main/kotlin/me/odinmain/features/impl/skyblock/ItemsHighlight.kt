@@ -1,16 +1,21 @@
 package me.odinmain.features.impl.skyblock
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.withAlpha
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.ColorSetting
+import me.odinmain.features.settings.impl.NumberSetting
+import me.odinmain.features.settings.impl.SelectorSetting
 import me.odinmain.utils.containsOneOf
-import me.odinmain.utils.render.*
+import me.odinmain.utils.render.HighlightRenderer
+import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.dungeonItemDrops
 import me.odinmain.utils.skyblock.getRarity
 import me.odinmain.utils.skyblock.lore
 import me.odinmain.utils.skyblock.unformattedName
+import me.odinmain.utils.ui.Colors
 import net.minecraft.entity.item.EntityItem
 
 object ItemsHighlight : Module(
@@ -47,7 +52,7 @@ object ItemsHighlight : Module(
         return when (colorStyle){
             0 -> getRarity(entity.entityItem.lore)?.color ?: Color.WHITE
             1 -> {
-                if (entity.ticksExisted <= 11) Color.MINECRAFT_YELLOW
+                if (entity.ticksExisted <= 11) Colors.MINECRAFT_YELLOW
                 else if (entity.getDistanceToEntity(mc.thePlayer) <= 3.5) Color.GREEN
                 else Color.RED
             }

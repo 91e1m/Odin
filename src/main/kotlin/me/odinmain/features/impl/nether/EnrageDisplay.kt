@@ -1,17 +1,14 @@
 package me.odinmain.features.impl.nether
 
-import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.constraints.px
-import com.github.stivais.ui.transforms.Transforms
-import com.github.stivais.ui.utils.seconds
+import com.github.stivais.aurora.animations.Animation
+import com.github.stivais.aurora.dsl.seconds
+import com.github.stivais.aurora.transforms.impl.Alpha
 import me.odinmain.events.impl.PacketReceivedEvent
 import me.odinmain.events.impl.RealServerTick
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.SelectorSetting
 import me.odinmain.utils.skyblock.skyblockID
-import me.odinmain.utils.ui.TextHUD
-import me.odinmain.utils.ui.and
 import net.minecraft.network.play.server.S29PacketSoundEffect
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
@@ -23,20 +20,20 @@ object EnrageDisplay : Module(
     private val showUnit by BooleanSetting("Show unit", default = false)
 
     // test
-    private val animation = Transforms.Alpha.Animated(from = 0f, to = 1f)
+    private val animation = Alpha.Animated(from = 0f, to = 1f)
 
-    private val HUD = TextHUD("Enrage Display") { color, font ->
-        if (!preview) transform(animation)
-        text(
-            "Enrage ",
-            color = color,
-            font = font,
-            size = 30.px
-        ) and text({ getDisplay(if (preview) 120 else enrageTimer) }, font = font)
-    }.registerSettings(
-        ::unit,
-        ::showUnit
-    ).setting("Displays the duration on screen.")
+//    private val HUD = TextHUD("Enrage Display") { color, font ->
+//        if (!preview) transform(animation)
+//        text(
+//            "Enrage ",
+//            color = color,
+//            font = font,
+//            size = 30.px
+//        ) and text({ getDisplay(if (preview) 120 else enrageTimer) }, font = font)
+//    }.registerSettings(
+//        ::unit,
+//        ::showUnit
+//    ).setting("Displays the duration on screen.")
 
     private fun getDisplay(ticks: Int): String {
         return when (unit) {
@@ -57,7 +54,7 @@ object EnrageDisplay : Module(
                 mc.thePlayer?.getCurrentArmor(2)?.skyblockID == "REAPER_CHESTPLATE"
             ) {
                 enrageTimer = 120
-                animation.animate(0.25.seconds, Animations.EaseOutQuint)
+                animation.animate(0.25.seconds, Animation.Style.EaseOutQuint)
             }
         }
     }
@@ -66,7 +63,7 @@ object EnrageDisplay : Module(
     fun onTick(event: RealServerTick) {
         enrageTimer--
         if (enrageTimer == 0) {
-            animation.animate(0.25.seconds, Animations.EaseOutQuint)
+            animation.animate(0.25.seconds, Animation.Style.EaseOutQuint)
         }
     }
 }

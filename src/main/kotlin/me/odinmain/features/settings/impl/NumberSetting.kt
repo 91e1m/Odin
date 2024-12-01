@@ -1,24 +1,22 @@
+@file:Suppress("always_false")
+
 package me.odinmain.features.settings.impl
 
-
-import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.constraints.at
-import com.github.stivais.ui.constraints.constrain
-import com.github.stivais.ui.constraints.measurements.Animatable
-import com.github.stivais.ui.constraints.percent
-import com.github.stivais.ui.constraints.px
-import com.github.stivais.ui.constraints.sizes.Copying
-import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.elements.scope.hoverEffect
-import com.github.stivais.ui.utils.radius
-import com.github.stivais.ui.utils.seconds
+import com.github.stivais.aurora.animations.Animation
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.constraints.impl.measurements.Animatable
+import com.github.stivais.aurora.constraints.impl.measurements.Pixel
+import com.github.stivais.aurora.constraints.impl.size.Copying
+import com.github.stivais.aurora.dsl.*
+import com.github.stivais.aurora.elements.ElementScope
+import com.github.stivais.aurora.elements.impl.Text.Companion.string
+import com.github.stivais.aurora.utils.multiply
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
 import me.odinmain.features.impl.render.ClickGUI
 import me.odinmain.features.impl.render.ClickGUI.`gray 26`
 import me.odinmain.features.settings.Saving
 import me.odinmain.features.settings.Setting
-import me.odinmain.features.settings.Setting.Renders.Companion.elementWidth
 import me.odinmain.features.settings.Setting.Renders.Companion.onValueChanged
 import me.odinmain.features.settings.Setting.Renders.Companion.setting
 import me.odinmain.utils.round
@@ -26,7 +24,7 @@ import kotlin.math.floor
 import kotlin.math.round
 
 /**
- * Setting that lets you pick a value between a range
+ * Setting that lets you pick a value between a range.
  *
  * @param min The minimum a value can be
  * @param max The maximum a value can be
@@ -63,62 +61,63 @@ class NumberSetting<E>(
             return "$number$unit"
         }
 
-    override fun ElementDSL.create() = setting(45.px) {
+    override fun ElementScope<*>.create() = setting(45.px) {
+
+        var shouldAnimate = false
+        val sliderWidth = Animatable.Raw(0f)
+
+        onAdd {
+            this@create.element.size()
+            val to = getPercent() * element.width
+            sliderWidth.to(to)
+        }
+
         text(
             name,
-            pos = at(6.px, 10.px),
+            pos = at(x = Pixel.ZERO),
             size = 35.percent
         )
-        val display = text(
-            text,
-            pos = at(x = -(6.px), y = 10.px),
+        text(
+            string = text,
+            pos = at(x = Pixel.ZERO.alignOpposite),
             size = 35.percent
-        )
-
-        val sliderWidth = Animatable.Raw((((value.toDouble() - min) / (max - min)) * (elementWidth.pixels * 0.95)).toFloat())
-
-        block(
-            constraints = constrain(y = 75.percent, w = 95.percent, h = 20.percent),
-            color = `gray 26`,
-            radius = 4.radius()
         ) {
-            block(
-                constraints = constrain(0.px, 0.px, sliderWidth, Copying),
-                color = ClickGUI.color,
-                radius = 4.radius()
-            ).hoverEffect(handler = this@block)
-
-            var dragging = false
-            // used to animate on only click
-            var first = true
-
-            onClick {
-                first = true
-                dragging = true
-                val percent = ((ui.mx - element.x).coerceIn(0f, element.width) / element.width).round(2).toFloat()
-                set(percent * (max - min) + min)
-                true
-            }
-            onMouseMove {
-                if (dragging) {
-                    val percent = ((ui.mx - element.x).coerceIn(0f, element.width) / element.width).round(2).toFloat()
-                    set(percent * (max - min) + min)
-                }
-                dragging
-            }
-            onRelease {
-                dragging = false
-            }
-
             onValueChanged {
-                val to = ((value.toDouble() - min) / (max - min) * element.width).toFloat()
-                if (first || !dragging) {
-                    first = false
-                    sliderWidth.animate(to = to, 0.75.seconds, Animations.EaseOutQuint)
+                val to = getPercent() * this@create.element.width
+                if (shouldAnimate || !element.pressed) {
+                    shouldAnimate = false
+                    sliderWidth.animate(to = to, 0.75.seconds, Animation.Style.EaseOutQuint)
                 } else {
                     sliderWidth.to(to = to)
                 }
-                display.string = text
+                string = text
+                redraw()
+            }
+        }
+
+        block(
+            constraints = constrain(y = 75.percent, w = Copying, h = 20.percent),
+            color = `gray 26`,
+            radius = 5.radius()
+        ) {
+            val color = Color.Animated(
+                from = ClickGUI.color,
+                to = Color.RGB(ClickGUI.color.rgba.multiply(1.2f))
+            )
+            block(
+                constrain(0.px, 0.px, sliderWidth, Copying),
+                color = color,
+                radius = 5.radius()
+            )
+            onMouseEnterExit {
+                color.animate(0.25.seconds, Animation.Style.Linear)
+            }
+            onClick {
+                shouldAnimate = true
+            }
+            onMouseDrag { percent, _ ->
+                set(percent * (max - min) + min)
+                true
             }
         }
     }
@@ -136,4 +135,6 @@ class NumberSetting<E>(
     fun set(new: Number) {
         value = (round((new.toDouble() / increment)) * increment).coerceIn(min, max) as E
     }
+
+    fun getPercent(): Float = ((value.toDouble() - min) / (max - min)).toFloat()
 }

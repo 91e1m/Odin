@@ -1,10 +1,10 @@
 package me.odinmain.utils.render
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.alpha
-import com.github.stivais.ui.color.blue
-import com.github.stivais.ui.color.green
-import com.github.stivais.ui.color.red
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.alpha
+import com.github.stivais.aurora.utils.blue
+import com.github.stivais.aurora.utils.green
+import com.github.stivais.aurora.utils.red
 import me.odinmain.OdinMain.mc
 import me.odinmain.events.impl.RenderEntityModelEvent
 import net.minecraft.client.renderer.OpenGlHelper

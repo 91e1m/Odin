@@ -1,6 +1,6 @@
 package me.odinmain.utils.skyblock
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.OdinMain.logger
 import me.odinmain.OdinMain.mc
 import me.odinmain.features.impl.floor7.p3.termsim.TermSimGui

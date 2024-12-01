@@ -1,7 +1,7 @@
 package me.odinmain.features.impl.floor7.p3
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.withAlpha
 import io.github.moulberry.notenoughupdates.NEUApi
 import me.odinmain.events.impl.GuiEvent
 import me.odinmain.events.impl.TerminalEvent
@@ -16,6 +16,7 @@ import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.PlayerUtils.windowClick
 import me.odinmain.utils.skyblock.modMessage
 import me.odinmain.utils.skyblock.unformattedName
+import me.odinmain.utils.ui.Colors
 import net.minecraft.client.gui.Gui
 import net.minecraft.client.gui.inventory.GuiChest
 import net.minecraft.client.renderer.GlStateManager
@@ -61,7 +62,7 @@ object TerminalSolver : Module(
     private val showColors by DropdownSetting("Color Settings")
     private val backgroundColor by ColorSetting("Background Color", Color.RGB(45, 45, 45), true, description = "Background color of the terminal solver.").withDependency { renderType == 0 && showColors }
 
-    val customGuiColor by ColorSetting("Custom Gui Color", Color.MINECRAFT_DARK_GRAY.withAlpha(.8f), true, description = "Color of the custom gui.").withDependency { renderType == 3 && showColors }
+    val customGuiColor by ColorSetting("Custom Gui Color", Colors.MINECRAFT_DARK_GRAY.withAlpha(.8f), true, description = "Color of the custom gui.").withDependency { renderType == 3 && showColors }
     val textColor by ColorSetting("Text Color", Color.RGB(220, 220, 220), true, description = "Text color of the terminal solver.").withDependency { showColors }
 
     val panesColor by ColorSetting("Panes Color", Color.RGB(0, 170, 170), true, description = "Color of the panes terminal solver.").withDependency { showColors }
@@ -79,10 +80,10 @@ object TerminalSolver : Module(
 
     val selectColor by ColorSetting("Select Color", Color.RGB(0, 170, 170), true, description = "Color of the select terminal solver.").withDependency { showColors }
 
-    val melodyColumColor by ColorSetting("Melody Column Color", Color.MINECRAFT_DARK_PURPLE.withAlpha(0.75f), true, description = "Color of the colum indicator for melody.").withDependency { showColors && !cancelMelodySolver }
+    val melodyColumColor by ColorSetting("Melody Column Color", Colors.MINECRAFT_DARK_PURPLE.withAlpha(0.75f), true, description = "Color of the colum indicator for melody.").withDependency { showColors && !cancelMelodySolver }
     val melodyRowColor by ColorSetting("Melody Row Color", Color.GREEN.withAlpha(0.75f), true, description = "Color of the row indicator for melody.").withDependency { showColors && !cancelMelodySolver }
-    val melodyPressColumColor by ColorSetting("Melody Press Column Color", Color.MINECRAFT_YELLOW.withAlpha(0.75f), true, description = "Color of the location for pressing for melody.").withDependency { showColors && !cancelMelodySolver }
-    val melodyPressColor by ColorSetting("Melody Press Color", Color.MINECRAFT_AQUA.withAlpha(0.75f), true, description = "Color of the location for pressing for melody.").withDependency { showColors && !cancelMelodySolver }
+    val melodyPressColumColor by ColorSetting("Melody Press Column Color", Colors.MINECRAFT_YELLOW.withAlpha(0.75f), true, description = "Color of the location for pressing for melody.").withDependency { showColors && !cancelMelodySolver }
+    val melodyPressColor by ColorSetting("Melody Press Color", Colors.MINECRAFT_AQUA.withAlpha(0.75f), true, description = "Color of the location for pressing for melody.").withDependency { showColors && !cancelMelodySolver }
     val melodyCorrectRowColor by ColorSetting("Melody Correct Row Color", Color.WHITE.withAlpha(0.75f), true, description = "Color of the whole row for melody.").withDependency { showColors && !cancelMelodySolver }
 
     private val zLevel get() = if (renderType == 1 && currentTerm.equalsOneOf(TerminalTypes.STARTS_WITH, TerminalTypes.SELECT)) 100f else 400f

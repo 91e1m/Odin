@@ -1,6 +1,6 @@
 package me.odinmain.utils.render
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.OdinMain.mc
 import me.odinmain.events.impl.RenderEntityModelEvent
 import me.odinmain.events.impl.RenderOverlayNoCaching

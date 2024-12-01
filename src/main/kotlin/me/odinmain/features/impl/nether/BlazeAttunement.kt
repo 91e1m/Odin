@@ -1,7 +1,7 @@
 package me.odinmain.features.impl.nether
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.withAlpha
 import me.odinmain.events.impl.RenderEntityModelEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
@@ -13,7 +13,9 @@ import me.odinmain.utils.xzDistance
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.entity.Entity
 import net.minecraft.entity.item.EntityArmorStand
-import net.minecraft.entity.monster.*
+import net.minecraft.entity.monster.EntityBlaze
+import net.minecraft.entity.monster.EntityPigZombie
+import net.minecraft.entity.monster.EntitySkeleton
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import kotlin.collections.set
 

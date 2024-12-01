@@ -1,6 +1,9 @@
 package me.odinmain.features.impl.render
 
-import com.github.stivais.ui.color.*
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.blue
+import com.github.stivais.aurora.utils.green
+import com.github.stivais.aurora.utils.red
 import com.google.gson.*
 import kotlinx.coroutines.*
 import me.odinmain.OdinMain.mc

@@ -1,14 +1,17 @@
 package me.odinclient.features.impl.render
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.events.impl.RenderChestEvent
-import me.odinmain.features.Category
 import me.odinmain.features.Module
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.ColorSetting
+import me.odinmain.features.settings.impl.SelectorSetting
 import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.render.Renderer
-import me.odinmain.utils.skyblock.*
+import me.odinmain.utils.skyblock.Island
+import me.odinmain.utils.skyblock.LocationUtils
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
+import me.odinmain.utils.skyblock.getBlockAt
 import me.odinmain.utils.toAABB
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.init.Blocks

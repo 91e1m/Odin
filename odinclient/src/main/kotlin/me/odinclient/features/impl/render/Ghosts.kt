@@ -1,7 +1,6 @@
 package me.odinclient.features.impl.render
 
-import com.github.stivais.ui.color.Color
-import me.odinmain.features.Category
+import com.github.stivais.aurora.color.Color
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.utils.addVec

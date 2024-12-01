@@ -1,20 +1,21 @@
 package me.odinmain.features.settings.impl
 
-import com.github.stivais.ui.constraints.*
-import com.github.stivais.ui.constraints.measurements.Animatable
-import com.github.stivais.ui.constraints.sizes.Bounding
-import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.elements.scope.focuses
-import com.github.stivais.ui.elements.scope.hoverEffect
-import com.github.stivais.ui.utils.animate
-import com.github.stivais.ui.utils.radius
-import com.github.stivais.ui.utils.seconds
+import com.github.stivais.aurora.animations.Animation
+import com.github.stivais.aurora.constraints.impl.measurements.Animatable
+import com.github.stivais.aurora.constraints.impl.measurements.Pixel
+import com.github.stivais.aurora.constraints.impl.size.Bounding
+import com.github.stivais.aurora.dsl.*
+import com.github.stivais.aurora.elements.ElementScope
+import com.github.stivais.aurora.elements.impl.Block.Companion.outline
+import com.github.stivais.aurora.elements.impl.Text.Companion.string
+import com.github.stivais.aurora.elements.impl.popup
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
 import me.odinmain.features.impl.render.ClickGUI
 import me.odinmain.features.impl.render.ClickGUI.`gray 38`
 import me.odinmain.features.settings.Saving
 import me.odinmain.features.settings.Setting
+import me.odinmain.features.settings.Setting.Renders.Companion.onValueChanged
 import me.odinmain.features.settings.Setting.Renders.Companion.setting
 import org.lwjgl.input.Keyboard.*
 import org.lwjgl.input.Mouse
@@ -60,46 +61,60 @@ class KeybindSetting(
         }
     }
 
-    override fun ElementDSL.create() = setting {
+    override fun ElementScope<*>.create() = setting {
         text(
-            text = name,
-            pos = at(x = 6.px),
+            name,
+            pos = at(x = Pixel.ZERO),
             size = 40.percent,
         )
+
+        val outline = Animatable(from = 1.px, to = 2.5.px)
+
         block(
-            constraints = constrain(x = -6.px, w = Bounding + 6.px, h = 70.percent),
+            constraints = constrain(x = Pixel.ZERO.alignOpposite, w = Bounding + 6.px, h = 70.percent),
             color = `gray 38`,
-            radius = radius(5)
+            radius = 5.radius()
         ) {
-            val display = text(
-                text = keyName,
+            outline(
+                color = ClickGUI.color,
+                thickness = outline
             )
-            onFocusedClick { (button) ->
-                value.key = -100 + button
-                ui.unfocus()
-                true
-            }
-            onKeyPressed { (code) ->
-                value.key = when (code) {
-                    KEY_ESCAPE, KEY_BACK -> 0
-                    KEY_NUMPADENTER, KEY_RETURN -> value.key
-                    else -> code
+            hoverEffect(
+                factor = 1.25f
+            )
+            text(
+                string = keyName
+            ) {
+                onValueChanged {
+                    string = keyName
                 }
-                ui.unfocus()
-                true
             }
-            onFocusGain {
-                outlineColor!!.animate(0.25.seconds)
-                outline!!.animate(0.25.seconds)
+            onClick {
+                // creates a popup which consumes any input and closes the popup and sets the keybind
+
+                val popup = popup(copies(), smooth = false) {
+                    onFocusChanged {
+                        outline.animate(0.25.seconds, style = Animation.Style.Linear)
+                    }
+                    onClick(nonSpecific = true) { (button) ->
+                        value.key = -100 + button
+                        ui.unfocus()
+                        closePopup()
+                        true
+                    }
+                    onKeycodePressed { (code) ->
+                        value.key = when (code) {
+                            KEY_ESCAPE, KEY_BACK -> 0
+                            KEY_NUMPADENTER, KEY_RETURN -> value.key
+                            else -> code
+                        }
+                        ui.unfocus()
+                        closePopup()
+                        true
+                    }
+                }
+                ui.focus(popup.element)
             }
-            onFocusLost {
-                display.string = keyName
-                outlineColor!!.animate(0.25.seconds)
-                outline!!.animate(0.25.seconds)
-            }
-            hoverEffect()
-            focuses()
-            outline(color = ClickGUI.color, Animatable(from = 1.px, to = 2.5.px))
         }
     }
 
@@ -114,7 +129,7 @@ class KeybindSetting(
     }
 }
 
-class Keybinding(var key: Int) {
+data class Keybinding(var key: Int) {
 
     /**
      * Intended to active when keybind is pressed.

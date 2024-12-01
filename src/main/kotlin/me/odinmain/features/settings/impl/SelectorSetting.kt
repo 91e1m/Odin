@@ -1,16 +1,18 @@
 package me.odinmain.features.settings.impl
 
-import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.constraints.*
-import com.github.stivais.ui.constraints.measurements.Animatable
-import com.github.stivais.ui.constraints.sizes.Bounding
-import com.github.stivais.ui.constraints.sizes.Copying
-import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.transforms.Transforms
-import com.github.stivais.ui.utils.animate
-import com.github.stivais.ui.utils.radius
-import com.github.stivais.ui.utils.seconds
+import com.github.stivais.aurora.animations.Animation
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.constraints.impl.measurements.Animatable
+import com.github.stivais.aurora.constraints.impl.measurements.Pixel
+import com.github.stivais.aurora.constraints.impl.size.Bounding
+import com.github.stivais.aurora.constraints.impl.size.Copying
+import com.github.stivais.aurora.dsl.*
+import com.github.stivais.aurora.elements.ElementScope
+import com.github.stivais.aurora.elements.Layout.Companion.divider
+import com.github.stivais.aurora.elements.Layout.Companion.section
+import com.github.stivais.aurora.elements.impl.Block.Companion.outline
+import com.github.stivais.aurora.elements.impl.Text.Companion.string
+import com.github.stivais.aurora.transforms.impl.Alpha
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
 import me.odinmain.features.impl.render.ClickGUI
@@ -72,38 +74,36 @@ class SelectorSetting(
         return options.map { it.lowercase() }.indexOf(string.lowercase()).coerceIn(0, options.size - 1)
     }
 
-    override fun ElementDSL.create() = setting(height = Bounding) {
+    override fun ElementScope<*>.create() = setting(height = Bounding) {
         column(size(w = Copying)) {
-            val alpha = Transforms.Alpha.Animated(from = 0f, to = 1f)
-            val height = Animatable(from = 0.px, to = Bounding)
+            val alpha = Alpha.Animated(from = 0f, to = 1f)
+            val height = Animatable(from = Pixel.ZERO, to = Bounding)
             val thickness = Animatable(from = 1.px, to = 1.75.px)
 
             section(40.px) {
                 text(
                     name,
-                    pos = at(x = 6.px),
+                    pos = at(x = Pixel.ZERO),
                     size = 40.percent
                 )
                 block(
-                    constraints = constrain(x = -(6.px), w = Bounding + 6.px, h = 75.percent),
+                    constraints = constrain(x = Pixel.ZERO.alignOpposite, w = Bounding + 6.px, h = 75.percent),
                     color = `gray 38`,
                     radius = 5.radius()
                 ) {
                     outline(ClickGUI.color, thickness = thickness)
 
-                    val text = text(
-                        options[value],
-                        pos = at(x = 6.px)
-                    )
-                    onValueChanged {
-                        text.string = options[value]
+                    text(string = options[value]) {
+                        onValueChanged {
+                            string = options[value]
+                        }
                     }
 
                     onClick {
-                        alpha.animate(0.25.seconds, Animations.EaseInOutQuint)
-                        height.animate(0.25.seconds, Animations.EaseInOutQuint)
-                        thickness.animate(0.25.seconds, Animations.EaseInOutQuint)
-                        this@column.redraw()
+                        alpha.animate(0.25.seconds, Animation.Style.EaseInOutQuint)
+                        height.animate(0.25.seconds, Animation.Style.EaseInOutQuint)
+                        thickness.animate(0.25.seconds, Animation.Style.EaseInOutQuint)
+                        this@setting.redraw()
                         true
                     }
                 }
@@ -112,7 +112,7 @@ class SelectorSetting(
                 transform(alpha)
                 divider(10.px)
 
-                column(size(w = 95.percent)) {
+                column(size(w = Copying)) {
                     block(
                         constraints = copies(),
                         color = `gray 38`,
@@ -125,24 +125,28 @@ class SelectorSetting(
                     }
 
                     for ((index, option) in options.withIndex()) {
+                        val color = Color.Animated(
+                            from = Color.TRANSPARENT,
+                            to = Color.RGB(150, 150, 150, 0.2f)
+                        )
                         block(
                             constraints = size(Copying, h = 32.px),
-                            color = Color.Animated(
-                                from = Color.TRANSPARENT,
-                                to = Color.RGB(150, 150, 150, 0.2f)
-                            ),
+                            color = color,
                             radius = 5.radius()
                         ) {
-                            text(option)
+                            text(
+                                string = option
+                            )
                             onClick {
                                 value = index
-                                alpha.animate(0.25.seconds, Animations.EaseInOutQuint)
-                                height.animate(0.25.seconds, Animations.EaseInOutQuint)
-                                thickness.animate(0.25.seconds, Animations.EaseInOutQuint)
+                                alpha.animate(0.25.seconds, Animation.Style.EaseInOutQuint)
+                                height.animate(0.25.seconds, Animation.Style.EaseInOutQuint)
+                                thickness.animate(0.25.seconds, Animation.Style.EaseInOutQuint)
+                                this@setting.redraw()
                                 true
                             }
                             onMouseEnterExit {
-                                color?.animate(duration = 0.05.seconds)
+                                color.animate(duration = 0.05.seconds, Animation.Style.Linear)
                             }
                         }
                     }

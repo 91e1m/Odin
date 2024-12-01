@@ -1,15 +1,13 @@
 package me.odinmain.features.settings.impl
 
-import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.color
-import com.github.stivais.ui.color.darker
-import com.github.stivais.ui.constraints.*
-import com.github.stivais.ui.constraints.measurements.Animatable
-import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.elements.scope.hoverEffect
-import com.github.stivais.ui.utils.radius
-import com.github.stivais.ui.utils.seconds
+import com.github.stivais.aurora.animations.Animation
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.constraints.impl.measurements.Animatable
+import com.github.stivais.aurora.constraints.impl.measurements.Pixel
+import com.github.stivais.aurora.dsl.*
+import com.github.stivais.aurora.elements.ElementScope
+import com.github.stivais.aurora.elements.impl.Block.Companion.outline
+import com.github.stivais.aurora.utils.color
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
 import me.odinmain.features.impl.render.ClickGUI
@@ -41,41 +39,36 @@ class BooleanSetting(
         }
     }
 
-    override fun ElementDSL.create() = setting {
+    override fun ElementScope<*>.create() = setting {
         text(
             name,
-            pos = at(x = 6.px),
+            pos = at(x = Pixel.ZERO),
             size = 40.percent
         )
-        val pointer = Animatable(from = 30.percent.center, to = 70.percent.center)
-        val color = Color.Animated(from = `gray 38`, to = ClickGUI.color)
-
-        if (value) {
-            pointer.swap()
-            color.swap()
-        }
+        val pointer = Animatable(from = 30.percent, to = 70.percent, swapIf = value)
+        val color = Color.Animated(from = `gray 38`, to = ClickGUI.color, swapIf = value)
 
         block(
-            constrain(x = -(6.px), w = 35.px, h = 50.percent),
+            constrain(x = Pixel.ZERO.alignOpposite, w = 35.px, h = 50.percent),
             color,
             radius = 10.radius()
         ) {
-            onClick {
-                value = !value
-                true
-            }
+            outline(color = color { ClickGUI.color.rgba }, thickness = 1.5.px)
+            hoverEffect(factor = 1.25f)
+
             block(
-                constrain(x = pointer, w = 50.percent, h = 80.percent),
+                constrain(x = pointer.alignCenter, w = 50.percent, h = 80.percent),
                 color = Color.WHITE,
                 radius = 8.radius()
             )
-            outline(color = color { ClickGUI.color.rgba.darker() }, thickness = 1.5.px)
-            hoverEffect()
+            onClick {
+                value = !value
+            }
         }
 
         onValueChanged {
-            color.animate(0.25.seconds, Animations.Linear)
-            pointer.animate(0.25.seconds, Animations.EaseInOutQuint)
+            color.animate(0.25.seconds, Animation.Style.EaseInOutQuint)
+            pointer.animate(0.25.seconds, Animation.Style.EaseInOutQuint)
         }
     }
 }

@@ -1,11 +1,12 @@
 package me.odinmain.features.huds
 
-import com.github.stivais.ui.constraints.Constraints
-import com.github.stivais.ui.constraints.percent
-import com.github.stivais.ui.constraints.sizes.Bounding
-import com.github.stivais.ui.elements.Element
-import com.github.stivais.ui.elements.scope.ElementScope
-import com.github.stivais.ui.transforms.Transforms
+import com.github.stivais.aurora.constraints.Constraints
+import com.github.stivais.aurora.constraints.impl.measurements.Undefined
+import com.github.stivais.aurora.constraints.impl.size.Bounding
+import com.github.stivais.aurora.dsl.percent
+import com.github.stivais.aurora.elements.BlankElement
+import com.github.stivais.aurora.elements.ElementScope
+import com.github.stivais.aurora.transforms.impl.Scale
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting
 import me.odinmain.features.settings.impl.NumberSetting
@@ -15,7 +16,7 @@ import kotlin.reflect.jvm.isAccessible
 class HUD(
     val name: String,
     val module: Module,
-    val builder: HUDScope.() -> Unit
+    val builder: ElementScope<HUD.Representation>.() -> Unit
 ) {
     val x = NumberSetting("x", 2.5f, 0f, 100f).hide()
     val y = NumberSetting("y", 2.5f, 0f, 100f).hide()
@@ -56,28 +57,22 @@ class HUD(
 
     inner class Representation(
         val preview: Boolean
-    ) : Element(Constraints(x.value.percent, y.value.percent, Bounding, Bounding)) {
+    ) : BlankElement(Constraints(x.value.percent, y.value.percent, Bounding, Bounding)) {
 
         override var enabled: Boolean = true
             get() = field && this@HUD.module.enabled
 
-        var scaleTransformation by Transforms.Scale(this@HUD.scale.value, centered = false).also {
+        var scaleTransformation by Scale(this@HUD.scale.value, centered = false).also {
             addTransform(it)
         }
 
-        override fun draw() {
-            // no-op
-        }
-        override fun onElementAdded(element: Element) {
-            // no-op
-            // elements here shouldn't be centered by default
-        }
+        override fun getDefaultPositions() = Pair(Undefined, Undefined)
 
-        fun refresh(scope: HUDScope) {
-            removeAll()
+        fun refresh(scope: ElementScope<Representation>) {
+//            removeAll()
             builder.invoke(scope)
             scaleTransformation = this@HUD.scale.value
-            redrawInternal = true
+            redraw = true
         }
     }
 
@@ -90,22 +85,21 @@ class HUD(
         }
         return null
     }
-}
 
-class HUDScope(element: HUD.Representation) : ElementScope<HUD.Representation>(element) {
+    companion object {
+        inline val ElementScope<HUD.Representation>.preview get() = element.preview
 
-    inline val preview get() = element.preview
-
-    inline fun needs(crossinline block: () -> Boolean) {
-        if (!element.preview) {
-            operation {
-                element.enabled = block()
-                false
+        inline fun ElementScope<HUD.Representation>.needs(crossinline block: () -> Boolean) {
+            if (!preview) {
+                operation {
+                    element.enabled = block()
+                    false
+                }
             }
         }
-    }
 
-    fun refreshHUD() {
-        element.refresh(this)
+        fun ElementScope<HUD.Representation>.refreshHUDs() {
+            element.refresh(this)
+        }
     }
 }

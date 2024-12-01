@@ -1,7 +1,7 @@
 package me.odinmain.features.impl.dungeon.dungeonwaypoints
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.toHexString
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.toHexString
 import me.odinmain.config.DungeonWaypointConfig
 import me.odinmain.events.impl.ClickEvent
 import me.odinmain.events.impl.RoomEnterEvent
@@ -15,14 +15,16 @@ import me.odinmain.features.impl.render.DevPlayers
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.*
 import me.odinmain.utils.*
-import me.odinmain.utils.render.*
+import me.odinmain.utils.render.RenderUtils
 import me.odinmain.utils.render.RenderUtils.outlineBounds
 import me.odinmain.utils.render.RenderUtils.renderVec
+import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.*
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.getRealCoords
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.getRelativeCoords
 import me.odinmain.utils.skyblock.dungeon.tiles.Room
+import me.odinmain.utils.ui.Colors
 import net.minecraft.block.BlockSign
 import net.minecraft.client.gui.GuiButton
 import net.minecraft.client.gui.GuiScreen
@@ -83,9 +85,9 @@ object DungeonWaypoints : Module(
 
     private val selectedColor get() = when (colorPallet) {
         0 -> color
-        1 -> Color.MINECRAFT_AQUA
-        2 -> Color.MINECRAFT_DARK_PURPLE
-        3 -> Color.MINECRAFT_YELLOW
+        1 -> Colors.MINECRAFT_AQUA
+        2 -> Colors.MINECRAFT_DARK_PURPLE
+        3 -> Colors.MINECRAFT_YELLOW
         4 -> Color.GREEN
         5 -> Color.RED
         else -> color

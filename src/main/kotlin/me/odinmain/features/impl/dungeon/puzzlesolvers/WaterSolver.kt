@@ -1,6 +1,6 @@
 package me.odinmain.features.impl.dungeon.puzzlesolvers
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import me.odinmain.OdinMain.mc
@@ -21,7 +21,7 @@ import net.minecraft.util.BlockPos
 import net.minecraft.util.Vec3
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2

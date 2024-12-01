@@ -16,7 +16,9 @@ blossom {
 
 allprojects {
     repositories {
+//        mavenLocal()
         mavenCentral()
+        maven("https://jitpack.io")
         maven("https://repo.spongepowered.org/maven/")
         maven("https://repo.essential.gg/repository/maven-public/")
     }
@@ -44,7 +46,11 @@ allprojects {
         annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT")
         implementation("org.spongepowered:mixin:0.7.11-SNAPSHOT") { isTransitive = false }
 
-        implementation("com.github.odtheking:odin-lwjgl:5065fe5c1e")
+        //implementation("com.github.stivais:AuroraUI:0.9.1-beta")
+        // todo: create releases for aurora
+        implementation("com.github.stivais:AuroraUI:90cb4e84e8")
+
+        implementation("com.github.odtheking:odin-lwjgl:faeaa48b39")
 
         sourceSets.main {
             java.srcDir(file("$projectDir/src/main/kotlin"))

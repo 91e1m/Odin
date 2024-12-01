@@ -1,15 +1,16 @@
 package me.odinclient.features.impl.skyblock
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.events.impl.GuiEvent
-import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.NumberSetting
-import me.odinmain.utils.*
+import me.odinmain.utils.name
+import me.odinmain.utils.noControlCodes
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.*
 import me.odinmain.utils.skyblock.PlayerUtils.windowClick
+import me.odinmain.utils.ui.Colors
 import net.minecraft.entity.item.EntityArmorStand
 import net.minecraft.inventory.Container
 import net.minecraft.inventory.ContainerChest
@@ -132,7 +133,7 @@ object ChocolateFactory : Module(
     private enum class ChocolateEggs(
         val texture: String, val type: String, val color: Color, val index: Int
     ) {
-        Breakfast(BunnyEggTextures.BREAKFAST_EGG_TEXTURE, "§6Breakfast Egg", Color.MINECRAFT_GOLD, 0),
+        Breakfast(BunnyEggTextures.BREAKFAST_EGG_TEXTURE, "§6Breakfast Egg", Colors.MINECRAFT_GOLD, 0),
         Lunch(BunnyEggTextures.LUNCH_EGG_TEXTURE, "§9Lunch Egg ", Color.BLUE, 1),
         Dinner(BunnyEggTextures.DINNER_EGG_TEXTURE, "§aDinner Egg", Color.GREEN, 2),
     }

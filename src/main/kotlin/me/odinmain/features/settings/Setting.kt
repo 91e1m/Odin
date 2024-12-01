@@ -1,23 +1,19 @@
 package me.odinmain.features.settings
 
-import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.constraints.Size
-import com.github.stivais.ui.constraints.measurements.Animatable
-import com.github.stivais.ui.constraints.measurements.Pixel
-import com.github.stivais.ui.constraints.px
-import com.github.stivais.ui.constraints.size
-import com.github.stivais.ui.constraints.sizes.Bounding
-import com.github.stivais.ui.constraints.sizes.Copying
-import com.github.stivais.ui.elements.Element
-import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.elements.scope.LayoutScope
-import com.github.stivais.ui.events.Event
-import com.github.stivais.ui.transforms.Transforms
-import com.github.stivais.ui.utils.seconds
+import com.github.stivais.aurora.animations.Animation
+import com.github.stivais.aurora.constraints.Constraint
+import com.github.stivais.aurora.constraints.impl.measurements.Animatable
+import com.github.stivais.aurora.constraints.impl.positions.Center
+import com.github.stivais.aurora.constraints.impl.size.Bounding
+import com.github.stivais.aurora.constraints.impl.size.Copying
+import com.github.stivais.aurora.dsl.*
+import com.github.stivais.aurora.elements.Element
+import com.github.stivais.aurora.elements.ElementScope
+import com.github.stivais.aurora.events.AuroraEvent
+import com.github.stivais.aurora.transforms.impl.Alpha
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import me.odinmain.features.Module
-import me.odinmain.features.settings.Setting.Renders.Companion.elementWidth
 import kotlin.properties.PropertyDelegateProvider
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -102,34 +98,25 @@ abstract class Setting<T> (
 
     interface Renders {
 
-        fun ElementDSL.create()
+        fun ElementScope<*>.create()
 
         companion object {
             /**
-             * Creates a group (or column) with the current width needed according the UIs it's used in.
+             * Creates a group with the current width needed according the UIs it's used in.
              */
-            fun ElementDSL.setting(
-                height: Size = 40.px,
-                scope: ElementDSL.() -> Unit
+            fun ElementScope<*>.setting(
+                height: Constraint.Size = 40.px,
+                scope: ElementScope<*>.() -> Unit
             ) {
-                group(size(Copying, height), scope)
+                group(
+                    size(Copying, height),
+                    scope
+                )
             }
 
-            fun ElementDSL.settingColumn(
-                height: Size = Bounding,
-                scope: LayoutScope.() -> Unit
-            ) {
-                column(size(Copying, height), null, scope)
-            }
-
-            /**
-             * Current width for settings elements inside the UIs it's used in
-             */
-            var elementWidth: Pixel = 240.px
-
-            inline fun ElementDSL.onValueChanged(crossinline block: (ValueUpdated) -> Unit) {
+            inline fun ElementScope<*>.onValueChanged(crossinline block: (ValueUpdated) -> Unit) {
                 element.registerEvent(ValueUpdated) {
-                    block(this)
+                    block(it)
                     redraw()
                     false
                 }
@@ -137,18 +124,16 @@ abstract class Setting<T> (
         }
 
 
-        data object ValueUpdated : Event
+        data object ValueUpdated : AuroraEvent
     }
 
-    inner class Drawable : Element(size(elementWidth, Animatable(from = Bounding, to = 0.px))) {
+    inner class Drawable : Element(constrain(x = Center, w = 95.percent, h = Animatable(from = Bounding, to = 0.px))) {
 
         private var visible = visibilityDependency?.invoke() ?: true
 
-//        private var lastValue: T = value
-
         private var lastValue: Int = value.hashCode()
 
-        private var alphaAnimation = Transforms.Alpha.Animated(to = 0f, from = 1f)
+        private var alphaAnimation = Alpha.Animated(to = 0f, from = 1f)
 
         init {
             addTransform(alphaAnimation)
@@ -156,19 +141,21 @@ abstract class Setting<T> (
                 (constraints.height as Animatable).swap()
                 alphaAnimation.swap()
             }
+            // calc size instantly
+            width = constraints.width.calculateSize(this, true)
         }
 
         override fun draw() {
             if ((visibilityDependency?.invoke() != false) != visible) {
                 visible = !visible
-                (constraints.height as Animatable).animate(0.25.seconds, Animations.EaseInOutQuint)
-                alphaAnimation.animate(0.25.seconds, Animations.EaseInOutQuint)
-                redraw = true
+                (constraints.height as Animatable).animate(0.25.seconds, Animation.Style.EaseInOutQuint)
+                alphaAnimation.animate(0.25.seconds, Animation.Style.EaseInOutQuint)
+                parent!!.redraw = true
             }
             val hashCode = value.hashCode()
             if (lastValue != hashCode) {
                 lastValue = hashCode
-                ui.eventManager.dispatchToAll(Renders.ValueUpdated, this)
+                ui.eventManager.postToAll(Renders.ValueUpdated, this)
             }
         }
     }

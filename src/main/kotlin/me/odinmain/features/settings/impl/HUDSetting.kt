@@ -1,6 +1,6 @@
 package me.odinmain.features.settings.impl
 
-import com.github.stivais.ui.utils.loop
+import com.github.stivais.aurora.utils.loop
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import me.odinmain.features.huds.HUD

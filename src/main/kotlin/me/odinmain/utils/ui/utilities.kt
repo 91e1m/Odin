@@ -1,42 +1,33 @@
 package me.odinmain.utils.ui
 
-import com.github.stivais.ui.UIScreen
-import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.constraints.*
-import com.github.stivais.ui.constraints.positions.Linked
-import com.github.stivais.ui.elements.impl.TextScope
-import com.github.stivais.ui.elements.scope.BlockScope
-import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.events.Event
-import com.github.stivais.ui.renderer.Font
-import com.github.stivais.ui.transforms.alpha
-import com.github.stivais.ui.transforms.scale
+import com.github.stivais.aurora.animations.Animation
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.dsl.onMouseEnter
+import com.github.stivais.aurora.dsl.onRemove
+import com.github.stivais.aurora.elements.ElementScope
+import com.github.stivais.aurora.renderer.data.Font
+import com.github.stivais.aurora.renderer.data.Image
+import com.github.stivais.aurora.transforms.impl.Alpha
+import com.github.stivais.aurora.transforms.impl.Scale
 import me.odinmain.features.Module
 import me.odinmain.features.huds.HUD
-import me.odinmain.features.huds.HUDScope
 import me.odinmain.features.settings.impl.ColorSetting
 import me.odinmain.features.settings.impl.SelectorSetting
-import me.odinmain.utils.ui.elements.TextInput
+import me.odinmain.utils.ui.screens.UIHandler
 
 val regularFont = Font("Regular", "/assets/odinmain/fonts/Regular.otf")
 val mcFont = Font("Minecraft", "/assets/odinmain/fonts/Minecraft-Regular.otf")
 
-// todo: better solution
-infix fun TextScope.and(other: TextScope) {
-    other.element.constraints.x = Linked(element)
-    other.size = size
-}
+/**
+ * Utility function to get an image from a string representing a path inside /assets/odinmain/
+ */
+fun String.image() = Image("/assets/odinmain/$this")
 
-fun ElementDSL.outline(
-    constraints: Constraints,
-    color: Color,
-    thickness: Measurement = 1.px,
-    radius: FloatArray? = null,
-    block: BlockScope.() -> Unit = {}
-) {
-    block(constraints, Color.TRANSPARENT, color, thickness, radius, block)
-}
+//// todo: better solution
+//infix fun TextScope.and(other: TextScope) {
+//    other.element.constraints.x = Linked(element)
+//    other.size = size
+//}
 
 /**
  * Makes a HUD, that uses common settings found in text-based HUDs.
@@ -47,7 +38,7 @@ fun ElementDSL.outline(
 inline fun Module.TextHUD(
     name: String,
     color: Color = Color.RGB(50, 150, 220),
-    crossinline block: HUDScope.(Color, Font) -> Unit
+    crossinline block: ElementScope<*>.(Color, Font) -> Unit
 ): HUD {
     val colorSetting = ColorSetting("Color", color, allowAlpha = false)
     val fontSetting = SelectorSetting("Font", arrayListOf("Regular", "Minecraft"))
@@ -69,7 +60,7 @@ inline fun Module.TextHUD(
 /**
  * Allows code to be run after certain amount of time hovering over the element
  */
-inline fun ElementDSL.onHover(duration: Float, crossinline block: () -> Unit) {
+inline fun ElementScope<*>.onHover(duration: Float, crossinline block: () -> Unit) {
     onMouseEnter {
         val start = System.nanoTime()
         operation {
@@ -89,36 +80,26 @@ inline fun ElementDSL.onHover(duration: Float, crossinline block: () -> Unit) {
  * @param typeInitialized style of the animation when element is created
  * @param typeUninitialized style of the animation when element is removed
  */
-fun ElementDSL.lifetimeAnimations(
+fun ElementScope<*>.lifetimeAnimations(
     duration: Float,
-    typeInitialized: Animations,
-    typeUninitialized: Animations,
+    typeInitialized: Animation.Style,
+    typeUninitialized: Animation.Style,
 ) {
-    val scaleAnimation = scale(from = 0f, to = 1f, centered = true)
-    val alphaAnimation = alpha(from = 0f, to = 1f)
+    val scaleAnimation = Scale.Animated(from = 0f, to = 1f, centered = true)
+    val alphaAnimation = Alpha.Animated(from = 0f, to = 1f)
+
+    transform(scaleAnimation)
+    transform(alphaAnimation)
 
     scaleAnimation.animate(duration, typeInitialized)
     alphaAnimation.animate(duration, typeInitialized)
 
     onRemove {
-        UIScreen.closeAnimHandler = ui.window as UIScreen
+        val handler = UIHandler(ui)
+        handler.open(init = false)
         scaleAnimation.animate(duration, typeUninitialized)
         alphaAnimation.animate(duration, typeUninitialized)?.onFinish {
-            UIScreen.closeAnimHandler = null
+            handler.close()
         }
     }
-}
-
-fun ElementDSL.textInput(
-    default: String = "",
-    placeholder: String = "",
-    pos: Positions? = null,
-    size: Size = 50.percent,
-    maxWidth: Size? = null,
-    censored: Boolean = false,
-    onTextChange: (event: TextInput.TextChanged) -> Unit
-) = create(TextScope(TextInput(default, placeholder, pos, size, maxWidth, censored, onTextChange = onTextChange)))
-
-fun ElementDSL.passEvent(event: Event, to: ElementDSL) {
-    ui.eventManager.dispatchToAll(event, to.element)
 }

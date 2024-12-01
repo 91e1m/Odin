@@ -1,10 +1,12 @@
 package me.odinmain.features.impl.floor7.p3
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.events.impl.PacketSentEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
-import me.odinmain.utils.*
+import me.odinmain.utils.addVec
+import me.odinmain.utils.distanceSquaredTo
+import me.odinmain.utils.flooredVec
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.M7Phases

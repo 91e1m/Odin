@@ -1,7 +1,7 @@
 package me.odinmain.features.impl.dungeon
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.withAlpha
 import me.odinmain.OdinMain.isLegitVersion
 import me.odinmain.events.impl.EntityLeaveWorldEvent
 import me.odinmain.events.impl.RenderChestEvent

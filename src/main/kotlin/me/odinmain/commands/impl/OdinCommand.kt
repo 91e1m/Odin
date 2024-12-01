@@ -1,7 +1,6 @@
 package me.odinmain.commands.impl
 
 import com.github.stivais.commodore.utils.GreedyString
-import com.github.stivais.ui.UIScreen.Companion.open
 import me.odinmain.commands.commodore
 import me.odinmain.features.huds.HUDManager
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints
@@ -12,6 +11,7 @@ import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.fillItemFromSack
 import me.odinmain.utils.skyblock.*
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
+import me.odinmain.utils.ui.screens.UIScreen.Companion.open
 import me.odinmain.utils.writeToClipboard
 import kotlin.math.round
 
@@ -21,7 +21,7 @@ val mainCommand = commodore("od", "odin") {
     }
 
     literal("edithuds").runs {
-        HUDManager.makeHUDEditor().open()
+        open(HUDManager.makeHUDEditor())
     }
 
     literal("ep").runs {
@@ -42,7 +42,11 @@ val mainCommand = commodore("od", "odin") {
 
     literal("reset") {
         literal("clickgui").runs {
-            ClickGUI.getSettingByName("Panel Data")?.reset()
+            ClickGUI.panelSettings.forEach { (_, value) ->
+                value.x = value.defaultX
+                value.y = value.defaultY
+                value.extended = true // default is always true
+            }
             modMessage("Reset ClickGUI panel positions")
         }
         literal("hud").runs {

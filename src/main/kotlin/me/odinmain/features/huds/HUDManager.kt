@@ -1,31 +1,26 @@
 package me.odinmain.features.huds
 
-import com.github.stivais.ui.UI
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
-import com.github.stivais.ui.constraints.*
-import com.github.stivais.ui.constraints.measurements.Pixel
-import com.github.stivais.ui.constraints.sizes.Bounding
-import com.github.stivais.ui.elements.impl.Popup
-import com.github.stivais.ui.elements.impl.popup
-import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.elements.scope.ElementScope
-import com.github.stivais.ui.elements.scope.hoverEffect
-import com.github.stivais.ui.utils.loop
-import com.github.stivais.ui.utils.radius
-import com.github.stivais.ui.utils.seconds
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.constraints.impl.measurements.Pixel
+import com.github.stivais.aurora.dsl.*
+import com.github.stivais.aurora.elements.ElementScope
+import com.github.stivais.aurora.elements.Layout.Companion.section
+import com.github.stivais.aurora.elements.impl.Block.Companion.outline
+import com.github.stivais.aurora.elements.impl.Popup
+import com.github.stivais.aurora.elements.impl.popup
+import com.github.stivais.aurora.utils.loop
+import com.github.stivais.aurora.utils.withAlpha
 import me.odinmain.config.Config
+import me.odinmain.features.huds.HUD.Companion.refreshHUDs
 import me.odinmain.features.impl.render.ClickGUI
 import me.odinmain.features.impl.render.ClickGUI.`gray 26`
 import me.odinmain.features.impl.render.ClickGUI.`gray 38`
 import me.odinmain.features.impl.render.ClickGUI.hoverInformation
 import me.odinmain.features.settings.Setting
-import me.odinmain.features.settings.Setting.Renders.Companion.elementWidth
 import me.odinmain.features.settings.Setting.Renders.Companion.onValueChanged
-import me.odinmain.utils.ui.UIHandler
-import me.odinmain.utils.ui.outline
+import me.odinmain.utils.ui.renderer.NVGRenderer
+import me.odinmain.utils.ui.screens.UIHandler
 import kotlin.math.abs
-import kotlin.math.sign
 
 object HUDManager {
 
@@ -39,26 +34,24 @@ object HUDManager {
     private const val SNAP_THRESHOLD = 5f
 
     fun setupHUDs() {
-        UI = UIHandler(UI {
+        UI = UIHandler(Aurora(renderer = NVGRenderer) {
             HUDs.loop { hud ->
-                val representation = hud.Representation(preview = false)
-                representation.add()
-                hud.builder(HUDScope(representation))
+                hud.Representation(preview = false).scope(hud.builder)
             }
         })
         UI!!.open()
     }
 
-    fun makeHUDEditor() = UI {
-        elementWidth = 180.px
+    fun makeHUDEditor() = Aurora(renderer = NVGRenderer) {
 
         var hudOptions: Popup? = null
 
         HUDs.loop { hud ->
             val representation = hud.Representation(preview = true)
-            representation.add()
-            hud.builder(HUDScope(representation).apply {
-                afterCreation {
+            representation.scope {
+                hud.builder(this)
+
+                onAdd {
                     element.constraints.x = element.x.px
                     element.constraints.y = element.y.px
                 }
@@ -67,9 +60,8 @@ object HUDManager {
                     hud.y.value = (element.y / ui.main.height) * 100f
                 }
                 onScroll { (amount) ->
-                    hud.scale.value += 0.1f * amount.sign
+                    hud.scale.value += 0.1f * amount
                     representation.scaleTransformation = hud.scale.value
-                    true
                 }
 
                 var removeSelected = false
@@ -83,6 +75,7 @@ object HUDManager {
                     removeSelected = true
                     true
                 }
+
                 onRelease {
                     if (removeSelected) {
                         selected?.closePopup()
@@ -91,16 +84,13 @@ object HUDManager {
                     }
                 }
 
-                //-------------//
-                // hud options //
-                //-------------//
                 onClick(button = 1) {
                     hudOptions?.closePopup()
                     hudOptions = popup(
                         constraints = at((element.x + element.screenWidth() + 20).px, element.y.px),
                         smooth = true
                     ) {
-                        column(size(Bounding, Bounding)) {
+                        column {
                             block(
                                 size(180.px, 35.px),
                                 color = `gray 26`,
@@ -108,20 +98,17 @@ object HUDManager {
                             ) {
                                 text(hud.name)
                             }
-                            column(size(w = 180.px, h = Bounding)) {
+                            column(size(w = 180.px)) {
                                 block(
                                     copies(),
                                     color = Color.RGB(38, 38, 38, 0.7f)
                                 )
                                 hud.settings.loop {
-                                    if (!it.hidden && it is Setting.Renders) {
-                                        it.apply {
-
-                                            val drawableScope = ElementScope(it.Drawable()).apply {
-                                                hoverInformation(it.description)
-                                                onValueChanged { refreshHUD() }
-                                            }
-                                            create(drawableScope).create()
+                                    if (it is Setting.Renders && !it.hidden) {
+                                        scope(it.Drawable()) {
+                                            hoverInformation(description = it.description)
+                                            onValueChanged { refreshHUDs() }
+                                            it.apply { create() }
                                         }
                                     }
                                 }
@@ -132,9 +119,12 @@ object HUDManager {
                                         color = `gray 38`,
                                         radius = 5.radius()
                                     ) {
-                                        hoverEffect(0.25.seconds)
-                                        outline(ClickGUI.color)
-                                        text("Reset")
+                                        outline(
+                                            ClickGUI.color,
+                                            thickness = 1.px
+                                        )
+                                        hoverEffect(factor = 1.25f)
+                                        text(string = "Reset")
 
                                         onClick {
                                             hud.settings.loop {
@@ -156,7 +146,7 @@ object HUDManager {
                     }
                     true
                 }
-            })
+            }
         }
 
         // used purely to close hud options/selections
@@ -170,7 +160,7 @@ object HUDManager {
 
         dragSelection()
 
-        onCreation {
+        onAdd {
             UI?.close()
         }
         onRemove {
@@ -179,7 +169,10 @@ object HUDManager {
         }
     }
 
-    private fun ElementDSL.createSelection(pressed: Boolean, selectedHUDs: ArrayList<HUD.Representation>): Popup {
+    private fun ElementScope<*>.createSelection(
+        pressed: Boolean,
+        selectedHUDs: ArrayList<HUD.Representation>
+    ): Popup {
         // get bounding box of selectedHUDs
         var minX = 9999f;   var minY = 9999f // I wish I could rust :(
         var maxX = 0f;      var maxY = 0f
@@ -195,8 +188,9 @@ object HUDManager {
 
         return popup(constraints = constrain(px, py, (maxX - minX).px, (maxY - minY).px), smooth = true) {
             outline(
-                constraints =  copies(),
-                color = Color.WHITE
+                constraints = copies(),
+                color = Color.WHITE,
+                thickness = 1.px
             )
 
             var mouseDown = pressed
@@ -222,8 +216,9 @@ object HUDManager {
                     snapLineX = -1f
                     snapLineY = -1f
 
-                    val centerX = parent!!.width / 2
-                    val centerY = parent!!.height / 2
+                    val parent = element.parent ?: return@onMouseMove false
+                    val centerX = parent.width / 2
+                    val centerY = parent.height / 2
 
                     // Check for center snapLineping
                     if (abs(newX + element.screenWidth() / 2 - centerX) <= SNAP_THRESHOLD) {
@@ -235,7 +230,7 @@ object HUDManager {
                         snapLineY = centerY
                     }
 
-                    parent?.elements?.loop { other ->
+                    parent.children?.loop { other ->
                         if (other is HUD.Representation && !selectedHUDs.contains(other)) {
 
                             // horizontal edges
@@ -267,14 +262,13 @@ object HUDManager {
                     val lastX = px.pixels
                     val lastY = py.pixels
 
-                    px.pixels = newX.coerceIn(0f, parent!!.width - element.screenWidth())
-                    py.pixels = newY.coerceIn(0f, parent!!.height - element.screenHeight())
+                    px.pixels = newX.coerceIn(0f, parent.width - element.screenWidth())
+                    py.pixels = newY.coerceIn(0f, parent.height - element.screenHeight())
 
                     selectedHUDs.loop {
                         if (lastX != px.pixels) (it.constraints.x as Pixel).pixels += px.pixels - lastX
                         if (lastY != py.pixels) (it.constraints.y as Pixel).pixels += py.pixels - lastY
                     }
-                    redraw()
                     true
                 } else {
                     false
@@ -283,7 +277,7 @@ object HUDManager {
         }
     }
 
-    private fun ElementDSL.dragSelection() {
+    private fun ElementScope<*>.dragSelection() {
         val x = 0.px
         val y = 0.px
         val w = 0.px
@@ -293,15 +287,15 @@ object HUDManager {
             constraints = constrain(x, y, w, h),
             color = Color.BLUE.withAlpha(0.25f)
         ) {
-            outline(Color.BLUE)
-            enabled = false
+            outline(Color.BLUE, thickness = 1.px)
+            toggle()
         }
 
         var clickedX = 0f
         var clickedY = 0f
 
         onClick {
-            box.enabled = true
+            box.toggle()
             clickedX = ui.mx
             clickedY = ui.my
 
@@ -309,6 +303,7 @@ object HUDManager {
             y.pixels = clickedY
             w.pixels = 0f
             h.pixels = 0f
+            box.redraw()
             true
         }
         onRelease {
@@ -321,16 +316,16 @@ object HUDManager {
             if (box.enabled) {
                 val selectedHUDs = arrayListOf<HUD.Representation>()
 
-                element.elements?.loop {
+                element.children?.loop {
                     if (it is HUD.Representation && it.enabled && it.intersects(box.element)) {
                         selectedHUDs.add(it)
                     }
                 }
                 selected?.closePopup()
                 selected = createSelection(pressed = false, selectedHUDs)
-                redraw()
 
-                box.enabled = false
+                box.toggle()
+                box.redraw()
             }
         }
         onMouseMove {
@@ -343,9 +338,7 @@ object HUDManager {
                 h.pixels = abs(newH)
                 box.redraw()
                 true
-            } else {
-                false
-            }
+            } else false
         }
     }
 }

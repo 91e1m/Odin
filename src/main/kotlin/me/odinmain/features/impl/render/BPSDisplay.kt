@@ -1,16 +1,12 @@
 package me.odinmain.features.impl.render
 
-import com.github.stivais.ui.constraints.px
 import me.odinmain.events.impl.PacketSentEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.utils.round
-import me.odinmain.utils.ui.TextHUD
-import me.odinmain.utils.ui.and
 import net.minecraft.network.play.client.C07PacketPlayerDigging.Action.START_DESTROY_BLOCK
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
-import kotlin.math.roundToInt
 import net.minecraft.network.play.client.C07PacketPlayerDigging as PacketPlayerDigging
 
 // todo: Fix number going to infinity somehow
@@ -20,16 +16,16 @@ object BPSDisplay : Module(
 ) {
     private val roundNumber by BooleanSetting("Round number", true, description = "If the number should be rounded.")
 
-    private val hud by TextHUD("HUD") { color, font ->
-        text(
-            text = "BPS ",
-            font = font,
-            color = color,
-            size = 30.px
-        ) and text({ if (roundNumber) bps.roundToInt() else bps.round(1) }, font = font)
-    }.registerSettings(
-        ::roundNumber
-    ).setting("Displays the BPS on screen.")
+//    private val hud by TextHUD("HUD") { color, font ->
+//        text(
+//            text = "BPS ",
+//            font = font,
+//            color = color,
+//            size = 30.px
+//        ) and text({ if (roundNumber) bps.roundToInt() else bps.round(1) }, font = font)
+//    }.registerSettings(
+//        ::roundNumber
+//    ).setting("Displays the BPS on screen.")
 
     private var bps = 0.0
         get() = field.coerceIn(0.0, 20.0)

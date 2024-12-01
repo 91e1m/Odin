@@ -1,7 +1,7 @@
 package me.odinmain.features.impl.dungeon
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.withAlpha
 import me.odinmain.events.impl.SecretPickupEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
@@ -13,6 +13,7 @@ import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.toAABB
 import me.odinmain.utils.toBlockPos
+import me.odinmain.utils.ui.Colors
 import net.minecraft.util.BlockPos
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
@@ -25,7 +26,7 @@ object SecretClicked : Module(
     private val boxesDropdown by DropdownSetting("Secret Boxes Dropdown")
     private val boxes by BooleanSetting("Secret Boxes", true, description = "Whether or not to render boxes around clicked secrets.").withDependency { boxesDropdown }
     private val style by SelectorSetting("Style", Renderer.DEFAULT_STYLE, Renderer.styles, description = Renderer.STYLE_DESCRIPTION).withDependency { boxesDropdown && boxes }
-    private val color by ColorSetting("Color", color = Color.MINECRAFT_GOLD.withAlpha(.4f), allowAlpha = true, description = "The color of the box.").withDependency { boxesDropdown && boxes }
+    private val color by ColorSetting("Color", color = Colors.MINECRAFT_GOLD.withAlpha(.4f), allowAlpha = true, description = "The color of the box.").withDependency { boxesDropdown && boxes }
     private val lineWidth by NumberSetting("Line Width", 2f, 0.1f, 10f, 0.1f, description = "The width of the box's lines.").withDependency { boxesDropdown && boxes }
     private val depthCheck by BooleanSetting("Depth check", false, description = "Boxes show through walls.").withDependency { boxesDropdown && boxes }
     private val lockedColor by ColorSetting("Locked Color", color = Color.RED.withAlpha(.4f), allowAlpha = true, description = "The color of the box when the chest is locked.").withDependency { boxesDropdown && boxes }

@@ -1,14 +1,21 @@
 package me.odinmain.features.impl.dungeon
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.withAlpha
 import me.odinmain.events.impl.RenderOverlayNoCaching
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.*
-import me.odinmain.utils.render.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.ColorSetting
+import me.odinmain.features.settings.impl.NumberSetting
+import me.odinmain.features.settings.impl.SelectorSetting
+import me.odinmain.utils.render.HighlightRenderer
+import me.odinmain.utils.render.RenderUtils
+import me.odinmain.utils.render.RenderUtils2D
+import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.dungeonTeammatesNoSelf
+import me.odinmain.utils.ui.Colors
 import net.minecraft.client.entity.EntityOtherPlayerMP
 import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.RenderLivingEvent
@@ -25,7 +32,7 @@ object TeammatesHighlight : Module(
     private val showHighlight by BooleanSetting("Show highlight", true, description = "Highlights teammates with an outline.")
     private val showName by BooleanSetting("Show name", true, description = "Highlights teammates with a name tag.")
     private val nameStyle by SelectorSetting("Name Style", "Plain Text", arrayListOf("Plain Text", "Oringo Style"), description = "The style of the name tag to render.").withDependency { showName }
-    private val backgroundColor by ColorSetting("Background Color", color = Color.MINECRAFT_DARK_GRAY.withAlpha(0.5f), true, description = "The color of the nametag background").withDependency { showName && nameStyle == 1 }
+    private val backgroundColor by ColorSetting("Background Color", color = Colors.MINECRAFT_DARK_GRAY.withAlpha(0.5f), true, description = "The color of the nametag background").withDependency { showName && nameStyle == 1 }
     private val accentColor by ColorSetting("Accent Color", color = Color.BLUE, true, description = "The color of the nametag accent").withDependency { showName && nameStyle == 1 }
     private val padding by NumberSetting("Padding", default = 5, min = 0, max = 20, increment = 1, description = "The padding around the text of the nametag.").withDependency { showName && nameStyle == 1 }
     private val scale by NumberSetting("Scale", default = 0.8f, min = 0, max = 2, increment = 0.1, description = "The scale of the nametag").withDependency { showName && nameStyle ==1 }

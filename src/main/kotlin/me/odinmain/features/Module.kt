@@ -1,8 +1,8 @@
 package me.odinmain.features
 
+import com.github.stivais.aurora.elements.ElementScope
 import me.odinmain.OdinMain
 import me.odinmain.features.huds.HUD
-import me.odinmain.features.huds.HUDScope
 import me.odinmain.features.impl.render.ClickGUI
 import me.odinmain.features.settings.AlwaysActive
 import me.odinmain.features.settings.Setting
@@ -143,7 +143,6 @@ abstract class Module(
      *
      * @author Bonsai
      */
-    // todo: use new event stuff
     fun onMessage(filter: Regex, shouldRun: () -> Boolean = { alwaysActive || enabled }, func: (String) -> Unit) {
         ModuleManager.messageFunctions.add(ModuleManager.MessageFunction(filter, shouldRun, func))
     }
@@ -166,7 +165,7 @@ abstract class Module(
 
     fun HUD(
         name: String,
-        block: HUDScope.() -> Unit
+        block: ElementScope<*>.() -> Unit
     ): HUD {
         return HUD(
             name,

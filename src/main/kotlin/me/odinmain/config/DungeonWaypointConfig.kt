@@ -1,7 +1,8 @@
 package me.odinmain.config
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.ColorSerializer
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.hexToRGBA
+import com.github.stivais.aurora.utils.toHexString
 import com.google.gson.*
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -132,5 +133,16 @@ object DungeonWaypointConfig {
             return jsonObject
         }
 
+    }
+
+    class ColorSerializer : JsonSerializer<Color>, JsonDeserializer<Color> {
+        override fun serialize(p0: Color?, p1: Type?, p2: JsonSerializationContext?): JsonElement {
+            return JsonPrimitive(p0?.toHexString() ?: "#000000FF")
+        }
+
+        override fun deserialize(p0: JsonElement?, p1: Type?, p2: JsonDeserializationContext?): Color {
+            val hexValue = p0?.asString?.replace("#", "") ?: "000000FF"
+            return Color.RGB(hexToRGBA(hexValue))
+        }
     }
 }

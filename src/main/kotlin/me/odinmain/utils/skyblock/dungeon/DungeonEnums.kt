@@ -1,8 +1,9 @@
 package me.odinmain.utils.skyblock.dungeon
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.renderer.Image
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.renderer.data.Image
 import me.odinmain.utils.skyblock.PersonalBest
+import me.odinmain.utils.ui.Colors
 import net.minecraft.entity.player.EntityPlayer
 
 /**
@@ -71,11 +72,11 @@ enum class DungeonClass(
     val defaultQuadrant: Int,
     var priority: Int,
 ) {
-    Archer(Color.MINECRAFT_GOLD, '6', 0, 2),
-    Berserk(Color.MINECRAFT_DARK_RED, '4', 1, 0),
-    Healer(Color.MINECRAFT_LIGHT_PURPLE, 'd', 2, 2),
-    Mage(Color.MINECRAFT_BLUE, 'b', 3, 2),
-    Tank(Color.MINECRAFT_DARK_GREEN, '2', 3, 1),
+    Archer(Colors.MINECRAFT_GOLD, '6', 0, 2),
+    Berserk(Colors.MINECRAFT_DARK_RED, '4', 1, 0),
+    Healer(Colors.MINECRAFT_LIGHT_PURPLE, 'd', 2, 2),
+    Mage(Colors.MINECRAFT_BLUE, 'b', 3, 2),
+    Tank(Colors.MINECRAFT_DARK_GREEN, '2', 3, 1),
     Unknown(Color.WHITE, 'f', 0, 0)
 }
 

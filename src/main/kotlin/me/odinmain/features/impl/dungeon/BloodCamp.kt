@@ -1,13 +1,16 @@
 package me.odinmain.features.impl.dungeon
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.OdinMain.isLegitVersion
 import me.odinmain.events.impl.EntityLeaveWorldEvent
 import me.odinmain.events.impl.PostEntityMetadata
 import me.odinmain.events.impl.RealServerTick
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.ColorSetting
+import me.odinmain.features.settings.impl.DropdownSetting
+import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.utils.*
 import me.odinmain.utils.ServerUtils.averagePing
 import me.odinmain.utils.render.RenderUtils.renderVec
@@ -17,6 +20,7 @@ import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.inBoss
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.inDungeons
 import me.odinmain.utils.skyblock.getSkullValue
+import me.odinmain.utils.ui.Colors
 import net.minecraft.entity.boss.BossStatus
 import net.minecraft.entity.item.EntityArmorStand
 import net.minecraft.entity.monster.EntityZombie
@@ -37,7 +41,7 @@ object BloodCamp : Module(
 ) {
     private val bloodHelper by BooleanSetting("Blood Camp Assist", default = true, description = "Draws boxes to spawning mobs in the blood room. WARNING: not perfectly accurate. Mobs spawn randomly between 37 - 41 ticks, adjust offset to adjust between ticks.")
     private val pboxColor by ColorSetting("Spawn Color", Color.RED, true, description = "Color for Spawn render box. Set alpha to 0 to disable.").withDependency { bloodHelper }
-    private val fboxColor by ColorSetting("Final Color", Color.MINECRAFT_AQUA, true, description = "Color for when Spawn and Mob boxes are merged. Set alpha to 0 to disable.").withDependency { bloodHelper }
+    private val fboxColor by ColorSetting("Final Color", Colors.MINECRAFT_AQUA, true, description = "Color for when Spawn and Mob boxes are merged. Set alpha to 0 to disable.").withDependency { bloodHelper }
     private val mboxColor by ColorSetting("Position Color", Color.GREEN, true, description = "Color for current position box. Set alpha to 0 to disable.").withDependency { bloodHelper }
     private val boxSize by NumberSetting("Box Size", default = 1.0, increment = 0.1, min = 0.1, max = 1.0, description = "The size of the boxes. Lower values may seem less accurate.").withDependency { bloodHelper }
     private val drawLine by BooleanSetting("Line", default = true, description = "Line between Position box and Spawn box.").withDependency { bloodHelper }
@@ -185,7 +189,7 @@ object BloodCamp : Module(
             val timeDisplay = (time.toFloat() - offset) / 1000
             val colorTime = when {
                 timeDisplay > 1.5 -> Color.GREEN
-                timeDisplay in 0.5..1.5 -> Color.MINECRAFT_GOLD
+                timeDisplay in 0.5..1.5 -> Colors.MINECRAFT_GOLD
                 timeDisplay in 0.0..0.5 -> Color.RED
                 else -> Color.BLUE
             }

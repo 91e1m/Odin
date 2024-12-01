@@ -1,18 +1,18 @@
 package me.odinmain.features.settings.impl
 
-import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.brighter
-import com.github.stivais.ui.color.color
-import com.github.stivais.ui.constraints.*
-import com.github.stivais.ui.constraints.measurements.Animatable
-import com.github.stivais.ui.constraints.sizes.AspectRatio
-import com.github.stivais.ui.constraints.sizes.Copying
-import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.renderer.Image
-import com.github.stivais.ui.utils.animate
-import com.github.stivais.ui.utils.radius
-import com.github.stivais.ui.utils.seconds
+import com.github.stivais.aurora.animations.Animation
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.constraints.impl.measurements.Animatable
+import com.github.stivais.aurora.constraints.impl.measurements.Pixel
+import com.github.stivais.aurora.constraints.impl.size.Copying
+import com.github.stivais.aurora.dsl.*
+import com.github.stivais.aurora.elements.ElementScope
+import com.github.stivais.aurora.elements.Layout.Companion.section
+import com.github.stivais.aurora.elements.impl.Block.Companion.outline
+import com.github.stivais.aurora.elements.impl.Text.Companion.string
+import com.github.stivais.aurora.elements.impl.TextInput.Companion.maxWidth
+import com.github.stivais.aurora.elements.impl.TextInput.Companion.onTextChanged
+import com.github.stivais.aurora.utils.multiply
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
 import me.odinmain.features.impl.render.ClickGUI
@@ -20,17 +20,19 @@ import me.odinmain.features.impl.render.ClickGUI.`gray 38`
 import me.odinmain.features.settings.Saving
 import me.odinmain.features.settings.Setting
 import me.odinmain.features.settings.Setting.Renders.Companion.setting
-import me.odinmain.utils.ui.elements.TextInput
-import me.odinmain.utils.ui.textInput
 
 /**
- * Setting that lets you type a string.
- * @author Aton, Stivais
+ * Setting that represents a string.
+ *
+ * @param default Default value for the setting.
+ * @param length Maximum length of the string.
+ * @param placeholder Placeholder string that appears inside the text input.
  */
 class StringSetting(
     name: String,
     override val default: String = "",
     var length: Int = 20,
+    private val placeholder: String = "",
     hidden: Boolean = false,
     description: String = "",
 ) : Setting<String>(name, hidden, description), Saving, Setting.Renders {
@@ -57,71 +59,74 @@ class StringSetting(
         }
     }
 
-    override fun ElementDSL.create() = setting(60.px) {
-        column(size(w = Copying)) {
+    override fun ElementScope<*>.create() = setting(60.px) {
+
+        val thickness = Animatable(1.px, 1.5.px)
+        val hoverColor = Color.Animated(from = `gray 38`, to = Color.RGB(`gray 38`.rgba.multiply(1.2f)))
+
+        column(size(w = Copying), padding = 2.5.px) {
             section(size = 20.px) {
                 text(
                     name,
-                    pos = at(x = 6.px),
+                    pos = at(x = Pixel.ZERO),
                     size = 80.percent
                 )
             }
-            val thickness = Animatable(from = 1.px, to = 1.75.px)
-            val hover = Color.Animated(from = `gray 38`, to = color { `gray 38`.rgba.brighter(1.2) })
-
-            divider(3.px)
 
             block(
-                size(w = 95.percent, h = 30.px),
-                color = hover,
-                outlineColor = ClickGUI.color,
-                outlineThickness = thickness,
+                size(w = Copying, h = 30.px),
+                color = hoverColor,
                 radius = 5.radius()
             ) {
                 outline(
                     ClickGUI.color,
-                    thickness,
+                    thickness = 1.px
                 )
-                onMouseEnterExit {
-                    hover.animate(0.25.seconds, Animations.Linear)
+
+                val lengthText = text(
+                    "${value.length}/$length",
+                    pos = at(x = 3.percent.alignOpposite),
+                    color = getLengthColor(value),
+                    size = 40.percent,
+                ).toggle()
+
+                val input = textInput(
+                    value,
+                    placeholder,
+                    pos = at(x = 3.percent),
+                    size = 55.percent,
+                ) {
+                    // doesn't animate, but used for just swapping
+                    val maxWidth = Animatable(from = 90.percent, to = 75.percent)
+                    maxWidth(maxWidth)
+
+                    onTextChanged { event ->
+                        var str = event.string
+                        if (str.length > length) str = str.substring(0, length)
+                        lengthText.string = "${str.length}/$length"
+                        lengthText.element.color = getLengthColor(str)
+                        event.string = str
+                        value = str
+                    }
+                    onFocusChanged {
+                        thickness.animate(0.25.seconds, style = Animation.Style.EaseInOutQuint)
+                        lengthText.toggle()
+                        maxWidth.swap()
+                        this@setting.redraw()
+                    }
                 }
 
-                val maxWidth = if (censors) 80.percent else 95.percent
-                val input = textInput(
-                    default = value,
-                    pos = at(x = 6.px),
-                    size = 50.percent,
-                    maxWidth = maxWidth,
-                    censored = censors,
-                    onTextChange = { event ->
-                        val str = event.string
-                        if (str.length <= length) value = str else event.cancel()
-                    }
-                ).apply {
-                    onFocusGain { thickness.animate(0.25.seconds) }
-                    onFocusLost { thickness.animate(0.25.seconds) }
-                }
                 onClick {
-                    input.focusThis()
-                    true
+                    ui.focus(input.element)
                 }
-                if (censors) {
-                    image(
-                        Image("/assets/odinmain/clickgui/visibility-show.svg", type = Image.Type.VECTOR),
-                        constraints = constrain(-6.px, w = AspectRatio(1f), h = 75.percent)
-                    ) {
-                        onClick {
-                            (input.element as TextInput).censorInput = !(input.element).censorInput
-                            if (input.element.censorInput) {
-                                element.image = Image("/assets/odinmain/clickgui/visibility-show.svg")
-                            } else {
-                                element.image = Image("/assets/odinmain/clickgui/visibility-off.svg")
-                            }
-                            true
-                        }
-                    }
+
+                onMouseEnterExit {
+                    hoverColor.animate(0.25.seconds, style = Animation.Style.EaseOutQuad)
                 }
             }
-        }
+        }//
     }
+
+    private fun getLengthColor(string: String) =
+        if (string.length > length) Color.RED else Color.RGB(200, 200, 200)
 }

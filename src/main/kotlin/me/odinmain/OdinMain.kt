@@ -1,7 +1,5 @@
 package me.odinmain
 
-import com.github.stivais.ui.UIScreen
-import com.github.stivais.ui.impl.`ui command`
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,6 +31,7 @@ import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.SkyblockPlayer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.ScanUtils
+import me.odinmain.utils.ui.screens.UIScreen
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiScreen
 import net.minecraftforge.common.MinecraftForge
@@ -73,7 +72,6 @@ object OdinMain {
             devCommand, highlightCommand,
             waypointCommand, dungeonWaypointsCommand,
             petCommand, visualWordsCommand, PosMsgCommand,
-            `ui command`
         )
     }
 

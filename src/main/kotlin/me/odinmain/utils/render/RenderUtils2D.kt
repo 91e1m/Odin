@@ -1,13 +1,14 @@
 package me.odinmain.utils.render
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.withAlpha
 import me.odinmain.OdinMain.mc
 import me.odinmain.utils.corners
 import me.odinmain.utils.render.RenderUtils.bind
 import me.odinmain.utils.render.RenderUtils.renderVec
 import me.odinmain.utils.render.RenderUtils.tessellator
 import me.odinmain.utils.render.RenderUtils.worldRenderer
+import me.odinmain.utils.ui.Colors
 import net.minecraft.client.gui.ScaledResolution
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
@@ -84,7 +85,7 @@ object RenderUtils2D {
         text: String,
         entity: Entity,
         padding: Number,
-        backgroundColor: Color = Color.MINECRAFT_GRAY.withAlpha(0.5f),
+        backgroundColor: Color = Colors.MINECRAFT_GRAY.withAlpha(0.5f),
         accentColor: Color = Color.BLUE,
         textColor: Color = Color.WHITE,
         scale: Float = 1f,

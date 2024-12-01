@@ -1,16 +1,19 @@
 package me.odinmain.features.impl.nether
 
-import com.github.stivais.ui.color.Color
 import me.odinmain.features.Module
 import me.odinmain.features.impl.nether.FreshTimer.highlightFresh
 import me.odinmain.features.impl.nether.FreshTimer.highlightFreshColor
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.ColorSetting
+import me.odinmain.features.settings.impl.NumberSetting
+import me.odinmain.features.settings.impl.SelectorSetting
 import me.odinmain.utils.render.HighlightRenderer
 import me.odinmain.utils.render.RenderUtils
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.KuudraUtils
 import me.odinmain.utils.skyblock.KuudraUtils.kuudraTeammates
+import me.odinmain.utils.ui.Colors
 import net.minecraft.client.entity.EntityOtherPlayerMP
 import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.RenderLivingEvent
@@ -26,8 +29,8 @@ object TeamHighlight : Module(
     private val showHighlight by BooleanSetting("Show highlight", true, description = "Highlights teammates with an outline.")
     private val showName by BooleanSetting("Show name", true, description = "Highlights teammates with a name tag.")
     private val depthCheck by BooleanSetting("Depth check", false, description = "Highlights teammates only when they are visible.")
-    private val outlineColor by ColorSetting("Outline Color", Color.MINECRAFT_DARK_PURPLE, true, description = "Color of the player outline.").withDependency { showHighlight }
-    private val nameColor by ColorSetting("Name Color", Color.MINECRAFT_LIGHT_PURPLE, true, description = "Color of the name highlight.").withDependency { showName }
+    private val outlineColor by ColorSetting("Outline Color", Colors.MINECRAFT_DARK_PURPLE, true, description = "Color of the player outline.").withDependency { showHighlight }
+    private val nameColor by ColorSetting("Name Color", Colors.MINECRAFT_LIGHT_PURPLE, true, description = "Color of the name highlight.").withDependency { showName }
 
     init {
         HighlightRenderer.addEntityGetter({ HighlightRenderer.HighlightType.entries[mode] }) {

@@ -1,23 +1,23 @@
 package me.odinmain.features.settings.impl
 
-import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.color.*
-import com.github.stivais.ui.constraints.*
-import com.github.stivais.ui.constraints.measurements.Animatable
-import com.github.stivais.ui.constraints.sizes.AspectRatio
-import com.github.stivais.ui.constraints.sizes.Bounding
-import com.github.stivais.ui.constraints.sizes.Copying
-import com.github.stivais.ui.elements.impl.Popup
-import com.github.stivais.ui.elements.impl.popup
-import com.github.stivais.ui.elements.scope.ElementDSL
-import com.github.stivais.ui.elements.scope.LayoutScope
-import com.github.stivais.ui.elements.scope.draggable
-import com.github.stivais.ui.elements.scope.hoverEffect
-import com.github.stivais.ui.renderer.Gradient.LeftToRight
-import com.github.stivais.ui.renderer.Gradient.TopToBottom
-import com.github.stivais.ui.transforms.Transforms
-import com.github.stivais.ui.utils.radius
-import com.github.stivais.ui.utils.seconds
+import com.github.stivais.aurora.animations.Animation
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.constraints.impl.measurements.Animatable
+import com.github.stivais.aurora.constraints.impl.measurements.Pixel
+import com.github.stivais.aurora.constraints.impl.positions.Center
+import com.github.stivais.aurora.constraints.impl.size.AspectRatio
+import com.github.stivais.aurora.constraints.impl.size.Bounding
+import com.github.stivais.aurora.constraints.impl.size.Fill
+import com.github.stivais.aurora.dsl.*
+import com.github.stivais.aurora.elements.ElementScope
+import com.github.stivais.aurora.elements.Layout.Companion.section
+import com.github.stivais.aurora.elements.impl.Block.Companion.outline
+import com.github.stivais.aurora.elements.impl.Popup
+import com.github.stivais.aurora.elements.impl.layout.Column.Companion.sectionRow
+import com.github.stivais.aurora.elements.impl.popup
+import com.github.stivais.aurora.renderer.data.Gradient
+import com.github.stivais.aurora.transforms.impl.Scale
+import com.github.stivais.aurora.utils.*
 import com.google.gson.JsonElement
 import com.google.gson.JsonPrimitive
 import me.odinmain.features.impl.render.ClickGUI.favoriteColors
@@ -26,9 +26,7 @@ import me.odinmain.features.settings.Saving
 import me.odinmain.features.settings.Setting
 import me.odinmain.features.settings.Setting.Renders.Companion.onValueChanged
 import me.odinmain.features.settings.Setting.Renders.Companion.setting
-import me.odinmain.utils.ui.outline
-import me.odinmain.utils.ui.passEvent
-import me.odinmain.utils.ui.textInput
+import me.odinmain.utils.ui.image
 import java.awt.Color.HSBtoRGB
 
 class ColorSetting(
@@ -50,7 +48,7 @@ class ColorSetting(
 
     override fun read(element: JsonElement?) {
         if (element?.asString?.startsWith("#") == true) {
-            value = colorFrom(element.asString).toHSB()
+            value = Color.RGB(hexToRGBA(element.asString)).toHSB()
         } else {
             element?.asInt?.let { value = Color.RGB(it).toHSB() }
         }
@@ -60,20 +58,20 @@ class ColorSetting(
         return JsonPrimitive(value.toHexString())
     }
 
-    override fun ElementDSL.create() = setting(40.px) {
+    override fun ElementScope<*>.create() = setting(40.px) {
         text(
             name,
-            pos = at(x = 6.px),
+            pos = at(x = Pixel.ZERO),
             size = 40.percent
         )
         outline(
-            constrain(-(6.px), w = 30.px, h = 50.percent),
+            constrain(x = Pixel.ZERO.alignOpposite, w = 30.px, h = 50.percent),
             color { value.withAlpha(255).rgba },
             thickness = 1.px,
             radius = 5.radius()
         ) {
             block(
-                constraints = indent(2),
+                constraints = indent(2f),
                 color = value,
                 radius = 4.radius()
             )
@@ -90,349 +88,270 @@ class ColorSetting(
         }
     }
 
-    private fun ElementDSL.colorPicker() = popup(smooth = true) {
-        val mainColor = color { HSBtoRGB(value.hue, value.saturation, 1f) }
-        val colorHue = color { HSBtoRGB(value.hue, 1f, 1f) }
+    private fun ElementScope<*>.colorPicker() = popup(constraints = copies(), smooth = true) {
+        val colorMaxBrightness = color { HSBtoRGB(value.hue, value.saturation, 1f) }
+        val colorOnlyHue = color { HSBtoRGB(value.hue, 1f, 1f) }
 
-        // used to consume event
-        onClick { false; }
-        draggable(button = 1)
+        onClick {
+            closePopup( )
+            popup = null
+        }
 
         block(
-            copies(),
+            size(Bounding + 12.px, Bounding + 12.px),
             color = Color.RGB(22, 22, 22),
             radius = 10.radius()
         ) {
-            outline(
-                mainColor,
-                thickness = 1.px
-            )
-        }
+            draggable()
 
-        // padding in constructor doesn't work, ill fix it in rewrite
-        column(size(Bounding, Bounding)) {
-            divider(10.px)
-            //------------------------//
-            // title and close button //
-            //------------------------//
-            section(20.px) {
-                text(
-                    name,
-                    pos = at(5.percent),
-                    size = 75.percent
-                )
-                image(
-                    "/assets/odinmain/clickgui/close_icon.svg",
-                    constrain(x = 95.percent.alignRight, w = AspectRatio(1f), h = 80.percent)
-                ) {
-                    onClick {
-                        closePopup()
-                        popup = null
-                        true
+            // consume event so it doesn't pass to background
+            // when hovering of any part of the color picker.
+            onClick { true }
+
+            // TODO: FIX
+//        Shadow(
+//            copies(),
+//            blur = 5f,
+//            spread = 5f,
+//            radii = 10.radius(),
+//        ).add()
+
+            outline(
+                colorMaxBrightness,
+                thickness = 1.px,
+            )
+
+            column(padding = 10.px) {
+                section(20.px) {
+                    text(
+                        "Color",
+                        pos = at(x = Pixel.ZERO),
+                        size = 75.percent
+                    )
+
+                    image(
+                        "clickgui/close_icon.svg".image(),
+                        constrain(x = Pixel.ZERO.alignOpposite, w = AspectRatio(1f), h = 80.percent)
+                    ) {
+                        onClick {
+                            closePopup()
+                            popup = null
+                            true
+                        }
                     }
                 }
-            }
-            divider(7.5.px)
 
-            row(at(x = 12.5.px)) {
-                saturationBrightness(mainColor, colorHue)
-                divider(7.5.px)
-                hueSlider(mainColor)
-                if (allowAlpha) {
-                    divider(7.5.px)
-                    alphaSlider(mainColor, colorHue)
-                }
-                divider(7.5.px)
-            }
-            divider(7.5.px)
-            hexTextInput(mainColor)
-            divider(7.5.px)
-            favoriteColors(mainColor)
+                row(padding = 7.5.px) {
+                    /**
+                     * Saturation and brightness slider
+                     */
+                    outline(
+                        size(w = 200.px, h = 200.px),
+                        colorMaxBrightness,
+                        thickness = 1.px,
+                        radius = 7.5.radius()
+                    ) {
+                        block(
+                            indent(amount = 2f),
+                            colors = Color.WHITE to colorOnlyHue,
+                            gradient = Gradient.LeftToRight,
+                            radius = 6.radius()
+                        )
+                        block(
+                            indent(amount = 2f),
+                            colors = Color.TRANSPARENT to Color.BLACK,
+                            gradient = Gradient.TopToBottom,
+                            radius = 6.radius()
+                        )
 
-            divider(12.5.px)
-        }
-    }
+                        pointer(onlyY = false) {
+                            value.saturation to 1f - value.brightness
+                        }
+                        onMouseDrag { x, y ->
+                            value.saturation = x
+                            value.brightness = 1f - y
+                            true
+                        }
+                    }
 
-    private fun ElementDSL.saturationBrightness(mainColor: Color, colorHue: Color) = outline(
-        size(w = 175.px, h = 175.px),
-        mainColor,
-        thickness = 1.px,
-        radius = 7.5.radius()
-    ) {
-        block(
-            constraints = indent(2),
-            colors = Color.WHITE to colorHue,
-            radius = 6.radius(),
-            gradient = LeftToRight
-        ) {
-            block(
-                constraints = copies(),
-                colors = transparentFix to Color.BLACK,
-                radius = 6.radius(),
-                gradient = TopToBottom
-            )
-        }
+                    /**
+                     * Hue slider
+                     */
+                    outline(
+                        size(w = 15.px, h = 200.px),
+                        colorMaxBrightness,
+                        thickness = 1.px,
+                        radius = 7.5.radius()
+                    ) {
+                        image(
+                            "clickgui/HueGradient.png".image(),
+                            constraints = indent(amount = 2f),
+                            radius = 5.radius()
+                        )
+                        pointer(onlyY = true) {
+                            0f to 1f - value.hue
+                        }
+                        onMouseDrag { _, y ->
+                            value.hue = 1f - y
+                            true
+                        }
+                    }
 
-        val pointerX = Animatable.Raw((175 * value.saturation).coerceIn(8f, 167f))
-        val pointerY = Animatable.Raw((175 * (1f - value.brightness)).coerceIn(8f, 167f))
+                    /**
+                     * Alpha slider
+                     */
+                    if (allowAlpha) {
+                        outline(
+                            size(w = 15.px, h = 200.px),
+                            colorMaxBrightness,
+                            thickness = 1.px,
+                            radius = 7.5.radius()
+                        ) {
+                            block(
+                                constraints = indent(2f),
+                                colors = colorOnlyHue to Color.TRANSPARENT,
+                                gradient = Gradient.TopToBottom,
+                                radius = 5.radius(),
+                            )
 
-        block(
-            constrain(pointerX.center, pointerY.center, 10.px, 10.px),
-            color = value,
-            radius = 5.radius()
-        ).outline(Color.WHITE)
-
-        pointerHandler(
-            pointerX,
-            pointerY,
-            apply = { px, py ->
-                value.saturation = px
-                value.brightness = 1f - py
-            },
-            block = {
-                value.saturation to 1f - value.brightness
-            }
-        )
-    }
-
-    private fun ElementDSL.hueSlider(mainColor: Color) = outline(
-        size(w = 16.px, h = 175.px),
-        mainColor,
-        thickness = 1.px,
-        radius = 6.radius()
-    ) {
-        image(
-            "/assets/odinmain/clickgui/HueGradient.png",
-            constraints = indent(2),
-            radius = 5.radius()
-        )
-
-        val pointerY = Animatable.Raw((175 * (1f - value.hue)).coerceIn(8f, 167f))
-
-        block(
-            constrain(y = pointerY.center, w = 10.px, h = 10.px),
-            color = value,
-            radius = 5.radius()
-        ).outline(Color.WHITE)
-
-        pointerHandler(
-            pointerX = null,
-            pointerY,
-            apply = { _, py ->
-                value.hue = 1f - py
-            },
-            block = {
-                0f to 1f - value.hue
-            }
-        )
-    }
-
-    private fun ElementDSL.alphaSlider(mainColor: Color, colorHue: Color) = outline(
-        size(w = 16.px, h = 175.px),
-        mainColor,
-        thickness = 1.px,
-        radius = 6.radius()
-    ) {
-        block(
-            constraints = indent(2),
-            colors = colorHue to transparentFix,
-            gradient = TopToBottom,
-            radius = 5.radius(),
-        )
-
-        val pointerY = Animatable.Raw((175 * value.alpha).coerceIn(8f, 167f))
-
-        block(
-            constrain(y = pointerY.center, w = 10.px, h = 10.px),
-            color = value,
-            radius = 5.radius()
-        ).outline(Color.WHITE)
-
-        pointerHandler(
-            pointerX = null,
-            pointerY,
-            apply = { _, py ->
-                value.alpha = 1f - py
-            },
-            block = {
-                0f to 1f - value.alpha
-            }
-        )
-    }
-
-    /**
-     * Creates a text input that lets you edit this color via hexadecimal input
-     */
-    private fun LayoutScope.hexTextInput(mainColor: Color) = section(30.px) {
-        text(
-            "Hex",
-            pos = at(x = 5.percent),
-        )
-        block(
-            constrain(x = 95.5.percent.alignRight, w = 70.percent, h = 90.percent),
-            color = `gray 38`,
-            radius = 6.radius()
-        ) {
-            hoverEffect(0.25.seconds)
-            outline(
-                mainColor,
-                thickness = 1.px
-            )
-            val input = textInput(
-                default = value.toHexString(),
-                pos = at(x = 5.percent),
-                onTextChange = { event ->
-                    val str = event.string
-                    val hexLength = if (allowAlpha) 9 else 7
-                    // Validate hex input
-                    if (str.length > hexLength || (str.isNotEmpty() && !str.startsWith("#")) || (str.length > 1 && !str.substring(1).all { it.isDigit() || it.lowercaseChar() in 'a'..'f' })) {
-                        event.cancel()
-                    } else if (str.length == hexLength) {
-                        try {
-                            // Parse and update color from hex immediately
-                            val newColor = colorFrom(str).toHSB()
-                            value.hue = newColor.hue
-                            value.saturation = newColor.saturation
-                            value.brightness = newColor.brightness
-                            if (allowAlpha) {
-                                value.alpha = newColor.alpha
+                            pointer(onlyY = true) {
+                                0f to 1f - value.alpha
                             }
-                        } catch (_: Exception) {}
+                            onMouseDrag { _, y ->
+                                value.alpha = 1f - y
+                                true
+                            }
+                        }
                     }
                 }
-            ).apply {
-                onValueChanged {
-                    this@apply.string = value.toHexString()
-                }
-                onFocusLost {
-                    if (this@apply.string.length != (if (allowAlpha) 9 else 7)) {
-                        this@apply.string = value.toHexString()
+
+                /**
+                 * Hex input
+                 */
+                sectionRow(size = 25.px, padding = 10.px) {
+                    text(
+                        "Hex",
+                        pos = at(y = Center),
+                        size = 65.percent,
+                    )
+                    block(
+                        size(w = Fill, h = 90.percent),
+                        color = `gray 38`,
+                        radius = 6.radius()
+                    ) {
+                        outline(
+                            colorMaxBrightness,
+                            thickness = 1.px,
+                        )
                     }
                 }
-            }
-            onClick {
-                input.focusThis()
-                true
+
+                /**
+                 * Favourite colors.
+                 */
+                sectionRow(padding = 3.percent) {
+                    block(
+                        size(w = 14.percent, h = AspectRatio(1f)),
+                        color = Color.RGB(22, 22, 22),
+                        radius = 6.radius()
+                    ) {
+                        outline(
+                            colorMaxBrightness,
+                            thickness = 1.px,
+                        )
+
+                        var clicked = false
+                        val transform = Scale.Animated(from = 1f, to = 0.9f)
+
+                        image(
+                            "clickgui/heart_icon.svg".image(),
+                            constraints = size(70.percent, 70.percent),
+                        ).transform(transform)
+
+                        onClick {
+                            if (!favoriteColors.contains(value)) {
+                                if (favoriteColors.size == 5) favoriteColors.removeLast()
+                                favoriteColors.add(0, Color.HSB(value))
+                            }
+                            clicked = true
+                            transform.animate(0.1.seconds, Animation.Style.EaseInQuint)
+                            true
+                        }
+                        onRelease {
+                            if (clicked) {
+                                transform.animate(0.15.seconds, Animation.Style.EaseInQuint)
+                                clicked = false
+                            }
+                        }
+                    }
+
+                    repeat(5) { index ->
+                        block(
+                            size(w = 14.percent, h = AspectRatio(1f)),
+                            color = Color.RGB(22, 22, 22),
+                            radius = 6.radius()
+                        ) {
+                            outline(
+                                color { (favoriteColors.getOrNull(index) ?: `gray 38`).rgba },
+                                thickness = 1.px
+                            )
+                            block(
+                                indent(2f),
+                                color { (favoriteColors.getOrNull(index) ?: Color.TRANSPARENT).rgba },
+                                radius = 5.radius()
+                            )
+                            onClick {
+                                val favoriteColor = favoriteColors.getOrNull(index)
+                                if (favoriteColor != null) {
+                                    value.hue = favoriteColor.hue
+                                    value.saturation = favoriteColor.saturation
+                                    value.brightness = favoriteColor.brightness
+                                    if (allowAlpha) value.alpha = favoriteColor.alpha
+                                }
+                                true
+                            }
+                            onClick(button = 1) {
+                                if (favoriteColors.size - 1 >= index) {
+                                    favoriteColors.removeAt(index)
+                                }
+                                true
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
-    /**
-     * Lets you favorite colors, so you can reuse them for other settings
-     */
-    private fun LayoutScope.favoriteColors(mainColor: Color) = row(constrain(x = 12.5.px, w = Copying)) {
-        block(
-            size(w = 12.5.percent, h = AspectRatio(1f)),
-            color = `gray 38`,
-            radius = 6.radius()
-        ) {
-            hoverEffect(0.25.seconds)
-            outline(mainColor)
-
-            // for "pulse" effect
-            var clicked = false
-            val transform = Transforms.Scale.Animated(from = 1f, to = 0.9f,)
-            image(
-                "/assets/odinmain/clickgui/heart_icon.svg",
-                constraints = size(70.percent, 70.percent),
-            ).transform(transform)
-
-            onClick {
-                if (!favoriteColors.contains(value)) {
-                    if (favoriteColors.size == 5) favoriteColors.removeLast()
-                    favoriteColors.add(0, Color.HSB(value))
-                }
-                clicked = true
-                transform.animate(0.1.seconds, Animations.EaseInQuint)
-                true
-            }
-            onRelease {
-                if (clicked) {
-                    transform.animate(0.15.seconds, Animations.EaseInQuint)
-                    clicked = false
-                }
-            }
-        }
-
-        repeat(5) { index ->
-            divider(3.percent)
-
-            block(
-                size(w = 12.5.percent, h = AspectRatio(1f)),
-                color = Color.RGB(22, 22, 22),
-                radius = 6.radius()
-            ) {
-                outline(
-                    color { (favoriteColors.getOrNull(index) ?: `gray 38`).rgba }
-                )
-                block(
-                    indent(2),
-                    color { (favoriteColors.getOrNull(index) ?: Color.TRANSPARENT).rgba },
-                    radius = 5.radius()
-                )
-                onClick {
-                    val favoriteColor = favoriteColors.getOrNull(index)
-                    if (favoriteColor != null) {
-                        value.hue = favoriteColor.hue
-                        value.saturation = favoriteColor.saturation
-                        value.brightness = favoriteColor.brightness
-                        if (allowAlpha) value.alpha = favoriteColor.alpha
-                    }
-                    true
-                }
-            }
-        }
-    }
-
-
-    /**
-     * Utility for making sliders
-     */
-    private inline fun ElementDSL.pointerHandler(
-        pointerX: Animatable.Raw?,
-        pointerY: Animatable.Raw?,
-        crossinline apply: (px: Float, py: Float) -> Unit,
-        crossinline block: () -> Pair<Float, Float>
+    private inline fun ElementScope<*>.pointer(
+        onlyY: Boolean,
+        crossinline block: () -> Pair<Float, Float>,
     ) {
-        var first = false
-        var dragging = false
+        val (sx, sy) = block()
+        val pointerX = if (onlyY) null else Animatable.Raw((sx * 200f).coerceIn(8f, 192f))
+        val pointerY = Animatable.Raw((sy * 200f).coerceIn(8f, 192f))
+
+        var animate = false
+
+        block(
+            constrain(
+                x = pointerX?.alignCenter ?: Center,
+                y = pointerY.alignCenter,
+                w = 10.px, h = 10.px
+            ),
+            color = value,
+            radius = 5.radius()
+        ).outline(color = Color.WHITE, thickness = 1.px)
 
         onClick {
-            val (px, py) = element.getMousePosPercent()
-            apply(px, py)
-            first = true
-            dragging = true
-            true
+            animate = true
         }
-        onMouseMove {
-            if (dragging) {
-                val (px, py) = element.getMousePosPercent()
-                apply(px, py)
-            }
-            dragging
-        }
-        onRelease {
-            dragging = false
-        }
-
         onValueChanged {
+            val duration = if (animate || !ui.eventManager.mouseDown) 0.15.seconds else 0f
             val (x, y) = block()
-
-            val toX = (x * element.width).coerceIn(8f, element.width - 8f)
-            val toY = (y * element.height).coerceIn(8f, element.height - 8f)
-            if (first || !dragging) {
-                pointerX?.animate(toX, 0.1.seconds, Animations.EaseOutQuad)
-                pointerY?.animate(toY, 0.1.seconds, Animations.EaseOutQuad)
-            } else {
-                pointerX?.to(toX)
-                pointerY?.to(toY)
-            }
-            redraw()
+            pointerX?.animate(to = (x * 200f).coerceIn(8f, 192f), duration, Animation.Style.EaseOutQuad)
+            pointerY.animate(to = (y * 200f).coerceIn(8f, 192f), duration, Animation.Style.EaseOutQuad)
+            animate = false
         }
-    }
-
-    private companion object {
-        @JvmStatic
-        val transparentFix: Color.RGB = Color.RGB(0, 0, 0, 0.2f)
     }
 }

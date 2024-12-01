@@ -1,18 +1,22 @@
 package me.odin.features.impl.floor7.p3
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.events.impl.BlockChangeEvent
 import me.odinmain.events.impl.RealServerTick
-import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.*
-import me.odinmain.utils.*
+import me.odinmain.features.settings.impl.ActionSetting
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.ColorSetting
+import me.odinmain.features.settings.impl.KeybindSetting
+import me.odinmain.utils.distanceSquaredTo
+import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.M7Phases
 import me.odinmain.utils.skyblock.modMessage
+import me.odinmain.utils.toVec3
 import net.minecraft.entity.item.EntityArmorStand
 import net.minecraft.init.Blocks
 import net.minecraft.util.AxisAlignedBB

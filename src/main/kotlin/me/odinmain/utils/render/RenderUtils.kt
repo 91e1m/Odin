@@ -1,12 +1,7 @@
 package me.odinmain.utils.render
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.alpha
-import com.github.stivais.ui.color.blue
-import com.github.stivais.ui.color.green
-import com.github.stivais.ui.color.isTransparent
-import com.github.stivais.ui.color.red
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.*
 import me.odinmain.OdinMain.mc
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints.DungeonWaypoint
 import net.minecraft.client.renderer.GlStateManager
@@ -139,7 +134,7 @@ object RenderUtils {
      * @param depth Whether to enable depth testing.
      */
     fun drawFilledAABB(aabb: AxisAlignedBB, color: Color, depth: Boolean = false) {
-        if (color.isTransparent) return
+        if (color.alpha == 0) return
 
         GlStateManager.pushMatrix()
         GlStateManager.disableCull()
@@ -163,7 +158,7 @@ object RenderUtils {
      * @param depth Whether to enable depth testing.
      */
     fun drawOutlinedAABB(aabb: AxisAlignedBB, color: Color, thickness: Number = 3f, depth: Boolean = false, smoothLines: Boolean = true) {
-        if (color.isTransparent) return
+        if (color.alpha == 0) return
         GlStateManager.pushMatrix()
         preDraw()
 
@@ -352,7 +347,7 @@ object RenderUtils {
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA)
 
             for (box in boxes) {
-                if (box.clicked || box.color.isTransparent) continue
+                if (box.clicked || box.color.alpha == 0) continue
                 (box.depth && !disableDepth).let {
                     if (it) GL11.glEnable(GL11.GL_DEPTH_TEST)
                     else GL11.glDisable(GL11.GL_DEPTH_TEST)
@@ -406,7 +401,7 @@ object RenderUtils {
      * @param depth Whether to enable depth testing.
      */
     fun drawBeaconBeam(vec3: Vec3, color: Color, depth: Boolean = true, height: Int = 300) {
-        if (color.isTransparent) return
+        if (color.alpha == 0) return
         val bottomOffset = 0
         val topOffset = bottomOffset + height
         depth(depth)

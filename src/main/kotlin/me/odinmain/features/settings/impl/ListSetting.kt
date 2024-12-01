@@ -7,7 +7,7 @@ import me.odinmain.features.settings.Setting
 import java.lang.reflect.Type
 
 /**
- * This setting is only designed to store values as a list, and shouldn't be rendered in the gui.
+ * This setting is only designed to store values as a list.
  *
  * @author Stivais
  */

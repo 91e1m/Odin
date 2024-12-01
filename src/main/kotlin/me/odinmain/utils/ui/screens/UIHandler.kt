@@ -1,32 +1,31 @@
-package me.odinmain.utils.ui
+package me.odinmain.utils.ui.screens
 
-import com.github.stivais.ui.UI
-import com.github.stivais.ui.Window
+import com.github.stivais.aurora.AuroraUI
+import com.github.stivais.aurora.Window
 import me.odinmain.OdinMain.mc
 import me.odinmain.events.impl.GuiEvent
+import net.minecraft.client.gui.GuiScreen.getClipboardString
+import net.minecraft.client.gui.GuiScreen.setClipboardString
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.input.Mouse
 import org.lwjgl.opengl.Display
 
-/**
- * Class that draws handles a [UI][com.github.stivais.ui.UI] instance via MC events.
- *
- * It is required to call [open] and [close] otherwise it will mess up with the eventbus.
- */
-class UIHandler(private val ui: UI, private val onlyRender: Boolean = false) : Window {
+class UIHandler(private val ui: AuroraUI): Window {
 
     private var previousWidth: Int = 0
     private var previousHeight: Int = 0
 
-    fun open() {
-        ui.initialize(Display.getWidth(), Display.getHeight(), this)
+    fun open(init: Boolean = true) {
+        if (init) {
+            ui.initialize(Display.getWidth(), Display.getHeight(), this)
+        }
         MinecraftForge.EVENT_BUS.register(this)
     }
 
     fun close() {
-        ui.cleanup()
+        ui.close()
         MinecraftForge.EVENT_BUS.unregister(this)
     }
 
@@ -39,16 +38,11 @@ class UIHandler(private val ui: UI, private val onlyRender: Boolean = false) : W
             previousWidth = w
             previousHeight = h
         }
-        if (!onlyRender) {
-            ui.eventManager.apply {
-                val mx = Mouse.getX().toFloat()
-                val my = previousHeight - Mouse.getY() - 1f
 
-                if (this.mouseX != mx || this.mouseY != my || check()) {
-                    onMouseMove(mx, my)
-                }
-            }
-        }
+        val mx = Mouse.getX().toFloat()
+        val my = previousHeight - Mouse.getY() - 1f
+        ui.eventManager.onMouseMove(mx, my)
+
         ui.render()
     }
 
@@ -64,6 +58,14 @@ class UIHandler(private val ui: UI, private val onlyRender: Boolean = false) : W
 
     @SubscribeEvent
     fun onKeyboardClick(event: GuiEvent.GuiKeyPressEvent) {
-        ui.eventManager.onKeyType(event.char)
+        ui.eventManager.onKeyTyped(event.char)
+    }
+
+    override fun getClipboard(): String? {
+        return getClipboardString()
+    }
+
+    override fun setClipboard(string: String?) {
+        return setClipboardString(string)
     }
 }

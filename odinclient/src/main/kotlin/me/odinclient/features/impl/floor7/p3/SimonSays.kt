@@ -1,11 +1,10 @@
 package me.odinclient.features.impl.floor7.p3
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.withAlpha
 import me.odinclient.utils.skyblock.PlayerUtils.rightClick
 import me.odinmain.events.impl.BlockChangeEvent
 import me.odinmain.events.impl.PostEntityMetadata
-import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.BooleanSetting
@@ -13,9 +12,12 @@ import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.utils.*
 import me.odinmain.utils.clock.Clock
 import me.odinmain.utils.render.Renderer
-import me.odinmain.utils.skyblock.*
+import me.odinmain.utils.skyblock.devMessage
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.M7Phases
+import me.odinmain.utils.skyblock.getBlockIdAt
+import me.odinmain.utils.skyblock.modMessage
+import me.odinmain.utils.ui.Colors
 import net.minecraft.block.BlockButtonStone
 import net.minecraft.entity.item.EntityItem
 import net.minecraft.init.Blocks
@@ -141,7 +143,7 @@ object SimonSays : Module(
         val isInSSRange = mc.thePlayer.getDistanceSqToCenter(BlockPos(108, 120, 93)) <= 1.45 * 1.45
         Renderer.drawCylinder(
             Vec3(108.5, 120.0, 93.5), 1.45f, 1.45f, .6f, 35,
-            1, 0f, 90f, 90f, (if (isInSSRange) Color.GREEN else Color.MINECRAFT_GOLD).withAlpha(.5f)
+            1, 0f, 90f, 90f, (if (isInSSRange) Color.GREEN else Colors.MINECRAFT_GOLD).withAlpha(.5f)
         )
 
         if (

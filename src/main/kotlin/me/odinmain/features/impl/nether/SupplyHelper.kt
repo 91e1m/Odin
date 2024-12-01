@@ -1,6 +1,6 @@
 package me.odinmain.features.impl.nether
 
-import com.github.stivais.ui.color.Color
+import com.github.stivais.aurora.color.Color
 import me.odinmain.features.Module
 import me.odinmain.features.impl.nether.NoPre.missing
 import me.odinmain.features.settings.Setting.Companion.withDependency
@@ -11,6 +11,7 @@ import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.KuudraUtils
 import me.odinmain.utils.skyblock.KuudraUtils.SupplyPickUpSpot
 import me.odinmain.utils.skyblock.modMessage
+import me.odinmain.utils.ui.Colors
 import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.ClientChatReceivedEvent
 import net.minecraftforge.client.event.RenderWorldLastEvent
@@ -23,7 +24,7 @@ object SupplyHelper : Module(
     description = "Helps with supplies in kuudra."
 ) {
     private val suppliesWaypoints by BooleanSetting("Supplies Waypoints", true, description = "Renders the supply waypoints.")
-    private val supplyWaypointColor by ColorSetting("Supply Waypoint Color", Color.MINECRAFT_YELLOW, true, description = "Color of the supply waypoints.").withDependency { suppliesWaypoints }
+    private val supplyWaypointColor by ColorSetting("Supply Waypoint Color", Colors.MINECRAFT_YELLOW, true, description = "Color of the supply waypoints.").withDependency { suppliesWaypoints }
     private val supplyDropWaypoints by BooleanSetting("Supply Drop Waypoints", true, description = "Renders the supply drop waypoints.")
     private val sendSupplyTime by BooleanSetting("Send Supply Time", true, description = "Sends a message when a supply is collected.")
 

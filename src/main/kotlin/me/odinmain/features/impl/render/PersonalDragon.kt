@@ -1,11 +1,13 @@
 package me.odinmain.features.impl.render
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.blue
-import com.github.stivais.ui.color.green
-import com.github.stivais.ui.color.red
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.blue
+import com.github.stivais.aurora.utils.green
+import com.github.stivais.aurora.utils.red
 import me.odinmain.features.Module
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.ColorSetting
+import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.utils.render.RenderUtils.renderX
 import me.odinmain.utils.render.RenderUtils.renderY
 import me.odinmain.utils.render.RenderUtils.renderZ

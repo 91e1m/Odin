@@ -1,24 +1,12 @@
 package me.odinmain.features.impl.dungeon
 
-import com.github.stivais.ui.UI
-import com.github.stivais.ui.UIScreen.Companion.open
-import com.github.stivais.ui.animation.Animations
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.constraints.constrain
-import com.github.stivais.ui.constraints.copies
-import com.github.stivais.ui.constraints.measurements.Animatable
-import com.github.stivais.ui.constraints.percent
-import com.github.stivais.ui.constraints.size
-import com.github.stivais.ui.elements.impl.Grid
-import com.github.stivais.ui.utils.radius
-import com.github.stivais.ui.utils.seconds
+import com.github.stivais.aurora.color.Color
 import io.github.moulberry.notenoughupdates.NEUApi
 import me.odinmain.events.impl.GuiEvent
 import me.odinmain.features.Module
 import me.odinmain.features.impl.dungeon.LeapHelper.getPlayer
 import me.odinmain.features.impl.dungeon.LeapHelper.leapHelperBossChatEvent
 import me.odinmain.features.impl.dungeon.LeapHelper.worldLoad
-import me.odinmain.features.impl.render.ClickGUI.`gray 38`
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.*
 import me.odinmain.utils.equalsOneOf
@@ -55,66 +43,66 @@ object LeapMenu : Module(
 
     private val EMPTY = DungeonPlayer("Empty", DungeonClass.Unknown)
 
-    fun leapMenu() = UI {
-        Grid(copies()).scope {
-            leapTeammates.forEachIndexed { index, it ->
-                if (it == EMPTY) return@forEachIndexed
-                val x = when (index) {
-                    0, 2 -> 16.percent
-                    else -> 6.percent
-                }
-
-                val y = when (index) {
-                    0, 1 -> 38.percent
-                    else -> 10.percent
-                }
-                val sizeX = Animatable(from = 80.percent, to = 83.percent) // this keeps the starting x and y while enlarging the width and height which isnt what we want
-                val sizeY = Animatable(from = 50.percent, to = 53.percent)
-                group(size(50.percent, 50.percent)) {
-                    val block = block(
-                        constraints = constrain(x, y, sizeX, sizeY),
-                        color = `gray 38`,
-                        radius = 12.radius()
-                    ) {
-
-                        image(
-                            it.skinImage,
-                            constraints = constrain(5.percent, 10.percent, 30.percent, 80.percent),
-                            12f.radius()
-                        )
-                        column(constraints = constrain(38.percent, 40.percent)) {
-                            text(it.name, size = 20.percent, color = it.clazz.color)
-                            divider(5.percent)
-                            text(if (it.isDead) "§cDEAD" else it.clazz.name, size = 10.percent, color = Color.WHITE)
-                        }
-                    }
-                    onClick { // make it possible to click any mouse button
-                        handleMouseClick(index)
-                        true
-                    }
-                    onMouseEnter {
-                        sizeX.animate(0.25.seconds, Animations.EaseInOutQuint)
-                        sizeY.animate(0.25.seconds, Animations.EaseInOutQuint)
-                        block.outline(color = Color.WHITE)
-                        redraw()
-                    }
-                    onMouseExit {
-                        sizeX.animate(0.25.seconds, Animations.EaseInOutQuint)
-                        sizeY.animate(0.25.seconds, Animations.EaseInOutQuint)
-                        block.outline(color = Color.TRANSPARENT)
-                        redraw()
-                    }
-                }
-            }
-        }
-    }
+//    fun leapMenu() = UI {
+//        Grid(copies()).scope {
+//            leapTeammates.forEachIndexed { index, it ->
+//                if (it == EMPTY) return@forEachIndexed
+//                val x = when (index) {
+//                    0, 2 -> 16.percent
+//                    else -> 6.percent
+//                }
+//
+//                val y = when (index) {
+//                    0, 1 -> 38.percent
+//                    else -> 10.percent
+//                }
+//                val sizeX = Animatable(from = 80.percent, to = 83.percent) // this keeps the starting x and y while enlarging the width and height which isnt what we want
+//                val sizeY = Animatable(from = 50.percent, to = 53.percent)
+//                group(size(50.percent, 50.percent)) {
+//                    val block = block(
+//                        constraints = constrain(x, y, sizeX, sizeY),
+//                        color = `gray 38`,
+//                        radius = 12.radius()
+//                    ) {
+//
+//                        image(
+//                            it.skinImage,
+//                            constraints = constrain(5.percent, 10.percent, 30.percent, 80.percent),
+//                            12f.radius()
+//                        )
+//                        column(constraints = constrain(38.percent, 40.percent)) {
+//                            text(it.name, size = 20.percent, color = it.clazz.color)
+//                            divider(5.percent)
+//                            text(if (it.isDead) "§cDEAD" else it.clazz.name, size = 10.percent, color = Color.WHITE)
+//                        }
+//                    }
+//                    onClick { // make it possible to click any mouse button
+//                        handleMouseClick(index)
+//                        true
+//                    }
+//                    onMouseEnter {
+//                        sizeX.animate(0.25.seconds, Animations.EaseInOutQuint)
+//                        sizeY.animate(0.25.seconds, Animations.EaseInOutQuint)
+//                        block.outline(color = Color.WHITE)
+//                        redraw()
+//                    }
+//                    onMouseExit {
+//                        sizeX.animate(0.25.seconds, Animations.EaseInOutQuint)
+//                        sizeY.animate(0.25.seconds, Animations.EaseInOutQuint)
+//                        block.outline(color = Color.TRANSPARENT)
+//                        redraw()
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     @SubscribeEvent
     fun guiOpen(event: GuiOpenEvent) {
         val chest = (event.gui as? GuiChest)?.inventorySlots ?: return
         if (chest !is ContainerChest || chest.name != "Spirit Leap" || leapTeammates.isEmpty() || leapTeammates.all { it == EMPTY }) return
         if (Loader.instance().activeModList.any { it.modId == "notenoughupdates" }) NEUApi.setInventoryButtonsToDisabled()
-        leapMenu().open()
+//        leapMenu().open()
     }
 
     private fun handleMouseClick(quadrant: Int) {

@@ -1,12 +1,11 @@
 package me.odinclient.features.impl.render
 
-import com.github.stivais.ui.color.Color
-import com.github.stivais.ui.color.withAlpha
+import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.withAlpha
 import me.odinclient.mixin.accessors.IEntityPlayerSPAccessor
 import me.odinclient.utils.skyblock.PlayerUtils
 import me.odinmain.events.impl.ClickEvent
 import me.odinmain.events.impl.PacketReceivedEvent
-import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints.toBlockPos
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints.toVec3
@@ -17,11 +16,14 @@ import me.odinmain.utils.*
 import me.odinmain.utils.clock.Clock
 import me.odinmain.utils.render.RenderUtils.renderVec
 import me.odinmain.utils.render.Renderer
-import me.odinmain.utils.skyblock.*
 import me.odinmain.utils.skyblock.EtherWarpHelper
 import me.odinmain.utils.skyblock.EtherWarpHelper.etherPos
+import me.odinmain.utils.skyblock.Island
+import me.odinmain.utils.skyblock.LocationUtils
 import me.odinmain.utils.skyblock.PlayerUtils.playLoudSound
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
+import me.odinmain.utils.skyblock.usingEtherWarp
+import me.odinmain.utils.ui.Colors
 import net.minecraft.network.play.server.S29PacketSoundEffect
 import net.minecraft.util.MathHelper
 import net.minecraft.util.Vec3
@@ -35,7 +37,7 @@ object EtherWarpHelper : Module(
 ) {
     private val zeroPing by BooleanSetting("Zero Ping", false, description = "Teleports you to the exact position of the etherwarp.").withDependency { isDev }
     private val render by BooleanSetting("Show Etherwarp Guess", true, description = "Shows where etherwarp will take you.")
-    private val color by ColorSetting("Color", Color.MINECRAFT_GOLD.withAlpha(.5f), allowAlpha = true, description = "Color of the box.").withDependency { render }
+    private val color by ColorSetting("Color", Colors.MINECRAFT_GOLD.withAlpha(.5f), allowAlpha = true, description = "Color of the box.").withDependency { render }
     private val renderFail by BooleanSetting("Show when failed", true, description = "Shows the box even when the guess failed.").withDependency { render }
     private val wrongColor by ColorSetting("Wrong Color", Color.RED.withAlpha(.5f), allowAlpha = true, description = "Color of the box if guess failed.").withDependency { renderFail }
 
