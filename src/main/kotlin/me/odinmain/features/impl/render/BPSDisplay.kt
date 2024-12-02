@@ -1,6 +1,6 @@
 package me.odinmain.features.impl.render
 
-import me.odinmain.events.impl.PacketSentEvent
+import me.odinmain.events.impl.PacketEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.utils.round
@@ -36,7 +36,7 @@ object BPSDisplay : Module(
     private var lastBrokenBlock = 0L
 
     @SubscribeEvent
-    fun onPacket(event: PacketSentEvent) {
+    fun onPacket(event: PacketEvent.Receive) {
         val packet = event.packet as? PacketPlayerDigging ?: return
         if (packet.status != START_DESTROY_BLOCK) return
         if (startTime == 0L) startTime = System.currentTimeMillis()

@@ -1,7 +1,6 @@
 package me.odinclient.features.impl.render
 
 import me.odinmain.events.impl.PacketEvent
-import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.utils.equalsOneOf
@@ -9,7 +8,9 @@ import net.minecraft.block.material.Material
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.network.play.server.S2APacketParticles
 import net.minecraft.util.EnumParticleTypes
-import net.minecraftforge.client.event.*
+import net.minecraftforge.client.event.EntityViewRenderEvent
+import net.minecraftforge.client.event.RenderBlockOverlayEvent
+import net.minecraftforge.client.event.RenderGameOverlayEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object NoDebuff : Module(

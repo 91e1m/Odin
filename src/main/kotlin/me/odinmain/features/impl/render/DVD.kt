@@ -5,11 +5,7 @@ import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.features.settings.impl.StringSetting
-import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.RenderUtils.bind
-import me.odinmain.utils.render.getMCTextHeight
-import me.odinmain.utils.render.mcText
-import me.odinmain.utils.render.roundedRectangle
 import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.modMessage
 import net.minecraft.client.gui.ScaledResolution
@@ -59,8 +55,8 @@ object DVD : Module(
     @SubscribeEvent
     fun onRenderOverlay(event: RenderGameOverlayEvent.Post) {
         if (event.type != RenderGameOverlayEvent.ElementType.ALL) return
-        roundedRectangle(x, y, boxWidth, boxHeight, color, if (roundedCorners) 12f else 0f)
-        mcText(text, x + boxWidth / 2, y + boxHeight / 2 - getMCTextHeight() * textScale / 2 , textScale, color, true)
+        /*roundedRectangle(x, y, boxWidth, boxHeight, color, if (roundedCorners) 12f else 0f)
+        mcText(text, x + boxWidth / 2, y + boxHeight / 2 - getMCTextHeight() * textScale / 2 , textScale, color, true)*/
         Color.WHITE.bind()
     }
 

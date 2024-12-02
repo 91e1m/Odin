@@ -1,7 +1,6 @@
 package me.odinclient.features.impl.dungeon
 
 import me.odinmain.events.impl.PacketEvent
-import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.SelectorSetting
 import me.odinmain.utils.equalsOneOf

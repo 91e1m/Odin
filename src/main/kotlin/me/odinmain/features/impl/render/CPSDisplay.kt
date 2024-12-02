@@ -1,7 +1,7 @@
 package me.odinmain.features.impl.render
 
 import com.github.stivais.aurora.color.Color
-import me.odinmain.events.impl.PacketSentEvent
+import me.odinmain.events.impl.PacketEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.BooleanSetting
@@ -30,22 +30,18 @@ object CPSDisplay : Module(
 
     @SubscribeEvent
     fun onTick(event: ClientTickEvent) {
-        if (leftClicks.size != 0 && System.currentTimeMillis() - leftClicks.first() > 1000) {
+        if (leftClicks.isNotEmpty() && System.currentTimeMillis() - leftClicks.first() > 1000) {
             leftClicks.removeFirst()
         }
-        if (rightClicks.size != 0 && System.currentTimeMillis() - rightClicks.first() > 1000) {
+        if (rightClicks.isNotEmpty() && System.currentTimeMillis() - rightClicks.first() > 1000) {
             rightClicks.removeFirst()
         }
     }
 
     @SubscribeEvent
-    fun onPacket(event: PacketSentEvent) {
+    fun onPacket(event: PacketEvent.Send) {
         if (event.packet !is C08PacketPlayerBlockPlacement) return
-        if (countPackets) {
-            if (rightClicks.size == 0 || System.currentTimeMillis() - rightClicks.last() > 5) {
-                onRightClick()
-            }
-        }
+        if (countPackets && rightClicks.isEmpty() || System.currentTimeMillis() - rightClicks.last() > 5) onRightClick()
     }
 
     @JvmStatic

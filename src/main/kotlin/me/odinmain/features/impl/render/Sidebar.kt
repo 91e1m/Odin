@@ -1,17 +1,9 @@
 package me.odinmain.features.impl.render
 
-import me.odinmain.features.Category
 import me.odinmain.features.Module
-import me.odinmain.features.settings.impl.*
-import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
-import me.odinmain.utils.render.*
-import me.odinmain.utils.render.RenderUtils.bind
-import net.minecraft.client.gui.Gui.drawRect
+import me.odinmain.features.settings.impl.BooleanSetting
 import net.minecraft.client.gui.ScaledResolution
-import net.minecraft.client.renderer.GlStateManager
-import net.minecraft.scoreboard.*
-import net.minecraft.util.EnumChatFormatting
-import kotlin.math.max
+import net.minecraft.scoreboard.ScoreObjective
 
 object Sidebar : Module(
     name = "Sidebar",
@@ -64,7 +56,7 @@ object Sidebar : Module(
         return this.enabled
     }
 
-    private fun drawString(str: String, x: Int, y: Int) {
+    /*private fun drawString(str: String, x: Int, y: Int) {
         if (customFont)
             text(str, x - 1, y + 3, Color.WHITE, 7, shadow = textShadow)
         else
@@ -73,5 +65,5 @@ object Sidebar : Module(
 
     private fun getStringWidth(str: String): Int {
         return if (customFont) (getTextWidth(str, 7f) * 1.5).toInt() else mc.fontRendererObj.getStringWidth(str)
-    }
+    }*/
 }

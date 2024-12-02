@@ -1,7 +1,8 @@
 package me.odinmain.features.impl.skyblock
 
 import me.odinmain.features.Module
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.KeybindSetting
+import me.odinmain.features.settings.impl.NumberSetting
 import net.minecraft.client.settings.KeyBinding
 import org.lwjgl.input.Keyboard
 

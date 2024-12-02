@@ -4,7 +4,10 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import me.odinmain.utils.downloadFile
 import me.odinmain.utils.fetchURLData
-import net.minecraft.client.gui.*
+import net.minecraft.client.gui.GuiButton
+import net.minecraft.client.gui.GuiMainMenu
+import net.minecraft.client.gui.GuiScreen
+import net.minecraft.client.gui.ScaledResolution
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.event.ClickEvent
 import net.minecraft.util.ChatComponentText

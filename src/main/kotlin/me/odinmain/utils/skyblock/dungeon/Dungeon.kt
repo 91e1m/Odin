@@ -8,7 +8,6 @@ import me.odinmain.events.impl.PacketEvent
 import me.odinmain.events.impl.RoomEnterEvent
 import me.odinmain.features.impl.dungeon.LeapMenu
 import me.odinmain.features.impl.dungeon.LeapMenu.odinSorting
-import me.odinmain.features.impl.dungeon.MapInfo.shownTitle
 import me.odinmain.features.impl.dungeon.Mimic
 import me.odinmain.utils.*
 import me.odinmain.utils.skyblock.PlayerUtils.posX
@@ -53,7 +52,7 @@ class Dungeon(val floor: Floor) {
             paul = hasBonusPaulScore()
         }
 
-        shownTitle = false
+        //shownTitle = false
     }
 
     fun enterDungeonRoom(event: RoomEnterEvent) {

@@ -4,12 +4,10 @@ import com.github.stivais.aurora.color.Color
 import com.github.stivais.aurora.utils.*
 import me.odinmain.OdinMain.mc
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints.DungeonWaypoint
-import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.client.renderer.Tessellator
 import net.minecraft.client.renderer.WorldRenderer
 import net.minecraft.client.renderer.entity.RenderManager
-import net.minecraft.client.renderer.texture.TextureUtil
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.entity.Entity
 import net.minecraft.util.AxisAlignedBB
@@ -104,7 +102,7 @@ object RenderUtils {
         GlStateManager.disableLighting()
         if (disableTexture2D) GlStateManager.disableTexture2D() else GlStateManager.enableTexture2D()
         GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0)
-        translate(-renderManager.viewerPosX, -renderManager.viewerPosY, -renderManager.viewerPosZ)
+        GlStateManager.translate(-renderManager.viewerPosX, -renderManager.viewerPosY, -renderManager.viewerPosZ)
     }
 
     private fun postDraw() {

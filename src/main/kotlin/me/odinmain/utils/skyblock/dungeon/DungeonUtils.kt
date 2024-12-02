@@ -23,7 +23,9 @@ import net.minecraft.util.Vec3
 import net.minecraftforge.event.entity.EntityJoinWorldEvent
 import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import kotlin.math.*
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.roundToLong
 
 object DungeonUtils {
 
@@ -181,7 +183,7 @@ object DungeonUtils {
     }
 
     @SubscribeEvent
-    fun onPacket(event: PacketReceivedEvent) {
+    fun onPacket(event: PacketEvent.Receive) {
         if (inDungeons) currentDungeon?.onPacket(event)
     }
 

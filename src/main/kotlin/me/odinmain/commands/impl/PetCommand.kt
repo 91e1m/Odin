@@ -4,7 +4,9 @@ import me.odinmain.OdinMain.mc
 import me.odinmain.commands.commodore
 import me.odinmain.config.Config
 import me.odinmain.features.impl.skyblock.PetKeybinds.petList
-import me.odinmain.utils.skyblock.*
+import me.odinmain.utils.skyblock.isHolding
+import me.odinmain.utils.skyblock.modMessage
+import me.odinmain.utils.skyblock.uuid
 
 val petCommand = commodore("petkeys") {
 

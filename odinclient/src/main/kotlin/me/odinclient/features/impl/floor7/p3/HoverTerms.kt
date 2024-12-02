@@ -6,11 +6,8 @@ import me.odinmain.features.Module
 import me.odinmain.features.impl.floor7.p3.TerminalSolver
 import me.odinmain.features.impl.floor7.p3.TerminalSolver.currentTerm
 import me.odinmain.features.impl.floor7.p3.TerminalTypes
-import me.odinmain.features.impl.floor7.p3.termGUI.TermGui
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.NumberSetting
-import me.odinmain.ui.util.MouseUtils.mouseX
-import me.odinmain.ui.util.MouseUtils.mouseY
 import me.odinmain.utils.clock.Clock
 import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.PlayerUtils.windowClick
@@ -40,7 +37,7 @@ object HoverTerms : Module(
 
         val hoveredItem =
             when {
-                TerminalSolver.renderType == 3 && TerminalSolver.enabled -> TermGui.getHoveredItem(mouseX.toInt(), mouseY.toInt())
+                //TerminalSolver.renderType == 3 && TerminalSolver.enabled -> TermGui.getHoveredItem(mouseX.toInt(), mouseY.toInt())
                 else -> {
                     if (event.gui.slotUnderMouse?.inventory == mc.thePlayer?.inventory) return
                     event.gui.slotUnderMouse?.slotIndex

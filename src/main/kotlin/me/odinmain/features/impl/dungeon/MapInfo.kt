@@ -2,7 +2,9 @@ package me.odinmain.features.impl.dungeon
 
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.SelectorSetting
+import me.odinmain.features.settings.impl.StringSetting
 
 object MapInfo : Module(
     name = "Map Info",

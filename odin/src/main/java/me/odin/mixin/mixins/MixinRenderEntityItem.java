@@ -1,8 +1,7 @@
 package me.odin.mixin.mixins;
 
-import com.github.stivais.ui.color.Color;
-import com.github.stivais.ui.color.ColorUtils;
-import com.github.stivais.ui.color.ColorUtils.*;
+import com.github.stivais.aurora.color.Color;
+import com.github.stivais.aurora.utils.Color_utilitiesKt;
 import me.odinmain.utils.render.HighlightRenderer;
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.GlStateManager;
@@ -73,10 +72,10 @@ public abstract class MixinRenderEntityItem {
             GL11.glTexEnvi(8960, OpenGlHelper.GL_OPERAND0_ALPHA, 770);
             this.odinMod$brightnessBuffer.position(0);
             Color color = highlightEntity.getColor();
-            odinMod$brightnessBuffer.put(ColorUtils.getRed(color) / 255f);
-            odinMod$brightnessBuffer.put(ColorUtils.getGreen(color) / 255f);
-            odinMod$brightnessBuffer.put(ColorUtils.getBlue(color) / 255f);
-            odinMod$brightnessBuffer.put(ColorUtils.getAlpha(color) / 255f);
+            odinMod$brightnessBuffer.put(Color_utilitiesKt.getRed(color) / 255f);
+            odinMod$brightnessBuffer.put(Color_utilitiesKt.getGreen(color) / 255f);
+            odinMod$brightnessBuffer.put(Color_utilitiesKt.getBlue(color) / 255f);
+            odinMod$brightnessBuffer.put(Color_utilitiesKt.getAlpha(color) / 255f);
             this.odinMod$brightnessBuffer.flip();
             GL11.glTexEnv(8960, 8705, this.odinMod$brightnessBuffer);
             GlStateManager.setActiveTexture(OpenGlHelper.GL_TEXTURE2);

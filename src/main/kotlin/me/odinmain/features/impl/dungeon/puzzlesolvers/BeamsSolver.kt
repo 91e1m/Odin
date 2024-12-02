@@ -9,16 +9,15 @@ import me.odinmain.events.impl.BlockChangeEvent
 import me.odinmain.events.impl.RoomEnterEvent
 import me.odinmain.features.impl.dungeon.puzzlesolvers.PuzzleSolvers.beamsAlpha
 import me.odinmain.features.impl.dungeon.puzzlesolvers.PuzzleSolvers.onPuzzleComplete
-import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
 import me.odinmain.utils.addVec
 import me.odinmain.utils.equalsOneOf
-import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.getRealCoords
 import me.odinmain.utils.skyblock.getBlockIdAt
 import me.odinmain.utils.toAABB
 import me.odinmain.utils.toVec3
+import me.odinmain.utils.ui.Colors
 import net.minecraft.init.Blocks
 import net.minecraft.util.BlockPos
 import java.io.InputStreamReader
@@ -87,14 +86,8 @@ object BeamsSolver {
     }
 
     private val colors = listOf(
-        Colors.MINECRAFT_GOLD,
-        Color.GREEN,
-        Colors.MINECRAFT_LIGHT_PURPLE,
-        Colors.MINECRAFT_AQUA,
-        Colors.MINECRAFT_YELLOW,
-        Colors.MINECRAFT_DARK_RED,
-        Color.WHITE,
-        Colors.MINECRAFT_DARK_PURPLE
+        Colors.MINECRAFT_GOLD, Color.GREEN, Colors.MINECRAFT_LIGHT_PURPLE, Colors.MINECRAFT_AQUA,
+        Colors.MINECRAFT_YELLOW, Colors.MINECRAFT_DARK_RED, Color.WHITE, Colors.MINECRAFT_DARK_PURPLE
     )
 }
 

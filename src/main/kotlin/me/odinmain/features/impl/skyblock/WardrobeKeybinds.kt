@@ -1,9 +1,11 @@
 package me.odinmain.features.impl.skyblock
 
-import me.odinmain.events.impl.GuiEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.DropdownSetting
+import me.odinmain.features.settings.impl.KeybindSetting
+import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.utils.clock.Clock
 import me.odinmain.utils.name
 import me.odinmain.utils.skyblock.getItemIndexInContainerChest

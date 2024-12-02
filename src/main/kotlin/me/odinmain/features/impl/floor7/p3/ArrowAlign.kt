@@ -4,8 +4,9 @@ import com.github.stivais.aurora.color.Color
 import me.odinmain.events.impl.PacketEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
-import me.odinmain.utils.*
-import me.odinmain.utils.render.Color
+import me.odinmain.utils.addVec
+import me.odinmain.utils.distanceSquaredTo
+import me.odinmain.utils.flooredVec
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.M7Phases
@@ -15,9 +16,6 @@ import net.minecraft.network.play.client.C02PacketUseEntity
 import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
 
 object ArrowAlign : Module(
     name = "Arrow Align",

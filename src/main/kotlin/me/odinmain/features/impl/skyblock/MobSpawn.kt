@@ -2,9 +2,14 @@ package me.odinmain.features.impl.skyblock
 
 import me.odinmain.events.impl.PostEntityMetadata
 import me.odinmain.features.Module
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.NumberSetting
+import me.odinmain.features.settings.impl.StringSetting
 import me.odinmain.utils.clock.Clock
-import me.odinmain.utils.skyblock.*
+import me.odinmain.utils.skyblock.PlayerUtils
+import me.odinmain.utils.skyblock.modMessage
+import me.odinmain.utils.skyblock.partyMessage
+import me.odinmain.utils.skyblock.sendChatMessage
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
 object MobSpawn: Module(

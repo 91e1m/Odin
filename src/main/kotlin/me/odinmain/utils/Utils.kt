@@ -7,7 +7,9 @@ import me.odinmain.OdinMain
 import me.odinmain.OdinMain.logger
 import me.odinmain.OdinMain.mc
 import me.odinmain.features.ModuleManager
-import me.odinmain.utils.skyblock.*
+import me.odinmain.utils.skyblock.modMessage
+import me.odinmain.utils.skyblock.sendCommand
+import me.odinmain.utils.skyblock.skyblockID
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityLivingBase
@@ -24,7 +26,9 @@ import net.minecraftforge.fml.common.eventhandler.Event
 import org.lwjgl.opengl.GL11
 import org.lwjgl.util.glu.GLU
 import java.util.*
-import kotlin.math.*
+import kotlin.math.floor
+import kotlin.math.pow
+import kotlin.math.round
 
 private val FORMATTING_CODE_PATTERN = Regex("§[0-9a-fk-or]", RegexOption.IGNORE_CASE)
 

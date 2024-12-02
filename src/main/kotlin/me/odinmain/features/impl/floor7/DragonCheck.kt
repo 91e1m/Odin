@@ -2,7 +2,6 @@ package me.odinmain.features.impl.floor7
 
 import me.odinmain.OdinMain.mc
 import me.odinmain.features.impl.floor7.WitherDragons.currentTick
-import me.odinmain.features.impl.floor7.WitherDragons.sendNotification
 import me.odinmain.features.impl.floor7.WitherDragons.sendSpray
 import me.odinmain.utils.isVecInXZ
 import me.odinmain.utils.skyblock.modMessage

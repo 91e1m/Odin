@@ -3,8 +3,8 @@ package me.odinmain.features.impl.nether
 import com.github.stivais.aurora.animations.Animation
 import com.github.stivais.aurora.dsl.seconds
 import com.github.stivais.aurora.transforms.impl.Alpha
-import me.odinmain.events.impl.PacketReceivedEvent
-import me.odinmain.events.impl.RealServerTick
+import me.odinmain.events.impl.PacketEvent
+import me.odinmain.events.impl.ServerTickEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.SelectorSetting
@@ -45,7 +45,7 @@ object EnrageDisplay : Module(
     private var enrageTimer = -1
 
     @SubscribeEvent
-    fun onPacket(event: PacketReceivedEvent) {
+    fun onPacket(event: PacketEvent.Receive) {
         val packet = event.packet as? S29PacketSoundEffect ?: return
         if (packet.soundName == "mob.zombie.remedy" && packet.pitch == 1.0f && packet.volume == 0.5f) {
             if (
@@ -60,7 +60,7 @@ object EnrageDisplay : Module(
     }
 
     @SubscribeEvent
-    fun onTick(event: RealServerTick) {
+    fun onTick(event: ServerTickEvent) {
         enrageTimer--
         if (enrageTimer == 0) {
             animation.animate(0.25.seconds, Animation.Style.EaseOutQuint)

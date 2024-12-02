@@ -6,9 +6,11 @@ import me.odinmain.OdinMain.mc
 import me.odinmain.events.impl.GuiEvent
 import net.minecraft.client.gui.GuiScreen.getClipboardString
 import net.minecraft.client.gui.GuiScreen.setClipboardString
+import net.minecraftforge.client.event.GuiScreenEvent
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import org.lwjgl.input.Keyboard
 import org.lwjgl.input.Mouse
 import org.lwjgl.opengl.Display
 
@@ -47,8 +49,8 @@ class UIHandler(private val ui: AuroraUI): Window {
     }
 
     @SubscribeEvent
-    fun onMouseClick(event: GuiEvent.GuiMouseClickEvent) {
-        ui.eventManager.onMouseClick(event.button)
+    fun onMouseClick(event: GuiScreenEvent.MouseInputEvent.Pre) {
+        if (Mouse.getEventButtonState()) ui.eventManager.onMouseClick(Mouse.getEventButton())
     }
 
     @SubscribeEvent
@@ -57,8 +59,8 @@ class UIHandler(private val ui: AuroraUI): Window {
     }
 
     @SubscribeEvent
-    fun onKeyboardClick(event: GuiEvent.GuiKeyPressEvent) {
-        ui.eventManager.onKeyTyped(event.char)
+    fun onKeyboardClick(event: GuiScreenEvent.MouseInputEvent.Pre) {
+        ui.eventManager.onKeyTyped(Keyboard.getEventCharacter())
     }
 
     override fun getClipboard(): String? {

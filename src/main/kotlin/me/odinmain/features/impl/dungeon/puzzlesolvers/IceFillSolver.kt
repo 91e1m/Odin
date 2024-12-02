@@ -8,7 +8,6 @@ import me.odinmain.events.impl.RoomEnterEvent
 import me.odinmain.utils.Vec2
 import me.odinmain.utils.add
 import me.odinmain.utils.addVec
-import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.IceFillFloors
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils

@@ -1,34 +1,29 @@
 package me.odinmain.features.impl.dungeon
 
 import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.utils.withAlpha
 import io.github.moulberry.notenoughupdates.NEUApi
-import me.odinmain.events.impl.GuiEvent
-import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.impl.dungeon.LeapHelper.leapHelperBossChatEvent
 import me.odinmain.features.impl.dungeon.LeapHelper.worldLoad
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.*
-import me.odinmain.ui.clickgui.animations.impl.EaseInOut
-import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
-import me.odinmain.ui.util.MouseUtils.getQuadrant
 import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.name
-import me.odinmain.utils.render.*
-import me.odinmain.utils.render.RenderUtils.drawTexturedModalRect
-import me.odinmain.utils.skyblock.*
 import me.odinmain.utils.skyblock.dungeon.DungeonClass
 import me.odinmain.utils.skyblock.dungeon.DungeonPlayer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.leapTeammates
+import me.odinmain.utils.skyblock.getItemIndexInContainerChest
+import me.odinmain.utils.skyblock.modMessage
+import me.odinmain.utils.skyblock.partyMessage
+import me.odinmain.utils.ui.Colors
 import net.minecraft.client.gui.inventory.GuiChest
-import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.inventory.ContainerChest
-import net.minecraft.util.ResourceLocation
 import net.minecraftforge.client.event.GuiOpenEvent
+import net.minecraftforge.client.event.GuiScreenEvent
 import net.minecraftforge.fml.common.Loader
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.input.Keyboard
-import org.lwjgl.opengl.Display
 
 object LeapMenu : Module(
     name = "Leap Menu",
@@ -37,7 +32,7 @@ object LeapMenu : Module(
     val type by SelectorSetting("Sorting", "Odin Sorting", arrayListOf("Odin Sorting", "A-Z Class (BetterMap)", "A-Z Name", "Custom sorting", "No Sorting"), description = "How to sort the leap menu.")
     private val onlyClass by BooleanSetting("Only Classes", false, description = "Renders classes instead of names.")
     private val colorStyle by BooleanSetting("Color Style", default = false, description = "Which color style to use.")
-    private val backgroundColor by ColorSetting("Background Color", default = Color.DARK_GRAY.withAlpha(0.9f), allowAlpha = true, description = "Color of the background of the leap menu.")
+    private val backgroundColor by ColorSetting("Background Color", Colors.MINECRAFT_DARK_GRAY.withAlpha(0.9f), allowAlpha = true, description = "Color of the background of the leap menu.")
     private val roundedRect by BooleanSetting("Rounded Rect", true, description = "Toggles the rounded rect for the gui.")
     private val useNumberKeys by BooleanSetting("Use Number Keys", false, description = "Use keyboard keys to leap to the player you want, going from left to right, top to bottom.")
     private val topLeftKeybind by KeybindSetting("Top Left", Keyboard.KEY_1, "Used to click on the first person in the leap menu.").withDependency { useNumberKeys }
@@ -51,6 +46,8 @@ object LeapMenu : Module(
     private val leapAnnounce by BooleanSetting("Leap Announce", false, description = "Announces when you leap to a player.")
 
     private val EMPTY = DungeonPlayer("Empty", DungeonClass.Unknown)
+    private val keybindList = listOf(topLeftKeybind, topRightKeybind, bottomLeftKeybind, bottomRightKeybind)
+
 
 //    fun leapMenu() = UI {
 //        Grid(copies()).scope {
@@ -152,15 +149,9 @@ object LeapMenu : Module(
     }
 
     init {
-        onMessage(Regex(".*")) {
-            leapHelperBossChatEvent(it)
-        }
+        onMessage(Regex(".*")) { leapHelperBossChatEvent(it) }
 
         onWorldLoad { worldLoad() }
-
-        execute(100) {
-            getPlayer()
-        }
     }
 
    /*private val leapTeammates: MutableList<DungeonPlayer> = mutableListOf(

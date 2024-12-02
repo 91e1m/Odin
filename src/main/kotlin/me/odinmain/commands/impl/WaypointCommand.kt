@@ -3,10 +3,12 @@ package me.odinmain.commands.impl
 import me.odinmain.commands.commodore
 import me.odinmain.features.impl.render.WaypointManager
 import me.odinmain.utils.floor
-import me.odinmain.utils.skyblock.*
+import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.PlayerUtils.posX
 import me.odinmain.utils.skyblock.PlayerUtils.posY
 import me.odinmain.utils.skyblock.PlayerUtils.posZ
+import me.odinmain.utils.skyblock.modMessage
+import me.odinmain.utils.skyblock.partyMessage
 
 val waypointCommand = commodore("waypoint", "odinwaypoint") {
 

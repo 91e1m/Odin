@@ -7,7 +7,6 @@ import me.odinmain.utils.isOtherPlayer
 import me.odinmain.utils.skyblock.KuudraUtils
 import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.partyMessage
-import net.minecraftforge.event.world.NoteBlockEvent.Play
 
 object KuudraReminders : Module(
     name = "Kuudra Reminders",

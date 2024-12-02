@@ -13,7 +13,6 @@ import me.odinmain.OdinMain.mc
 import me.odinmain.OdinMain.scope
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints.DungeonWaypoint
-import me.odinmain.utils.render.Color
 import me.odinmain.utils.skyblock.modMessage
 import net.minecraft.util.AxisAlignedBB
 import java.io.ByteArrayOutputStream

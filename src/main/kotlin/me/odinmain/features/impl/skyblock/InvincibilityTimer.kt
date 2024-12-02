@@ -3,11 +3,9 @@ package me.odinmain.features.impl.skyblock
 import me.odinmain.events.impl.ChatPacketEvent
 import me.odinmain.events.impl.GuiEvent.DrawSlotOverlayEvent
 import me.odinmain.events.impl.ServerTickEvent
-import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
-import me.odinmain.features.settings.impl.HudSetting
-import me.odinmain.utils.render.*
+import me.odinmain.utils.render.RenderUtils
 import me.odinmain.utils.skyblock.LocationUtils
 import me.odinmain.utils.skyblock.partyMessage
 import me.odinmain.utils.skyblock.skyblockID

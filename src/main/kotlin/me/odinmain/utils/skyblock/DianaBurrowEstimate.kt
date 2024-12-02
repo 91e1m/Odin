@@ -3,6 +3,7 @@ package me.odinmain.utils.skyblock
 import com.github.stivais.aurora.color.Color
 import me.odinmain.features.impl.skyblock.DianaHelper
 import me.odinmain.utils.*
+import me.odinmain.utils.skyblock.DianaBurrowEstimate.ParticleType.entries
 import me.odinmain.utils.ui.Colors
 import net.minecraft.network.play.server.S29PacketSoundEffect
 import net.minecraft.network.play.server.S2APacketParticles

@@ -1,24 +1,21 @@
 package me.odinmain.features
 
-import me.odinmain.OdinMain.mc
-import me.odinmain.events.impl.*
+import me.odinmain.events.impl.ChatPacketEvent
+import me.odinmain.events.impl.InputEvent
+import me.odinmain.events.impl.PacketEvent
+import me.odinmain.events.impl.ServerTickEvent
 import me.odinmain.features.impl.dungeon.*
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints
 import me.odinmain.features.impl.dungeon.puzzlesolvers.PuzzleSolvers
-import me.odinmain.features.impl.floor7.*
+import me.odinmain.features.impl.floor7.TerminalSimulator
+import me.odinmain.features.impl.floor7.TickTimers
+import me.odinmain.features.impl.floor7.WitherDragons
 import me.odinmain.features.impl.floor7.p3.*
 import me.odinmain.features.impl.nether.*
 import me.odinmain.features.impl.render.*
-import me.odinmain.features.impl.render.ClickGUIModule.hudChat
 import me.odinmain.features.impl.skyblock.*
 import me.odinmain.features.settings.impl.KeybindSetting
-import me.odinmain.ui.hud.EditHUDGui
-import me.odinmain.ui.hud.HudElement
-import me.odinmain.utils.capitalizeFirst
-import me.odinmain.utils.profile
-import me.odinmain.utils.render.getTextWidth
 import net.minecraft.network.Packet
-import net.minecraftforge.client.event.RenderGameOverlayEvent
 import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
@@ -153,17 +150,6 @@ object ModuleManager {
                 if (setting is KeybindSetting && setting.value.key + 100 == event.keycode) {
                     setting.value.onPress?.invoke()
                 }
-            }
-        }
-    }
-
-    @SubscribeEvent
-    fun onRenderOverlay(event: RenderGameOverlayEvent.Post) {
-        if ((mc.currentScreen != null && !hudChat) || event.type != RenderGameOverlayEvent.ElementType.ALL || mc.currentScreen == EditHUDGui) return
-
-        profile("Odin Hud") {
-            for (i in 0 until huds.size) {
-                huds[i].draw(false)
             }
         }
     }

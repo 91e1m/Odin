@@ -1,20 +1,17 @@
-package me.odinmain.features.impl.skyblock
+package me.odinmain.features.impl.dungeon
 
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.ColorSetting
-import me.odinmain.features.settings.impl.HudSetting
 import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.utils.addVec
 import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.getSafe
-import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.Renderer
-import me.odinmain.utils.render.getTextWidth
-import me.odinmain.utils.render.mcText
 import me.odinmain.utils.skyblock.LocationUtils
 import me.odinmain.utils.skyblock.skyblockID
 import me.odinmain.utils.toAABB
+import me.odinmain.utils.ui.Colors
 import net.minecraft.network.play.server.S29PacketSoundEffect
 import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.RenderWorldLastEvent
@@ -36,7 +33,7 @@ object SpringBoots : Module(
         }
     }*/
     private val renderGoal by BooleanSetting("Render Goal", true, description = "Render the goal block.")
-    private val goalColor by ColorSetting("Goal Color", Color.GREEN, description = "Color of the goal block.")
+    private val goalColor by ColorSetting("Goal Color", Colors.MINECRAFT_GREEN, description = "Color of the goal block.")
     private val offset by NumberSetting("Offset", 0.0, -10.0, 10.0, 0.1, description = "The offset of the goal block.")
 
     private val blocksList: List<Double> = listOf(

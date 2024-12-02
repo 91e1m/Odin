@@ -2,7 +2,10 @@ package me.odinmain.features.impl.nether
 
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
-import me.odinmain.utils.skyblock.*
+import me.odinmain.utils.skyblock.PlayerUtils
+import me.odinmain.utils.skyblock.allMessage
+import me.odinmain.utils.skyblock.modMessage
+import me.odinmain.utils.skyblock.partyMessage
 
 object VanqNotifier: Module(
     name = "Vanq Notifier",

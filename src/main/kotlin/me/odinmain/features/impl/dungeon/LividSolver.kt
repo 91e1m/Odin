@@ -1,27 +1,24 @@
 package me.odinmain.features.impl.dungeon
 
-import me.odinmain.features.Category
+import com.github.stivais.aurora.color.Color
 import me.odinmain.features.Module
-import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.RenderUtils
 import me.odinmain.utils.render.RenderUtils.renderBoundingBox
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
-import me.odinmain.utils.skyblock.dungeon.Floor
 import me.odinmain.utils.skyblock.getBlockAt
 import me.odinmain.utils.skyblock.getBlockStateAt
 import net.minecraft.client.entity.EntityOtherPlayerMP
 import net.minecraft.entity.item.EntityArmorStand
 import net.minecraft.init.Blocks
 import net.minecraft.util.BlockPos
+import net.minecraftforge.client.event.RenderLivingEvent
+import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
-import net.minecraftforge.client.event.RenderWorldLastEvent
-import net.minecraftforge.client.event.RenderLivingEvent
 
 object LividSolver : Module(
     name = "Livid Solver",
-    description = "Automatically solves the Livid puzzle in dungeons.",
-    category = Category.DUNGEON
+    description = "Automatically solves the Livid puzzle in dungeons."
 ) {
 
     private data class Livid(val woolMeta: Int, val name: String, val color: String, val entity: EntityOtherPlayerMP? = null, val armorStand: EntityArmorStand? = null)

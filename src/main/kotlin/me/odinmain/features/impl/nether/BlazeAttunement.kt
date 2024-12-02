@@ -17,7 +17,6 @@ import net.minecraft.entity.monster.EntityBlaze
 import net.minecraft.entity.monster.EntityPigZombie
 import net.minecraft.entity.monster.EntitySkeleton
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import kotlin.collections.set
 
 object BlazeAttunement : Module(
     name = "Blaze Attunement",

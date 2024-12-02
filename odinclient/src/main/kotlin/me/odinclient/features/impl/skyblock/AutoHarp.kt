@@ -1,6 +1,5 @@
 package me.odinclient.features.impl.skyblock
 
-import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.utils.name
 import me.odinmain.utils.skyblock.LocationUtils.isInSkyblock

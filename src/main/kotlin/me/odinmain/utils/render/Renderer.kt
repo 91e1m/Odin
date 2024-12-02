@@ -7,7 +7,6 @@ import com.github.stivais.aurora.utils.withAlpha
 import me.odinmain.OdinMain.mc
 import me.odinmain.utils.addVec
 import me.odinmain.utils.fastEyeHeight
-import me.odinmain.utils.min
 import me.odinmain.utils.render.RenderUtils.drawBeaconBeam
 import me.odinmain.utils.render.RenderUtils.outlineBounds
 import me.odinmain.utils.render.RenderUtils.renderVec

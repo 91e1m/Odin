@@ -5,7 +5,10 @@ import me.odinmain.utils.*
 import me.odinmain.utils.render.RenderUtils.renderVec
 import net.minecraft.util.BlockPos
 import net.minecraft.util.Vec3
-import kotlin.math.*
+import kotlin.math.abs
+import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.sign
 
 object EtherWarpHelper {
     data class EtherPos(val succeeded: Boolean, val pos: BlockPos?) {

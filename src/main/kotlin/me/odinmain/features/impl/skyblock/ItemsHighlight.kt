@@ -8,15 +8,14 @@ import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.ColorSetting
 import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.features.settings.impl.SelectorSetting
-import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
 import me.odinmain.utils.containsOneOf
-import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.HighlightRenderer
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.dungeonItemDrops
 import me.odinmain.utils.skyblock.getRarity
 import me.odinmain.utils.skyblock.lore
 import me.odinmain.utils.skyblock.unformattedName
+import me.odinmain.utils.ui.Colors
 import net.minecraft.entity.item.EntityItem
 
 object ItemsHighlight : Module(
@@ -54,7 +53,7 @@ object ItemsHighlight : Module(
         return when (colorStyle){
             0 -> getRarity(entity.entityItem.lore)?.color?.withAlpha(rarityAlpha) ?: Color.WHITE
             1 -> when {
-                entity.ticksExisted <= 11 -> Color.YELLOW
+                entity.ticksExisted <= 11 -> Colors.MINECRAFT_YELLOW
                 entity.getDistanceToEntity(mc.thePlayer) <= 3.5 -> Color.GREEN
                 else -> Color.RED
             }
