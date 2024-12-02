@@ -165,7 +165,7 @@ abstract class Module(
 
     fun HUD(
         name: String,
-        block: ElementScope<*>.() -> Unit
+        block: ElementScope<HUD.Representation>.() -> Unit
     ): HUD {
         return HUD(
             name,

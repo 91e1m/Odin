@@ -2,15 +2,22 @@ package me.odinmain.utils.ui
 
 import com.github.stivais.aurora.animations.Animation
 import com.github.stivais.aurora.color.Color
+import com.github.stivais.aurora.constraints.Constraint
+import com.github.stivais.aurora.constraints.Positions
+import com.github.stivais.aurora.dsl.at
 import com.github.stivais.aurora.dsl.onMouseEnter
 import com.github.stivais.aurora.dsl.onRemove
+import com.github.stivais.aurora.dsl.px
 import com.github.stivais.aurora.elements.ElementScope
+import com.github.stivais.aurora.elements.impl.Text.Companion.shadow
+import com.github.stivais.aurora.elements.impl.Text.Companion.textSupplied
 import com.github.stivais.aurora.renderer.data.Font
 import com.github.stivais.aurora.renderer.data.Image
 import com.github.stivais.aurora.transforms.impl.Alpha
 import com.github.stivais.aurora.transforms.impl.Scale
 import me.odinmain.features.Module
 import me.odinmain.features.huds.HUD
+import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.ColorSetting
 import me.odinmain.features.settings.impl.SelectorSetting
 import me.odinmain.utils.ui.screens.UIHandler
@@ -29,6 +36,32 @@ fun String.image() = Image("/assets/odinmain/$this")
 //    other.size = size
 //}
 
+inline fun ElementScope<*>.buildText(
+    string: String,
+    crossinline supplier: () -> Any?,
+    font: Font,
+    color1: Color,
+    color2: Color,
+    shadow: Boolean,
+    pos: Positions = at(),
+    size: Constraint.Size = 30.px
+) {
+    row(pos) {
+        text(
+            string = "$string ",
+            font,
+            color1,
+            size = size
+        ).shadow = shadow
+        textSupplied(
+            supplier,
+            font,
+            color2,
+            size = size
+        ).shadow = shadow
+    }
+}
+
 /**
  * Makes a HUD, that uses common settings found in text-based HUDs.
  *
@@ -38,21 +71,23 @@ fun String.image() = Image("/assets/odinmain/$this")
 inline fun Module.TextHUD(
     name: String,
     color: Color = Color.RGB(50, 150, 220),
-    crossinline block: ElementScope<*>.(Color, Font) -> Unit
+    crossinline block: ElementScope<HUD.Representation>.(Color, Font, shadow: Boolean) -> Unit
 ): HUD {
     val colorSetting = ColorSetting("Color", color, allowAlpha = false)
     val fontSetting = SelectorSetting("Font", arrayListOf("Regular", "Minecraft"))
-    // copy of selector setting, where each entry is a different font representing it
+    val shadowSetting = BooleanSetting("Shadow", true)
+
     val hud = HUD(name) {
         val font = when (fontSetting.value) {
             1 -> mcFont
             else -> regularFont
         }
-        block(colorSetting.value, font)
+        block(colorSetting.value, font, shadowSetting.value)
     }
     hud.registerSettings(
         colorSetting,
         fontSetting,
+        shadowSetting
     )
     return hud
 }

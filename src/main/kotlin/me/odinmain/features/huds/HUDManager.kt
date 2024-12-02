@@ -51,10 +51,6 @@ object HUDManager {
             representation.scope {
                 hud.builder(this)
 
-                onAdd {
-                    element.constraints.x = element.x.px
-                    element.constraints.y = element.y.px
-                }
                 onRemove {
                     hud.x.value = (element.x / ui.main.width) * 100f
                     hud.y.value = (element.y / ui.main.height) * 100f
@@ -173,10 +169,16 @@ object HUDManager {
         pressed: Boolean,
         selectedHUDs: ArrayList<HUD.Representation>
     ): Popup {
+        redraw()
         // get bounding box of selectedHUDs
         var minX = 9999f;   var minY = 9999f // I wish I could rust :(
         var maxX = 0f;      var maxY = 0f
         selectedHUDs.loop {
+            // check if it has converted to pixel for mutability, if not convert it
+            if (it.constraints.x !is Pixel) {
+                it.constraints.x = it.x.px
+                it.constraints.y = it.y.px
+            }
             minX = minOf(minX, it.x)
             maxX = maxOf(maxX, it.x + it.screenWidth())
             minY = minOf(minY, it.y)
@@ -220,7 +222,7 @@ object HUDManager {
                     val centerX = parent.width / 2
                     val centerY = parent.height / 2
 
-                    // Check for center snapLineping
+                    // Check for center snapLine
                     if (abs(newX + element.screenWidth() / 2 - centerX) <= SNAP_THRESHOLD) {
                         newX = centerX - element.screenWidth() / 2
                         snapLineX = centerX
@@ -269,10 +271,9 @@ object HUDManager {
                         if (lastX != px.pixels) (it.constraints.x as Pixel).pixels += px.pixels - lastX
                         if (lastY != py.pixels) (it.constraints.y as Pixel).pixels += py.pixels - lastY
                     }
+                    redraw()
                     true
-                } else {
-                    false
-                }
+               } else false
             }
         }
     }

@@ -69,7 +69,7 @@ class HUD(
         override fun getDefaultPositions() = Pair(Undefined, Undefined)
 
         fun refresh(scope: ElementScope<Representation>) {
-//            removeAll()
+            removeAll()
             builder.invoke(scope)
             scaleTransformation = this@HUD.scale.value
             redraw = true
