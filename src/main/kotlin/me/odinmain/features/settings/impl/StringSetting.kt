@@ -124,9 +124,9 @@ class StringSetting(
                     hoverColor.animate(0.25.seconds, style = Animation.Style.EaseOutQuad)
                 }
             }
-        }//
+        }
     }
 
     private fun getLengthColor(string: String) =
-        if (string.length > length) Color.RED else Color.RGB(200, 200, 200)
+        if (string.length >= length) Color.RED else Color.RGB(200, 200, 200)
 }

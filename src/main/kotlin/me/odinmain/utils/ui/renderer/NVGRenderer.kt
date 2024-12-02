@@ -1,5 +1,6 @@
 package me.odinmain.utils.ui.renderer
 
+import com.github.stivais.aurora.color.Color
 import com.github.stivais.aurora.renderer.Renderer
 import com.github.stivais.aurora.renderer.data.Font
 import com.github.stivais.aurora.renderer.data.Gradient
@@ -153,7 +154,7 @@ object NVGRenderer : Renderer, Lwjgl3Wrapper by wrapper {
         nvgRGBA(0, 0, 0, 125, nvgColor)
         nvgRGBA(0, 0, 0, 0, nvgColor2)
 
-        // TODO: fix gradient bug i have no clue why its doing that
+        //  TODO: fix gradient bug i have no clue why its doing that
         nvgBoxGradient(vg, x - spread, y - spread, width + 2 * spread, height + 2 * spread, tl + spread, blur, nvgColor, nvgColor2, nvgPaint)
         nvgBeginPath(vg)
         nvgRoundedRect(vg, x - spread - blur, y - spread - blur, width + 2 * spread + 2 * blur, height + 2 * spread + 2 * blur, tl + spread)
@@ -193,6 +194,8 @@ object NVGRenderer : Renderer, Lwjgl3Wrapper by wrapper {
         nvgImagePattern(vg, x, y, w, h, 0f, getImage(image), 1f, nvgPaint)
         nvgBeginPath(vg)
         nvgRoundedRectVarying(vg, x, y, w, h, tl, tr, br, bl)
+        color(Color.RED.rgba)
+        nvgFillColor(vg, nvgColor)
         nvgFillPaint(vg, nvgPaint)
         nvgFill(vg)
     }

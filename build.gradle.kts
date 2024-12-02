@@ -46,9 +46,9 @@ allprojects {
         annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT")
         implementation("org.spongepowered:mixin:0.7.11-SNAPSHOT") { isTransitive = false }
 
-//        implementation("com.github.stivais:AuroraUI:0.9.1-beta")
+        implementation("com.github.stivais:AuroraUI:0.9.1-beta")
         // todo: create releases for aurora
-        implementation("com.github.stivais:AuroraUI:e8cff5402b")
+//        implementation("com.github.stivais:AuroraUI:e8cff5402b")
 
         implementation("com.github.odtheking:odin-lwjgl:faeaa48b39")
 
