@@ -1,4 +1,4 @@
-package me.odinclient.features.impl.skyblock
+package me.odinclient.features.impl.dungeon
 
 import me.odinmain.features.Category
 import me.odinmain.features.Module
@@ -18,15 +18,18 @@ object AutoGFS : Module(
     private val refillOnDungeonStart by BooleanSetting("Refill on Dungeon Start", true, description = "Refill when a dungeon starts.")
     private val refillPearl by BooleanSetting("Refill Pearl", true, description = "Refill ender pearls.")
     private val refillJerry by BooleanSetting("Refill Jerry", true, description = "Refill inflatable jerrys.")
+    private val refillTNT by BooleanSetting("Refill TNT", true, description = "Refill superboom tnt.")
     private val refillOnTimer by BooleanSetting("Refill on Timer", true, description = "Refill on a 5s intervals.")
     private val timerIncrements by NumberSetting("Timer Increments", 5L, 1, 60, description = "The interval in which to refill.", unit = "s")
+
+    private val dungeonStartRegex = Regex("\\[NPC] Mort: Here, I found this map when I first entered the dungeon\\.|\\[NPC] Mort: Right-click the Orb for spells, and Left-click \\(or Drop\\) to use your Ultimate!")
 
     init {
         execute({ timerIncrements * 1000 }) {
             if (refillOnTimer) refill()
         }
 
-        onMessage(Regex("\\[NPC] Mort: Here, I found this map when I first entered the dungeon\\.")) {
+        onMessage(dungeonStartRegex) {
             if (refillOnDungeonStart) refill()
         }
     }
@@ -39,6 +42,6 @@ object AutoGFS : Module(
 
         inventory.find { it?.skyblockID == "INFLATABLE_JERRY" }?.takeIf { refillJerry }?.also { fillItemFromSack(64, "INFLATABLE_JERRY", "inflatable_jerry", false) }
 
-        inventory.find { it?.skyblockID == "SUPERBOOM_TNT" }.takeIf { it?.stackSize == 1 }?.also { fillItemFromSack(1, "SUPERBOOM_TNT", "superboom_tnt", false) }
+        inventory.find { it?.skyblockID == "SUPERBOOM_TNT" }.takeIf { refillTNT }?.also { fillItemFromSack(64, "SUPERBOOM_TNT", "superboom_tnt", false) }
     }
 }

@@ -1,5 +1,3 @@
-@file:Suppress("UNUSED")
-
 package me.odinmain.features.impl.render
 
 import me.odinmain.features.Module

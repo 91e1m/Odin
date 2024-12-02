@@ -1,7 +1,7 @@
 package me.odinmain.utils
 
 import me.odinmain.OdinMain.mc
-import me.odinmain.events.impl.PacketReceivedEvent
+import me.odinmain.events.impl.PacketEvent
 import me.odinmain.utils.clock.Executor
 import me.odinmain.utils.clock.Executor.Companion.register
 import net.minecraft.entity.Entity
@@ -45,17 +45,16 @@ object ServerUtils {
     }
 
     @SubscribeEvent
-    fun onPacket(event: PacketReceivedEvent) {
+    fun onPacket(event: PacketEvent.Receive) {
         when (event.packet) {
-            is S37PacketStatistics -> averagePing = (System.nanoTime() - pingStartTime) / 1e6 * 0.4 + averagePing * 0.6
+            is S37PacketStatistics -> averagePing = (System.nanoTime() - pingStartTime) / 1e6
 
             is S01PacketJoinGame -> averagePing = 0.0
 
             is S03PacketTimeUpdate -> {
-                if (prevTime != 0L) {
-                    averageTps = (20000 / (System.currentTimeMillis() - prevTime + 1f))
-                        .coerceIn(0f, 20f) * 0.182 + averageTps * 0.818
-                }
+                if (prevTime != 0L)
+                    averageTps = (20_000.0 / (System.currentTimeMillis() - prevTime + 1)).coerceIn(0.0, 20.0)
+
                 prevTime = System.currentTimeMillis()
             }
             else -> return
@@ -69,10 +68,6 @@ object ServerUtils {
         pingStartTime = System.nanoTime()
         isPinging = true
         sendPacketNoEvent(C16PacketClientStatus(C16PacketClientStatus.EnumState.REQUEST_STATS))
-    }
-
-    fun Entity.getPing(): Int {
-        return mc.netHandler.getPlayerInfo(this.uniqueID)?.responseTime ?: -1
     }
 
     private fun reset() {

@@ -30,7 +30,7 @@ object Triggerbot : Module(
 ) {
     private val bloodDropDown by DropdownSetting("Blood Dropdown", false)
     private val blood by BooleanSetting("Blood Mobs", default = false, description = "Automatically clicks blood mobs.").withDependency { bloodDropDown }
-    private val bloodClickType by SelectorSetting("Blood Click Type", "Left", arrayListOf("Left", "Right"), description = "What button to click for blood mobs.").withDependency { blood && bloodDropDown}
+    private val bloodClickType by BooleanSetting("Blood Click Type", default = false, description = "What button to click for blood mobs.").withDependency { blood && bloodDropDown }
 
     private val spiritBearDropDown by DropdownSetting("Spirit Bear Dropdown", false)
     private val spiritBear by BooleanSetting("Spirit Bear", default = false, description = "Automatically clicks the spirit bear.").withDependency { spiritBearDropDown }
@@ -78,7 +78,7 @@ object Triggerbot : Module(
 
         if (!isFacingAABB(AxisAlignedBB(event.entity.posX - .5, event.entity.posY - 2.0, event.entity.posZ - .5, event.entity.posX + .5, event.entity.posY + 3.0, event.entity.posZ + .5), 30f)) return
 
-        if (bloodClickType == 0 && name != "Spirit Bear") PlayerUtils.rightClick() else leftClick()
+        if (bloodClickType && name != "Spirit Bear") PlayerUtils.rightClick() else leftClick()
     }
 
     @SubscribeEvent

@@ -7,6 +7,7 @@ import me.odinmain.events.impl.ClickEvent
 import me.odinmain.events.impl.RoomEnterEvent
 import me.odinmain.events.impl.SecretPickupEvent
 import me.odinmain.features.Module
+import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints.WaypointType.entries
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.SecretWaypoints.onEtherwarp
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.SecretWaypoints.onLocked
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.SecretWaypoints.onPosUpdate
@@ -99,7 +100,7 @@ object DungeonWaypoints : Module(
     enum class WaypointType {
         NONE, NORMAL, SECRET, ETHERWARP, MOVE, BLOCKETHERWARP
         ;
-        val displayName get() = name.capitalizeFirst()
+        val displayName get() = name.lowercase().capitalizeFirst()
         companion object {
             fun getArrayList() = ArrayList(entries.map { it.displayName })
             fun getByInt(i: Int) = entries.getOrNull(i).takeIf { it != NONE }
@@ -112,7 +113,7 @@ object DungeonWaypoints : Module(
     enum class TimerType {
         NONE, START, CHECKPOINT, END,
         ;
-        val displayName get() = name.capitalizeFirst()
+        val displayName get() = name.lowercase().capitalizeFirst()
         companion object{
             fun getType() = if (waypointType.equalsOneOf(0, 1, 5)) null else getByInt(timerSetting)
             fun getArrayList() = ArrayList(TimerType.entries.map { it.displayName })

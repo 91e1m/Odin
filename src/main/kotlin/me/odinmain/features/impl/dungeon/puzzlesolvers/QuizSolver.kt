@@ -4,10 +4,14 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import me.odinmain.OdinMain.logger
 import me.odinmain.events.impl.RoomEnterEvent
+import me.odinmain.features.impl.dungeon.puzzlesolvers.PuzzleSolvers.onPuzzleComplete
 import me.odinmain.features.impl.dungeon.puzzlesolvers.PuzzleSolvers.quizDepth
-import me.odinmain.utils.*
-import me.odinmain.utils.render.*
+import me.odinmain.utils.render.RenderUtils
+import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.getRealCoords
+import me.odinmain.utils.startsWithOneOf
+import me.odinmain.utils.toAABB
+import me.odinmain.utils.toVec3
 import net.minecraft.util.BlockPos
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
@@ -34,16 +38,19 @@ object QuizSolver {
 
     fun onMessage(msg: String) {
         if (msg.startsWith("[STATUE] Oruo the Omniscient: ") && msg.endsWith("correctly!")) {
-            if (msg.contains("answered the final question")) return reset()
+            if (msg.contains("answered the final question")) {
+                onPuzzleComplete("Quiz")
+                reset()
+                return
+            }
             if (msg.contains("answered Question #")) triviaOptions.forEach { it.isCorrect = false }
         }
-        if (msg.trim().startsWithOneOf("ⓐ", "ⓑ", "ⓒ", ignoreCase = true)) {
-            if (triviaAnswers?.any { msg.endsWith(it) } ?: return) {
-                when (msg.trim()[0]) {
-                    'ⓐ' -> triviaOptions[0].isCorrect = true
-                    'ⓑ' -> triviaOptions[1].isCorrect = true
-                    'ⓒ' -> triviaOptions[2].isCorrect = true
-                }
+
+        if (msg.trim().startsWithOneOf("ⓐ", "ⓑ", "ⓒ", ignoreCase = true) && triviaAnswers?.any { msg.endsWith(it) } == true) {
+            when (msg.trim()[0]) {
+                'ⓐ' -> triviaOptions[0].isCorrect = true
+                'ⓑ' -> triviaOptions[1].isCorrect = true
+                'ⓒ' -> triviaOptions[2].isCorrect = true
             }
         }
 

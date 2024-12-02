@@ -36,8 +36,7 @@ public abstract class MixinGuiContainer {
 
     @Inject(method = "drawSlot", at = @At("HEAD"), cancellable = true)
     private void onDrawSlot(Slot slotIn, CallbackInfo ci) {
-        if (postAndCatch(new GuiEvent.DrawSlotEvent(inventorySlots, odinMod$gui, slotIn, slotIn.xDisplayPosition, slotIn.yDisplayPosition)))
-            ci.cancel();
+        if (postAndCatch(new GuiEvent.DrawSlotEvent(inventorySlots, odinMod$gui, slotIn, slotIn.xDisplayPosition, slotIn.yDisplayPosition))) ci.cancel();
     }
 
     @Inject(method = "drawScreen", at = @At(value = "HEAD"), cancellable = true)
@@ -52,10 +51,5 @@ public abstract class MixinGuiContainer {
                 this.theSlot = slot;
             }
         }
-    }
-
-    @Inject(method = "onGuiClosed", at = @At("HEAD"))
-    private void onGuiClosed(CallbackInfo ci) {
-        postAndCatch(new GuiEvent.GuiClosedEvent(odinMod$gui));
     }
 }

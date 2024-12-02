@@ -1,18 +1,20 @@
 package me.odinmain.commands.impl
 
 import com.github.stivais.commodore.utils.GreedyString
+import me.odinmain.OdinMain.display
 import me.odinmain.commands.commodore
-import me.odinmain.features.huds.HUDManager
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints
-import me.odinmain.features.impl.render.ClickGUI
-import me.odinmain.features.impl.render.ClickGUI.clickGUI
-import me.odinmain.utils.ServerUtils
-import me.odinmain.utils.equalsOneOf
-import me.odinmain.utils.fillItemFromSack
+import me.odinmain.features.impl.render.ClickGUIModule
+import me.odinmain.features.impl.render.ServerHud.colorizeFPS
+import me.odinmain.features.impl.render.ServerHud.colorizePing
+import me.odinmain.features.impl.render.ServerHud.colorizeTps
+import me.odinmain.ui.clickgui.ClickGUI
+import me.odinmain.ui.hud.EditHUDGui
+import me.odinmain.utils.*
 import me.odinmain.utils.skyblock.*
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
-import me.odinmain.utils.ui.screens.UIScreen.Companion.open
-import me.odinmain.utils.writeToClipboard
+import java.awt.Desktop
+import java.net.URI
 import kotlin.math.round
 
 val mainCommand = commodore("od", "odin") {
@@ -80,8 +82,10 @@ val mainCommand = commodore("od", "odin") {
              §3- /od ep §7» §8Refills ender pearls up to 16.
              §3- /od ij §7» §8Refills inflatable Jerry's up to 64.
              §3- /od sl §7» §8Refills spirit leaps up to 16.
+             §3- /od sb §7» §8Refills super booms up to 64.
              §3- /spcmd §7» §8Use /spcmd cmds for command list.
              §3- /visualwords §7» §8Command to replace words in the game.
+             §3- /od leap §7» §8Sets custom leap order.
              """.trimIndent()
         )
     }
@@ -156,5 +160,5 @@ private val floors = mapOf(
 )
 
 private val tiers = mapOf(
-    '1' to "none", '2' to "hot", '3' to "burning", '4' to "fiery", '5' to "infernal"
+    '1' to "normal", '2' to "hot", '3' to "burning", '4' to "fiery", '5' to "infernal"
 )

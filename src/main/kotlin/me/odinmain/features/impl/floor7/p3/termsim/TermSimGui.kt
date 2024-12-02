@@ -1,9 +1,9 @@
 package me.odinmain.features.impl.floor7.p3.termsim
 
+
 import me.odinmain.OdinMain.display
 import me.odinmain.events.impl.GuiEvent
-import me.odinmain.events.impl.PacketReceivedEvent
-import me.odinmain.events.impl.PacketSentEvent
+import me.odinmain.events.impl.PacketEvent
 import me.odinmain.features.impl.floor7.TerminalSimulator
 import me.odinmain.features.impl.floor7.TerminalSimulator.openRandomTerminal
 import me.odinmain.features.impl.floor7.TerminalSimulator.sendOnlyPB
@@ -46,7 +46,7 @@ open class TermSimGui(val name: String, val size: Int, private val inv: Inventor
     }
 
     fun solved(name: String, pbIndex: Int) {
-        TerminalSimulator.simPBs.time(pbIndex, (System.currentTimeMillis() - startTime) / 1000.0, "s§7!", "§a$name §7(termsim) §7solved in §6", addPBString = true, addOldPBString = true, sendOnlyPB = sendOnlyPB == 0)
+        TerminalSimulator.termSimPBs.time(pbIndex, (System.currentTimeMillis() - startTime) / 1000.0, "s§7!", "§a$name §7(termsim) §7solved in §6", addPBString = true, addOldPBString = true, sendOnlyPB = sendMessage)
         if (TerminalSounds.enabled && completeSounds) playCompleteSound()
         if (this.consecutive > 0) openRandomTerminal(ping, consecutive) else if (TerminalSimulator.openStart) StartGui.open(ping) else mc.thePlayer.closeScreen()
     }
@@ -63,7 +63,7 @@ open class TermSimGui(val name: String, val size: Int, private val inv: Inventor
     }
 
     @SubscribeEvent
-    fun onPacketSend(event: PacketSentEvent) {
+    fun onPacketSend(event: PacketEvent.Send) {
         val packet = event.packet as? C0EPacketClickWindow ?: return
         if (mc.currentScreen != this) return
         delaySlotClick(this.inventorySlots.inventorySlots[packet.slotId], packet.usedButton)
@@ -71,7 +71,7 @@ open class TermSimGui(val name: String, val size: Int, private val inv: Inventor
     }
 
     @SubscribeEvent
-    fun onPacketReceived(event: PacketReceivedEvent) {
+    fun onPacketReceived(event: PacketEvent.Receive) {
         val packet = event.packet as? S2FPacketSetSlot ?: return
         if (mc.currentScreen !== this) return
         packet.func_149174_e()?.let {
@@ -94,14 +94,14 @@ open class TermSimGui(val name: String, val size: Int, private val inv: Inventor
     final override fun mouseClicked(mouseX: Int, mouseY: Int, mouseButton: Int) {
         val slot = slotUnderMouse ?: return
         if (slot.stack?.item == pane && slot.stack?.metadata == 15) return
-        if (!GuiEvent.GuiWindowClickEvent(mc.thePlayer.openContainer.windowId, slot.slotIndex, mouseButton, 0, mc.thePlayer).postAndCatch())
+        if (!GuiEvent.WindowClick(mc.thePlayer.openContainer.windowId, slot.slotIndex, mouseButton, 0, mc.thePlayer).postAndCatch())
         delaySlotClick(slot, mouseButton)
     }
 
     final override fun handleMouseClick(slotIn: Slot?, slotId: Int, clickedButton: Int, clickType: Int) {
         val slot = slotIn ?: return
         if (slot.stack?.item == pane && slot.stack?.metadata == 15) return
-        if (!GuiEvent.GuiWindowClickEvent(mc.thePlayer.openContainer.windowId, slot.slotIndex, clickedButton, clickType, mc.thePlayer).postAndCatch())
+        if (!GuiEvent.WindowClick(mc.thePlayer.openContainer.windowId, slot.slotIndex, clickedButton, clickType, mc.thePlayer).postAndCatch())
         delaySlotClick(slot, 0)
     }
 }

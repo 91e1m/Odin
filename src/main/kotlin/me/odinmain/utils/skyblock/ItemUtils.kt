@@ -52,9 +52,6 @@ val ItemStack?.skyblockID: String
 val ItemStack?.uuid: String
     get() = this?.extraAttributes?.getString("uuid") ?: ""
 
-inline val heldItem: ItemStack?
-    get() = mc.thePlayer?.heldItem
-
  /**
  * Returns if an item has an ability
  */
@@ -89,11 +86,8 @@ val EntityPlayerSP.usingEtherWarp: Boolean
 /**
  * Returns the ID of held item
  */
-fun isHolding(id: String): Boolean =
-    mc.thePlayer?.heldItem?.skyblockID == id
-
-fun EntityPlayerSP?.isHolding(id: String): Boolean =
-    this?.heldItem?.skyblockID == id
+fun isHolding(vararg id: String): Boolean =
+    mc.thePlayer?.heldItem?.skyblockID in id
 
 /**
  * Returns first slot of an Item
@@ -153,7 +147,7 @@ enum class ItemRarity(
     VERY_SPECIAL("VERY SPECIAL", "§c", Colors.MINECRAFT_DARK_RED);
 }
 
-private val rarityRegex: Regex = Regex("§l(?<rarity>${ItemRarity.entries.joinToString("|") { it.loreName }}) ?(?<type>[A-Z ]+)?(?:§[0-9a-f]§l§ka)?$")
+private val rarityRegex = Regex("§l(?<rarity>${ItemRarity.entries.joinToString("|") { it.loreName }}) ?(?<type>[A-Z ]+)?(?:§[0-9a-f]§l§ka)?$")
 
 /**
  * Gets the rarity of an item

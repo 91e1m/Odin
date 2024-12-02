@@ -21,7 +21,8 @@ data class DungeonPlayer(
     val clazzLvl: Int = 0,
     val skinImage: Image = Image("https://mc-heads.net/avatar/Stivais/32"),
     var entity: EntityPlayer? = null,
-    var isDead: Boolean = false
+    var isDead: Boolean = false,
+    var deaths: Int = 0
 )
 
 data class Puzzle(

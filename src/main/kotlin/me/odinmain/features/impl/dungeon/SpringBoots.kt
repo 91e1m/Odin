@@ -1,14 +1,17 @@
 package me.odinmain.features.impl.skyblock
 
-import com.github.stivais.aurora.color.Color
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.ColorSetting
+import me.odinmain.features.settings.impl.HudSetting
 import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.utils.addVec
 import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.getSafe
+import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.Renderer
+import me.odinmain.utils.render.getTextWidth
+import me.odinmain.utils.render.mcText
 import me.odinmain.utils.skyblock.LocationUtils
 import me.odinmain.utils.skyblock.skyblockID
 import me.odinmain.utils.toAABB
@@ -27,10 +30,9 @@ object SpringBoots : Module(
             mcText("Jump: 6.5", 1f, 1f, 1, Color.WHITE)
             getTextWidth("Jump: 6.5", 12f) to 12f
         } else {
-            val blockAmount = blocksList.getSafe(pitchCounts.sum())
-            if (blockAmount == 0.0) return@HudSetting 0f to 0f
-            mcText("Jump: ${blockAmount ?: "61 (MAX)"}", 1f, 1f, 1, Color.WHITE)
-            getTextWidth("Jump: ${blockAmount ?: "61 (MAX)"}", 12f) to 12f
+            val blockAmount = blocksList.getSafe(pitchCounts.sum()).takeIf { it != 0.0 } ?: return@HudSetting 0f to 0f
+            mcText("Jump: ${colorHud(blockAmount)}", 1f, 1f, 1, Color.WHITE)
+            getTextWidth("Jump: ${colorHud(blockAmount)}", 12f) to 12f
         }
     }*/
     private val renderGoal by BooleanSetting("Render Goal", true, description = "Render the goal block.")
@@ -74,5 +76,15 @@ object SpringBoots : Module(
     fun onRenderWorld(event: RenderWorldLastEvent) {
         if (!renderGoal || !LocationUtils.isInSkyblock) return
         blockPos?.let { Renderer.drawBox(it.toAABB(), goalColor, fillAlpha = 0f) }
+    }
+
+    private fun colorHud(blocks: Double): String {
+        return when {
+            blocks <= 13.5 -> "§c"
+            blocks <= 22.5 -> "§e"
+            blocks <= 33.0 -> "§6"
+            blocks <= 43.5 -> "§a"
+            else -> "§b"
+        } + blocks
     }
 }

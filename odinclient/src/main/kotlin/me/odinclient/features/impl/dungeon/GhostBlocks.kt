@@ -176,9 +176,8 @@ object GhostBlocks : Module(
     // TODO: MAKE THIS JSON PLS ITS SO BAD
     private val enderChests = mapOf(
         1 to arrayOf(
-            BlockPos(77, 221, 35),
-            BlockPos(77, 221, 34),
-            BlockPos(77, 221, 33)
+            BlockPos(69, 221, 37),
+            BlockPos(69, 221, 36),
         ),
         2 to arrayOf(
             BlockPos(101, 169, 46),
@@ -192,8 +191,8 @@ object GhostBlocks : Module(
 
     private val glass = mapOf(
         1 to arrayOf(
-            BlockPos(77, 221, 36),
-            BlockPos(78, 221, 36)
+            BlockPos(68, 221, 38),
+            BlockPos(69, 221, 38)
         ),
         2 to arrayOf(
             BlockPos(102, 169, 47)
@@ -217,13 +216,12 @@ object GhostBlocks : Module(
             BlockPos(88, 212, 61),
             BlockPos(88, 211, 61),
             BlockPos(88, 210, 61),
-            BlockPos(77, 220, 35),
-            BlockPos(78, 220, 35)
+            BlockPos(69, 220, 37),
+            BlockPos(68, 220, 37)
         ),
         2 to arrayOf(
             BlockPos(88, 167, 41),
             BlockPos(89, 167, 41),
-            BlockPos(90, 167, 41),
             BlockPos(91, 167, 41),
             BlockPos(92, 167, 41),
             BlockPos(93, 167, 41),
@@ -306,7 +304,7 @@ object GhostBlocks : Module(
     )
 
 
-    private val toggleKeybind: Keybinding by KeybindSetting("Toggle Module", Keyboard.KEY_NONE, description = "Keybind to toggle the module on/ off.").onPress {
+    private val toggleKeybind: Keybinding by KeybindSetting("Toggle Module", Keyboard.KEY_NONE, description = "Keybind to toggle the module on/off.").onPress {
         this.onKeybind()
     }
 }

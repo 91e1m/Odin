@@ -115,7 +115,7 @@ object ArrowsDevice : Module(
 
 
     @SubscribeEvent
-    fun onServerTick(event: RealServerTick) {
+    fun onServerTick(event: ServerTickEvent) {
         serverTicksSinceLastTargetDisappeared = serverTicksSinceLastTargetDisappeared?.let {
             // There was no target last tick (or the count would be null)
 

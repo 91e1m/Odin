@@ -1,6 +1,7 @@
 package me.odin
 
-import me.odin.features.impl.floor7.p3.*
+import me.odin.features.impl.floor7.p3.ArrowsDevice
+import me.odin.features.impl.floor7.p3.SimonSays
 import me.odin.features.impl.render.Camera
 import me.odin.features.impl.render.EtherWarpHelper
 import me.odin.features.impl.skyblock.HidePlayers
@@ -11,7 +12,9 @@ import me.odinmain.utils.render.RenderUtils
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.fml.common.Mod
 import net.minecraftforge.fml.common.Mod.EventHandler
-import net.minecraftforge.fml.common.event.*
+import net.minecraftforge.fml.common.event.FMLInitializationEvent
+import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
 

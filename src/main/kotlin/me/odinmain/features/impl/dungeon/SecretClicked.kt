@@ -45,7 +45,8 @@ object SecretClicked : Module(
     private val volume by NumberSetting("Volume", 1f, 0, 1, .01f, description = "Volume of the sound.").withDependency { chimeDropdownSetting && chime }
     private val pitch by NumberSetting("Pitch", 2f, 0, 2, .01f, description = "Pitch of the sound.").withDependency { chimeDropdownSetting && chime }
     val reset by ActionSetting("Play Sound", description = "Plays the sound with the current settings.") {
-        PlayerUtils.playLoudSound(if (sound == defaultSounds.size - 1) customSound else defaultSounds[sound], volume, pitch) }.withDependency { chimeDropdownSetting && chime }
+        PlayerUtils.playLoudSound(if (sound == defaultSounds.size - 1) customSound else defaultSounds[sound], volume, pitch)
+    }.withDependency { chimeDropdownSetting && chime }
     private val chimeInBoss by BooleanSetting("Chime In Boss", false, description = "Prevent playing the sound if in boss room.").withDependency { chimeDropdownSetting && chime }
 
     private data class Secret(val pos: BlockPos, var locked: Boolean = false)
@@ -54,7 +55,7 @@ object SecretClicked : Module(
 
     @SubscribeEvent
     fun onRenderWorld(event: RenderWorldLastEvent) {
-        if (!boxes || !DungeonUtils.inDungeons || (DungeonUtils.inBoss && boxInBoss) || clickedSecretsList.isEmpty()) return
+        if (!boxes || !DungeonUtils.inDungeons || (DungeonUtils.inBoss && !boxInBoss) || clickedSecretsList.isEmpty()) return
 
         clickedSecretsList.forEach {
             val currentColor = if (it.locked) lockedColor else color
@@ -66,21 +67,21 @@ object SecretClicked : Module(
     @SubscribeEvent
     fun onSecret(event: SecretPickupEvent) {
         when {
-            event is SecretPickupEvent.Interact -> secretBox(event.blockPos)
-            event is SecretPickupEvent.Bat -> secretBox(event.packet.positionVector.toBlockPos())
+            event is SecretPickupEvent.Interact            -> secretBox(event.blockPos)
+            event is SecretPickupEvent.Bat                 -> secretBox(event.packet.positionVector.toBlockPos())
             event is SecretPickupEvent.Item && toggleItems -> secretBox(event.entity.positionVector.toBlockPos())
         }
         secretChime()
     }
 
     private fun secretChime() {
-        if (!chime || (chimeInBoss && DungeonUtils.inBoss) || System.currentTimeMillis() - lastPlayed <= 10) return
+        if (!chime || (DungeonUtils.inBoss && !chimeInBoss) || System.currentTimeMillis() - lastPlayed <= 10) return
         PlayerUtils.playLoudSound(if (sound == defaultSounds.size - 1) customSound else defaultSounds[sound], volume, pitch)
         lastPlayed = System.currentTimeMillis()
     }
 
     private fun secretBox(pos: BlockPos) {
-        if (!boxes || (DungeonUtils.inBoss && boxInBoss) || clickedSecretsList.any { it.pos == pos }) return
+        if (!boxes || (DungeonUtils.inBoss && !boxInBoss) || clickedSecretsList.any { it.pos == pos }) return
         clickedSecretsList.add(Secret(pos))
         runIn(timeToStay * 20) { clickedSecretsList.removeFirstOrNull() }
     }

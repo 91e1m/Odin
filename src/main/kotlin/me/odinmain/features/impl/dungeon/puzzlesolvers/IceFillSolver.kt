@@ -8,6 +8,7 @@ import me.odinmain.events.impl.RoomEnterEvent
 import me.odinmain.utils.Vec2
 import me.odinmain.utils.add
 import me.odinmain.utils.addVec
+import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.IceFillFloors
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
@@ -77,18 +78,16 @@ object IceFillSolver {
 
     private fun transform(x: Int, z: Int, rotation: Rotations): Vec2 {
         return when (rotation) {
-            Rotations.NORTH -> Vec2(z, -x)
-            Rotations.WEST -> Vec2(-x, -z)
-            Rotations.SOUTH -> Vec2(-z, x)
-            Rotations.EAST -> Vec2(x, z)
+            Rotations.NORTH -> Vec2(z, -x) // east
+            Rotations.WEST -> Vec2(-x, -z) // north
+            Rotations.SOUTH -> Vec2(-z, x) // west
+            Rotations.EAST -> Vec2(x, z) // south
             else -> Vec2(x, z)
         }
     }
 
-    fun transformTo(vec: Vec3i, rotation: Rotations): Vec3 {
-        return with(transform(vec.x, vec.z, rotation)) {
-            Vec3(x.toDouble(), vec.y.toDouble(), z.toDouble())
-        }
+    fun transformTo(vec: Vec3i, rotation: Rotations): Vec3 = with(transform(vec.x, vec.z, rotation)) {
+        Vec3(x.toDouble(), vec.y.toDouble(), z.toDouble())
     }
 
     fun reset() {

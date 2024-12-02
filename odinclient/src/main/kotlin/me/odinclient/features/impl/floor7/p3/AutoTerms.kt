@@ -4,7 +4,9 @@ import me.odinmain.events.impl.GuiEvent
 import me.odinmain.features.Module
 import me.odinmain.features.impl.floor7.p3.TerminalSolver
 import me.odinmain.features.impl.floor7.p3.TerminalTypes
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.NumberSetting
+import me.odinmain.features.settings.impl.SelectorSetting
 import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.PlayerUtils.windowClick
 import me.odinmain.utils.skyblock.modMessage
@@ -18,7 +20,7 @@ object AutoTerms : Module(
 ) {
     private val autoDelay by NumberSetting("Delay", 170L, 130, 300, unit = "ms", description = "Delay between clicks.")
     private val firstClickDelay by NumberSetting("First Click Delay", 350L, 300, 500, unit = "ms", description = "Delay before first click.")
-    private val middleClick by SelectorSetting("Click Type", "Left", arrayListOf("Left", "Middle"), description = "What Click type to use.")
+    private val middleClick by BooleanSetting("Middle Click", false, description = "Use middle click instead of left click.")
     private val breakThreshold by NumberSetting("Break Threshold", 500L, 350L, 1000L, 10L, unit = "ms", description = "Time before breaking the click.")
     private val clickingOrder by SelectorSetting("Clicking order", "random", arrayListOf("from first", "from last", "random"), description = "The order to click the items in.")
     private val disableMelody by BooleanSetting("Disable Melody", false, description = "Disables melody terminals.")
@@ -50,15 +52,15 @@ object AutoTerms : Module(
 
         when (TerminalSolver.currentTerm.type) {
             TerminalTypes.RUBIX ->
-                windowClick(item, if (TerminalSolver.currentTerm.solution.count { it == item } >= 3) PlayerUtils.ClickType.Right else if (middleClick == 1) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
+                windowClick(item, if (TerminalSolver.currentTerm.solution.count { it == item } >= 3) PlayerUtils.ClickType.Right else if (middleClick) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
 
             TerminalTypes.ORDER ->
-                windowClick(TerminalSolver.currentTerm.solution.first(), if (middleClick == 1) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
+                windowClick(TerminalSolver.currentTerm.solution.first(), if (middleClick) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
 
             TerminalTypes.MELODY ->
-                windowClick(TerminalSolver.currentTerm.solution.find { it % 9 == 7 } ?: return, if (middleClick == 1) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
+                windowClick(TerminalSolver.currentTerm.solution.find { it % 9 == 7 } ?: return, if (middleClick) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
 
-            else -> windowClick(item, if (middleClick == 1) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
+            else -> windowClick(item, if (middleClick) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Left)
         }
 
         val currentTime = System.currentTimeMillis()

@@ -1,6 +1,6 @@
 package me.odinclient.features.impl.render
 
-import me.odinmain.events.impl.PacketReceivedEvent
+import me.odinmain.events.impl.PacketEvent
 import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
@@ -23,15 +23,21 @@ object NoDebuff : Module(
     private val antiWaterFOV by BooleanSetting("No Water FOV", false, description = "Disable FOV change in water.")
     private val noFire by BooleanSetting("No Fire Overlay", false, description = "Disable Fire overlay on screen.")
     private val seeThroughBlocks by BooleanSetting("See Through Blocks", false, description = "Makes blocks transparent.")
+    private val noNausea by BooleanSetting("No Nausea", false, description = "Disables the nausea effect.")
+    val noHurtCam by BooleanSetting("No Hurt Cam", false, description = "Disables the hurt effect.")
+
+    @JvmStatic
+    val shouldIgnoreNausea get() = noNausea && enabled
 
     @SubscribeEvent
     fun onRenderFog(event: EntityViewRenderEvent.FogDensity) {
         if (!antiBlind) return
         event.density = 0f
+        event.isCanceled = true
         GlStateManager.setFogStart(998f)
         GlStateManager.setFogEnd(999f)
-        event.isCanceled = true
     }
+
     @SubscribeEvent
     fun onOverlay(event: RenderGameOverlayEvent.Pre) {
         if (event.type == RenderGameOverlayEvent.ElementType.PORTAL && antiPortal)
@@ -41,7 +47,7 @@ object NoDebuff : Module(
     }
 
     @SubscribeEvent
-    fun onPacket(event: PacketReceivedEvent) {
+    fun onPacket(event: PacketEvent.Receive) {
         val packet = event.packet as? S2APacketParticles ?: return
         if (noShieldParticles && packet.particleType.equalsOneOf(EnumParticleTypes.SPELL_WITCH, EnumParticleTypes.HEART))
             event.isCanceled = true
@@ -50,7 +56,7 @@ object NoDebuff : Module(
     @SubscribeEvent
     fun onFOV(event: EntityViewRenderEvent.FOVModifier) {
         if (antiWaterFOV && event.block.material == Material.water)
-            event.fov *= 70F / 60F
+            event.fov *= 7 / 6
     }
 
     @SubscribeEvent

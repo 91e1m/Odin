@@ -3,7 +3,8 @@ package me.odin.features.impl.render
 import com.github.stivais.ui.color.Color
 import com.github.stivais.ui.color.withAlpha
 import me.odin.mixin.accessors.IEntityPlayerSPAccessor
-import me.odinmain.events.impl.PacketReceivedEvent
+import me.odinmain.events.impl.PacketEvent
+import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.*
@@ -32,7 +33,8 @@ object EtherWarpHelper : Module(
     private val style by SelectorSetting("Style", Renderer.DEFAULT_STYLE, Renderer.styles, description = Renderer.STYLE_DESCRIPTION)
     private val lineWidth by NumberSetting("Line Width", 2f, 0.1f, 10f, 0.1f, description = "The width of the box's lines.")
     private val depthCheck by BooleanSetting("Depth check", false, description = "Boxes show through walls.")
-    private val useServerPosition by SelectorSetting("Positioning", "Server Pos", arrayListOf("Server Pos", "Player Pos"), description = "If etherwarp guess should use your server position or real position.").withDependency { render }
+    private val expand by NumberSetting("Expand", 0.0, -1, 1, 0.01, description = "Expands the box by this amount.")
+    private val useServerPosition by BooleanSetting("Use Server Position", true, description = "If etherwarp guess should use your server position or real position.").withDependency { render }
 
     private val dropdown by DropdownSetting("Sounds", false)
     private val sounds by BooleanSetting("Custom Sounds", default = false, description = "Plays the selected custom sound when you etherwarp.").withDependency { dropdown }
@@ -50,22 +52,20 @@ object EtherWarpHelper : Module(
         if (mc.thePlayer?.usingEtherWarp == false || !render) return
         val player = mc.thePlayer as? IEntityPlayerSPAccessor ?: return
         val positionLook =
-            if (useServerPosition == 0)
+            if (useServerPosition)
                 PositionLook(Vec3(player.lastReportedPosX, player.lastReportedPosY, player.lastReportedPosZ), player.lastReportedYaw, player.lastReportedPitch)
             else
                 PositionLook(mc.thePlayer.renderVec, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch)
 
         etherPos = EtherWarpHelper.getEtherPos(positionLook)
         if (etherPos.succeeded || renderFail)
-            Renderer.drawStyledBlock(etherPos.pos ?: return, if (etherPos.succeeded) color else wrongColor, style, lineWidth, depthCheck)
+            Renderer.drawStyledBlock(etherPos.pos ?: return, if (etherPos.succeeded) color else wrongColor, style, lineWidth, depthCheck, true, expand)
     }
 
     @SubscribeEvent
-    fun onSoundPacket(event: PacketReceivedEvent) {
-        with(event.packet) {
-            if (this !is S29PacketSoundEffect || soundName != "mob.enderdragon.hit" || !sounds || volume != 1f || pitch != 0.53968257f || customSound == "mob.enderdragon.hit") return
-            playLoudSound(if (sound == defaultSounds.size - 1) customSound else defaultSounds[sound], soundVolume, soundPitch, positionVector)
-            event.isCanceled = true
-        }
+    fun onSoundPacket(event: PacketEvent.Receive) = with(event.packet) {
+        if (this !is S29PacketSoundEffect || soundName != "mob.enderdragon.hit" || !sounds || volume != 1f || pitch != 0.53968257f || customSound == "mob.enderdragon.hit") return
+        playLoudSound(if (sound == defaultSounds.size - 1) customSound else defaultSounds[sound], soundVolume, soundPitch, positionVector)
+        event.isCanceled = true
     }
 }

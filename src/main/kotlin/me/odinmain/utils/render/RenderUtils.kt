@@ -4,10 +4,12 @@ import com.github.stivais.aurora.color.Color
 import com.github.stivais.aurora.utils.*
 import me.odinmain.OdinMain.mc
 import me.odinmain.features.impl.dungeon.dungeonwaypoints.DungeonWaypoints.DungeonWaypoint
+import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.client.renderer.Tessellator
 import net.minecraft.client.renderer.WorldRenderer
 import net.minecraft.client.renderer.entity.RenderManager
+import net.minecraft.client.renderer.texture.TextureUtil
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats
 import net.minecraft.entity.Entity
 import net.minecraft.util.AxisAlignedBB
@@ -102,7 +104,7 @@ object RenderUtils {
         GlStateManager.disableLighting()
         if (disableTexture2D) GlStateManager.disableTexture2D() else GlStateManager.enableTexture2D()
         GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0)
-        GlStateManager.translate(-renderManager.viewerPosX, -renderManager.viewerPosY, -renderManager.viewerPosZ)
+        translate(-renderManager.viewerPosX, -renderManager.viewerPosY, -renderManager.viewerPosZ)
     }
 
     private fun postDraw() {
@@ -227,12 +229,10 @@ object RenderUtils {
         if (text.isBlank()) return
         GlStateManager.pushMatrix()
 
-        val xMultiplier = if (mc.gameSettings.thirdPersonView == 2) -1 else 1
-
         preDraw(false)
         GlStateManager.translate(vec3.xCoord, vec3.yCoord, vec3.zCoord)
         GlStateManager.rotate(-renderManager.playerViewY, 0.0f, 1.0f, 0.0f)
-        GlStateManager.rotate(renderManager.playerViewX * xMultiplier, 1.0f, 0.0f, 0.0f)
+        GlStateManager.rotate(renderManager.playerViewX * if (mc.gameSettings.thirdPersonView == 2) -1 else 1, 1.0f, 0.0f, 0.0f)
         GlStateManager.scale(-scale, -scale, scale)
 
         depth(depthTest)

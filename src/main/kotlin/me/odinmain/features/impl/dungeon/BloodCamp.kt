@@ -4,15 +4,14 @@ import com.github.stivais.aurora.color.Color
 import me.odinmain.OdinMain.isLegitVersion
 import me.odinmain.events.impl.EntityLeaveWorldEvent
 import me.odinmain.events.impl.PostEntityMetadata
-import me.odinmain.events.impl.RealServerTick
+import me.odinmain.events.impl.ServerTickEvent
+import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.BooleanSetting
-import me.odinmain.features.settings.impl.ColorSetting
-import me.odinmain.features.settings.impl.DropdownSetting
-import me.odinmain.features.settings.impl.NumberSetting
+import me.odinmain.features.settings.impl.*
 import me.odinmain.utils.*
 import me.odinmain.utils.ServerUtils.averagePing
+import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.RenderUtils.renderVec
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.devMessage
@@ -20,7 +19,6 @@ import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.inBoss
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.inDungeons
 import me.odinmain.utils.skyblock.getSkullValue
-import me.odinmain.utils.ui.Colors
 import net.minecraft.entity.boss.BossStatus
 import net.minecraft.entity.item.EntityArmorStand
 import net.minecraft.entity.monster.EntityZombie
@@ -33,6 +31,7 @@ import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 object BloodCamp : Module(
@@ -108,7 +107,7 @@ object BloodCamp : Module(
     }
 
     private fun onPacketLookMove(packet: S17PacketEntityLookMove) {
-        val entity = packet.getEntity(mc.theWorld) as? EntityArmorStand ?: return
+        val entity = packet.getEntity(mc.theWorld ?: return) as? EntityArmorStand ?: return
         if (currentWatcherEntity?.let { it.getDistanceToEntity(entity) <= 20 } != true ||
             entity.getEquipmentInSlot(4)?.item != Items.skull || getSkullValue(entity) !in allowedMobSkulls) return
 
@@ -161,7 +160,7 @@ object BloodCamp : Module(
             val (currVector, endVector, endVecUpdated, speedVectors) = renderData
             val endVectorUpdated = min(currentTickTime - endVecUpdated, 100)
 
-            val endPoint = calcEndVector(endVector, renderData.lastEndVector, endVectorUpdated / 100)
+            val endPoint = calcEndVector(endVector, renderData.lastEndVector, endVectorUpdated / 100f)
 
             val pingPoint = Vec3(
                 entity.posX + speedVectors.xCoord * averagePing,
@@ -210,7 +209,7 @@ object BloodCamp : Module(
     }
 
     @SubscribeEvent
-    fun onServerTick(event: RealServerTick) {
+    fun onServerTick(event: ServerTickEvent) {
         currentTickTime += 50
     }
 

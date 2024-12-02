@@ -3,35 +3,39 @@ package me.odinmain.features.impl.floor7.p3
 import com.github.stivais.aurora.color.Color
 import com.github.stivais.aurora.utils.withAlpha
 import io.github.moulberry.notenoughupdates.NEUApi
-import me.odinmain.events.impl.GuiEvent
-import me.odinmain.events.impl.TerminalEvent
+import me.odinmain.events.impl.*
+import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.impl.floor7.p3.termGUI.CustomTermGui
 import me.odinmain.features.settings.AlwaysActive
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.*
+import me.odinmain.ui.clickgui.util.ColorUtil
+import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
+import me.odinmain.ui.util.MouseUtils
 import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.postAndCatch
+import me.odinmain.utils.render.*
 import me.odinmain.utils.skyblock.PlayerUtils
 import me.odinmain.utils.skyblock.PlayerUtils.windowClick
 import me.odinmain.utils.skyblock.modMessage
 import me.odinmain.utils.skyblock.unformattedName
-import me.odinmain.utils.ui.Colors
 import net.minecraft.client.gui.Gui
 import net.minecraft.client.gui.inventory.GuiChest
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.entity.player.InventoryPlayer
 import net.minecraft.inventory.ContainerChest
 import net.minecraft.inventory.ContainerPlayer
-import net.minecraft.item.EnumDyeColor
-import net.minecraft.item.Item
-import net.minecraft.item.ItemStack
+import net.minecraft.item.*
 import net.minecraft.network.play.server.S2FPacketSetSlot
+import net.minecraftforge.client.event.GuiScreenEvent
 import net.minecraftforge.event.entity.player.ItemTooltipEvent
 import net.minecraftforge.fml.common.Loader
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
+import org.lwjgl.input.Keyboard
+import org.lwjgl.input.Mouse
 
 @AlwaysActive // So it can be used in other modules
 object TerminalSolver : Module(
@@ -124,7 +128,7 @@ object TerminalSolver : Module(
 
     @SubscribeEvent
     fun onGuiRender(event: GuiEvent.DrawGuiContainerScreenEvent) {
-        if (currentTerm.type == TerminalTypes.NONE || !enabled || !renderType.equalsOneOf(0,3) || event.container !is ContainerChest || (currentTerm.type == TerminalTypes.MELODY && cancelMelodySolver)) return
+        if (!enabled || currentTerm.type == TerminalTypes.NONE || !renderType.equalsOneOf(0,3) || event.container !is ContainerChest || (currentTerm.type == TerminalTypes.MELODY && cancelMelodySolver)) return
         if (renderType == 3) {
             CustomTermGui.render()
             event.isCanceled = true
@@ -151,9 +155,9 @@ object TerminalSolver : Module(
 
     @SubscribeEvent
     fun drawSlot(event: GuiEvent.DrawSlotEvent) {
-        if (currentTerm.type == TerminalTypes.NONE || (currentTerm.type == TerminalTypes.MELODY && cancelMelodySolver) || renderType == 3) return
-        if (event.slot.slotIndex !in currentTerm.solution && event.slot.slotIndex <= event.container.inventorySlots.size - 37 && enabled && getShouldBlockWrong() && event.slot.inventory !is InventoryPlayer) event.isCanceled = true
-        if (event.slot.slotIndex !in currentTerm.solution || event.slot.slotIndex > event.container.inventorySlots.size - 37 || !enabled || event.slot.inventory is InventoryPlayer) return
+        if (!enabled || renderType == 3 || currentTerm.type == TerminalTypes.NONE || (currentTerm.type == TerminalTypes.MELODY && cancelMelodySolver)) return
+        if (event.slot.slotIndex !in currentTerm.solution && event.slot.slotIndex <= event.container.inventorySlots.size - 37 && getShouldBlockWrong() && event.slot.inventory !is InventoryPlayer) event.isCanceled = true
+        if (event.slot.slotIndex !in currentTerm.solution || event.slot.slotIndex > event.container.inventorySlots.size - 37 || event.slot.inventory is InventoryPlayer) return
 
         GlStateManager.translate(0f, 0f, zLevel)
         GlStateManager.disableLighting()
@@ -212,47 +216,50 @@ object TerminalSolver : Module(
 
     @SubscribeEvent
     fun onTooltip(event: ItemTooltipEvent) {
-        if (cancelToolTip && currentTerm.type != TerminalTypes.NONE && enabled) event.toolTip.clear()
+        if (cancelToolTip && enabled && currentTerm.type != TerminalTypes.NONE) event.toolTip.clear()
     }
 
     @SubscribeEvent(receiveCanceled = true)
-    fun onGuiClick(event: GuiEvent.GuiMouseClickEvent) {
+    fun onGuiClick(event: GuiScreenEvent.MouseInputEvent.Pre) {
+        if (!enabled || !Mouse.getEventButtonState() || currentTerm.type == TerminalTypes.NONE) return
         val gui = event.gui as? GuiChest ?: return
         val needed = currentTerm.solution.count { it == gui.slotUnderMouse?.slotIndex }
 
-        if (renderType != 3 && currentTerm.type == TerminalTypes.NONE && middleClickGUI) {
-            event.isCanceled = true
-            windowClick(gui.slotUnderMouse?.slotIndex ?: return, if (needed >= 3) PlayerUtils.ClickType.Right else PlayerUtils.ClickType.Middle)
-        }
-        if (currentTerm.type == TerminalTypes.NONE || !enabled || (currentTerm.type == TerminalTypes.MELODY && cancelMelodySolver)) return
-        if (renderType == 3) {
-          //  CustomTermGui.mouseClicked(MouseUtils.mouseX.toInt(), MouseUtils.mouseY.toInt(), event.button)
+        if (renderType == 3 && !(currentTerm.type == TerminalTypes.MELODY && cancelMelodySolver)) {
+            CustomTermGui.mouseClicked(MouseUtils.mouseX.toInt(), MouseUtils.mouseY.toInt(), Mouse.getEventButton())
             event.isCanceled = true
             return
         }
 
         if (blockIncorrectClicks && currentTerm.type != TerminalTypes.MELODY) {
-
-            event.isCanceled = when {
+            when {
                 gui.slotUnderMouse?.slotIndex !in currentTerm.solution -> true
-                currentTerm.type == TerminalTypes.RUBIX && ((needed < 3 && event.button != 0) || (needed >= 3 && event.button != 1)) -> true
+                currentTerm.type == TerminalTypes.RUBIX && ((needed < 3 && Mouse.getEventButton() != 0) || (needed >= 3 && Mouse.getEventButton() != 1)) -> true
                 else -> false
+            }.takeIf { it }?.let {
+                event.isCanceled = true
+                return
             }
+        }
+
+        if (middleClickGUI) {
+            windowClick(gui.slotUnderMouse?.slotIndex ?: return, if (Mouse.getEventButton() == 0) PlayerUtils.ClickType.Middle else PlayerUtils.ClickType.Right)
+            event.isCanceled = true
         }
     }
 
     @SubscribeEvent
-    fun onGuiKeyPress(event: GuiEvent.GuiKeyPressEvent) {
-        if (currentTerm.type == TerminalTypes.NONE || !enabled || (currentTerm.type == TerminalTypes.MELODY && cancelMelodySolver)) return
-        if (renderType == 3 && (event.keyCode == mc.gameSettings.keyBindDrop.keyCode || event.keyCode in 2..10)) {
-          //  CustomTermGui.mouseClicked(MouseUtils.mouseX.toInt(), MouseUtils.mouseY.toInt(), if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && event.keyCode == mc.gameSettings.keyBindDrop.keyCode) 1 else 0)
+    fun onGuiKeyPress(event: GuiScreenEvent.KeyboardInputEvent.Pre) {
+        if (!enabled || currentTerm.type == TerminalTypes.NONE || (currentTerm.type == TerminalTypes.MELODY && cancelMelodySolver)) return
+        if (renderType == 3 && (Keyboard.isKeyDown(mc.gameSettings.keyBindDrop.keyCode) || Keyboard.getEventKey() in 2..10)) {
+            CustomTermGui.mouseClicked(MouseUtils.mouseX.toInt(), MouseUtils.mouseY.toInt(), if (Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) && Keyboard.isKeyDown(mc.gameSettings.keyBindDrop.keyCode)) 1 else 0)
             event.isCanceled = true
         }
     }
 
     @SubscribeEvent
     fun itemStack(event: GuiEvent.DrawSlotOverlayEvent) {
-        if (currentTerm.type == TerminalTypes.ORDER && enabled && (event.stack?.item?.registryName ?: return) == "minecraft:stained_glass_pane") event.isCanceled = true
+        if (enabled && currentTerm.type == TerminalTypes.ORDER && (event.stack?.item?.registryName ?: return) == "minecraft:stained_glass_pane") event.isCanceled = true
     }
 
     @SubscribeEvent
@@ -262,8 +269,8 @@ object TerminalSolver : Module(
 
     init {
         onMessage(Regex("(.{1,16}) (?:activated|completed) a (terminal|device|lever)! \\((\\d)/(\\d)\\)")) {
-            Regex("(.{1,16}) (?:activated|completed) a (terminal|device|lever)! \\((\\d)/(\\d)\\)").find(it)?.let {
-                val (playerName, deviceType, completionStatus, total) = it.destructured
+            Regex("(.{1,16}) (?:activated|completed) a (terminal|device|lever)! \\((\\d)/(\\d)\\)").find(it)?.let { message ->
+                val (playerName, deviceType, completionStatus, total) = message.destructured
                 TerminalEvent.Solved(if (deviceType == "terminal") lastTermOpened else TerminalTypes.NONE, playerName, completionStatus.toIntOrNull() ?: return@let, total.toIntOrNull() ?: return@let).postAndCatch()
             }
         }

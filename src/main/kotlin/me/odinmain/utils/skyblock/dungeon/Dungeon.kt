@@ -4,10 +4,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import me.odinmain.OdinMain.mc
 import me.odinmain.OdinMain.scope
-import me.odinmain.events.impl.PacketReceivedEvent
+import me.odinmain.events.impl.PacketEvent
 import me.odinmain.events.impl.RoomEnterEvent
 import me.odinmain.features.impl.dungeon.LeapMenu
 import me.odinmain.features.impl.dungeon.LeapMenu.odinSorting
+import me.odinmain.features.impl.dungeon.MapInfo.shownTitle
 import me.odinmain.features.impl.dungeon.Mimic
 import me.odinmain.utils.*
 import me.odinmain.utils.skyblock.PlayerUtils.posX
@@ -16,7 +17,10 @@ import me.odinmain.utils.skyblock.dungeon.DungeonUtils.getDungeonPuzzles
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.getDungeonTeammates
 import me.odinmain.utils.skyblock.dungeon.tiles.Room
 import net.minecraft.entity.player.EntityPlayer
-import net.minecraft.network.play.server.*
+import net.minecraft.network.play.server.S02PacketChat
+import net.minecraft.network.play.server.S38PacketPlayerListItem
+import net.minecraft.network.play.server.S3EPacketTeams
+import net.minecraft.network.play.server.S47PacketPlayerListHeaderFooter
 import net.minecraftforge.event.entity.EntityJoinWorldEvent
 
 // could add some system to look back at previous runs.
@@ -26,9 +30,9 @@ class Dungeon(val floor: Floor) {
 
     var paul = false
     val inBoss: Boolean get() = getBoss()
-    var dungeonTeammates: ArrayList<DungeonPlayer> = ArrayList<DungeonPlayer>(5)
-    var dungeonTeammatesNoSelf: ArrayList<DungeonPlayer> = ArrayList<DungeonPlayer>(4)
-    var leapTeammates: ArrayList<DungeonPlayer> = ArrayList<DungeonPlayer>(4)
+    var dungeonTeammates: ArrayList<DungeonPlayer> = ArrayList(5)
+    var dungeonTeammatesNoSelf: ArrayList<DungeonPlayer> = ArrayList(4)
+    var leapTeammates: ArrayList<DungeonPlayer> = ArrayList(4)
     var dungeonStats = DungeonStats()
     val currentRoom: Room? get() = ScanUtils.currentRoom
     val passedRooms: MutableSet<Room> get() = ScanUtils.passedRooms
@@ -49,7 +53,7 @@ class Dungeon(val floor: Floor) {
             paul = hasBonusPaulScore()
         }
 
-       // shownTitle = false mapinfo
+        shownTitle = false
     }
 
     fun enterDungeonRoom(event: RoomEnterEvent) {
@@ -58,7 +62,7 @@ class Dungeon(val floor: Floor) {
         dungeonStats.knownSecrets = dungeonStats.knownSecrets?.plus(roomSecrets) ?: roomSecrets
     }
 
-    fun onPacket(event: PacketReceivedEvent) {
+    fun onPacket(event: PacketEvent.Receive) {
         when (event.packet) {
             is S38PacketPlayerListItem -> handleTabListPacket(event.packet)
             is S3EPacketTeams -> handleScoreboardPacket(event.packet)
@@ -82,10 +86,14 @@ class Dungeon(val floor: Floor) {
 
     private fun handleChatPacket(packet: S02PacketChat) {
         val message = packet.chatComponent.unformattedText.noControlCodes
-        if (Regex("\\[BOSS] The Watcher: You have proven yourself. You may pass.").matches(message)) expectingBloodUpdate = true
-        Regex("(?:\\[\\w+] )?(\\w+) opened a (?:WITHER|Blood) door!").find(message)?.let { dungeonStats.doorOpener = it.groupValues[1] }
-
-        val partyMessage = Regex("Party > .*?: (.+)\$").find(message)?.groupValues?.get(1)?.lowercase() ?: return
+        if (expectingBloodRegex.matches(message)) expectingBloodUpdate = true
+        doorOpenRegex.find(message)?.let { dungeonStats.doorOpener = it.groupValues[1] }
+        deathRegex.find(message)?.let { match ->
+            dungeonTeammates.find {
+                it.name == (match.groupValues[1].takeUnless { it == "You" } ?: mc.thePlayer?.name)
+            }?.deaths?.inc()
+        }
+        val partyMessage = partyMessageRegex.find(message)?.groupValues?.get(1)?.lowercase() ?: return
         if (partyMessage.equalsOneOf("mimic killed", "mimic slain", "mimic killed!", "mimic dead", "mimic dead!", "\$skytils-dungeon-score-mimic\$", Mimic.mimicMessage))
             dungeonStats.mimicKilled = true
         if (partyMessage.equalsOneOf("blaze done!", "blaze done", "blaze puzzle solved!"))  //more completion messages may be necessary.
@@ -101,7 +109,7 @@ class Dungeon(val floor: Floor) {
     private fun handleScoreboardPacket(packet: S3EPacketTeams) {
         if (packet.action != 2) return
 
-        clearedRegex.find(packet.prefix.plus(packet.suffix))?.groupValues[1]?.toIntOrNull()?.let {
+        clearedRegex.find(packet.prefix.plus(packet.suffix))?.groupValues?.get(1)?.toIntOrNull()?.let {
             if (dungeonStats.percentCleared != it && expectingBloodUpdate) dungeonStats.bloodDone = true
             dungeonStats.percentCleared = it
         }
@@ -119,6 +127,10 @@ class Dungeon(val floor: Floor) {
         }
     }
 
+    private val partyMessageRegex = Regex("Party > .*?: (.+)\$")
+    private val doorOpenRegex = Regex("(?:\\[\\w+] )?(\\w+) opened a (?:WITHER|Blood) door!")
+    private val expectingBloodRegex = Regex("\\[BOSS] The Watcher: You have proven yourself. You may pass.")
+    private val deathRegex = Regex("☠ (\\w{1,16}) .* and became a ghost\\.")
     private val timeRegex = Regex("§r Time: §r§6((?:\\d+h ?)?(?:\\d+m ?)?\\d+s)§r")
     private val clearedRegex = Regex("^Cleared: §[c6a](\\d+)% §8(?:§8)?\\(\\d+\\)$")
     private val secretCountRegex = Regex("^§r Secrets Found: §r§b(\\d+)§r$")

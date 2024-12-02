@@ -41,13 +41,12 @@ object Rubix : TermSimGui(
     }
 
     private fun getPane(): ItemStack {
-        val a = Math.random()
-        return when {
-            a < .2 -> genStack(order[0])
-            a < .4 -> genStack(order[1])
-            a < .6 -> genStack(order[2])
-            a < .8 -> genStack(order[3])
-            else ->   genStack(order[4])
+        return when (Math.random()) {
+            in 0.0..0.2 -> genStack(order[0])
+            in 0.2..0.4 -> genStack(order[1])
+            in 0.4..0.6 -> genStack(order[2])
+            in 0.6..0.8 -> genStack(order[3])
+            else -> genStack(order[4])
         }
     }
 

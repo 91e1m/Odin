@@ -1,9 +1,17 @@
 package me.odinmain.features.impl.render
 
+import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.*
+import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
+import me.odinmain.utils.render.*
+import me.odinmain.utils.render.RenderUtils.bind
+import net.minecraft.client.gui.Gui.drawRect
 import net.minecraft.client.gui.ScaledResolution
+import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.scoreboard.*
+import net.minecraft.util.EnumChatFormatting
+import kotlin.math.max
 
 object Sidebar : Module(
     name = "Sidebar",
@@ -50,8 +58,20 @@ object Sidebar : Module(
     private val redNumbers by BooleanSetting("Show Red Numbers", true, description = "Whether to show the numbers in red.")
    // private val backgroundColor by ColorSetting("Background Color", Color.GRAY.withAlpha(.5f), allowAlpha = true, description = "The color of the sidebar background.")
 
+    @JvmStatic
     fun renderSidebar(scoreObjective: ScoreObjective, scaledResolution: ScaledResolution): Boolean {
         variableScoreObjective = scoreObjective
         return this.enabled
+    }
+
+    private fun drawString(str: String, x: Int, y: Int) {
+        if (customFont)
+            text(str, x - 1, y + 3, Color.WHITE, 7, shadow = textShadow)
+        else
+            mcText(str, x, y, 1, Color.WHITE, shadow = textShadow, center = false)
+    }
+
+    private fun getStringWidth(str: String): Int {
+        return if (customFont) (getTextWidth(str, 7f) * 1.5).toInt() else mc.fontRendererObj.getStringWidth(str)
     }
 }

@@ -14,8 +14,8 @@ object TerminalTimes : Module(
     name = "Terminal Times",
     description = "Records the time taken to complete terminals in floor 7."
 ) {
-    private val sendOnlyPB by SelectorSetting("Send Message", "Always", arrayListOf("Always", "Only PB"), true, description = "Send a message when a terminal is completed")
-    private val reset by ActionSetting("Reset pbs") {
+    private val sendMessage by BooleanSetting("Send Message", false, description = "Send a message when a terminal is completed.")
+    private val reset by ActionSetting("Reset pbs", description = "Resets the terminal PBs.") {
         repeat(6) { i -> termPBs.set(i, 999.0) }
         modMessage("§6Terminal PBs §fhave been reset.")
     }
@@ -28,7 +28,7 @@ object TerminalTimes : Module(
     @SubscribeEvent
     fun onTerminalClose(event: TerminalEvent.Solved) {
         if (event.type == TerminalTypes.NONE || mc.currentScreen is TermSimGui || event.playerName != mc.thePlayer?.name) return
-        termPBs.time(event.type.ordinal, (System.currentTimeMillis() - TerminalSolver.currentTerm.timeOpened) / 1000.0, "s§7!", "§a${event.type.guiName} §7solved in §6", addPBString = true, addOldPBString = true, sendOnlyPB = sendOnlyPB == 1)
+        termPBs.time(event.type.ordinal, (System.currentTimeMillis() - TerminalSolver.currentTerm.timeOpened) / 1000.0, "s§7!", "§a${event.type.guiName} §7solved in §6", addPBString = true, addOldPBString = true, sendOnlyPB = sendMessage)
     }
 
     private val terminalCompleteRegex = Regex("(.{1,16}) (activated|completed) a (terminal|lever|device)! \\((\\d)/(\\d)\\)")
@@ -65,6 +65,10 @@ object TerminalTimes : Module(
             resetSection()
             modMessage("§bTimes: §a${times.joinToString(" §8| ") { "§a${it}s" }}§8, §bTotal: §a${phaseTimer.seconds}s")
         }
+
+        onWorldLoad {
+            resetSection(true)
+        }
     }
 
     private val Long.seconds
@@ -81,7 +85,7 @@ object TerminalTimes : Module(
     }
 
     @SubscribeEvent
-    fun onServerTick(event: RealServerTick) {
+    fun onServerTick(event: ServerTickEvent) {
         if (!terminalSplits || useRealTime) return
         currentTick += 50
     }

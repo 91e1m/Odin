@@ -1,7 +1,8 @@
 package me.odinmain.features.impl.dungeon
 
 import me.odinmain.features.Module
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.NumberSetting
 import me.odinmain.utils.runIn
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.sendCommand
@@ -11,7 +12,7 @@ object DungeonRequeue : Module(
     description = "Automatically starts a new dungeon at the end of a dungeon."
 ) {
     private val delay by NumberSetting("Delay", 2, 0, 30, 1, description = "The delay in seconds before requeuing.", unit = "s")
-    private val type by SelectorSetting("Type", "Normal", arrayListOf("Requeue", "Normal"), description = "The type of command to execute to fulfill the requeue request.")
+    private val type by BooleanSetting("Type", true, description = "The type of command to execute to fulfill the requeue request. (true for Normal, false for Requeue)")
     private val disablePartyLeave by BooleanSetting("Disable on leave/kick", true, description = "Disables the requeue on party leave message.")
 
     var disableRequeue = false
@@ -23,7 +24,7 @@ object DungeonRequeue : Module(
             }
 
             runIn(delay * 20) {
-                sendCommand(if (type == 0) "instancerequeue" else "od ${DungeonUtils.floor.name.lowercase()}", clientSide = type != 0)
+                sendCommand(if (type) "instancerequeue" else "od ${DungeonUtils.floor.name.lowercase()}", clientSide = !type)
             }
         }
 

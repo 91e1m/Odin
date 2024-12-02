@@ -3,32 +3,41 @@ package me.odinmain.features.impl.dungeon
 import com.github.stivais.aurora.color.Color
 import io.github.moulberry.notenoughupdates.NEUApi
 import me.odinmain.events.impl.GuiEvent
+import me.odinmain.features.Category
 import me.odinmain.features.Module
-import me.odinmain.features.impl.dungeon.LeapHelper.getPlayer
 import me.odinmain.features.impl.dungeon.LeapHelper.leapHelperBossChatEvent
 import me.odinmain.features.impl.dungeon.LeapHelper.worldLoad
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.*
+import me.odinmain.ui.clickgui.animations.impl.EaseInOut
+import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
+import me.odinmain.ui.util.MouseUtils.getQuadrant
 import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.name
+import me.odinmain.utils.render.*
+import me.odinmain.utils.render.RenderUtils.drawTexturedModalRect
+import me.odinmain.utils.skyblock.*
 import me.odinmain.utils.skyblock.dungeon.DungeonClass
 import me.odinmain.utils.skyblock.dungeon.DungeonPlayer
-import me.odinmain.utils.skyblock.getItemIndexInContainerChest
-import me.odinmain.utils.skyblock.modMessage
-import me.odinmain.utils.skyblock.partyMessage
+import me.odinmain.utils.skyblock.dungeon.DungeonUtils.leapTeammates
 import net.minecraft.client.gui.inventory.GuiChest
+import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.inventory.ContainerChest
+import net.minecraft.util.ResourceLocation
 import net.minecraftforge.client.event.GuiOpenEvent
 import net.minecraftforge.fml.common.Loader
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.input.Keyboard
+import org.lwjgl.opengl.Display
 
 object LeapMenu : Module(
     name = "Leap Menu",
     description = "Renders a custom leap menu when in the Spirit Leap gui."
 ) {
-    val type by SelectorSetting("Sorting", "Odin Sorting", arrayListOf("Odin Sorting", "A-Z Class (BetterMap)", "A-Z Name", "No Sorting"), description = "How to sort the leap menu.")
-    private val colorStyle by SelectorSetting("Color Style", "Gray", arrayListOf("Gray", "Color"), description = "Which color style to use")
+    val type by SelectorSetting("Sorting", "Odin Sorting", arrayListOf("Odin Sorting", "A-Z Class (BetterMap)", "A-Z Name", "Custom sorting", "No Sorting"), description = "How to sort the leap menu.")
+    private val onlyClass by BooleanSetting("Only Classes", false, description = "Renders classes instead of names.")
+    private val colorStyle by BooleanSetting("Color Style", default = false, description = "Which color style to use.")
+    private val backgroundColor by ColorSetting("Background Color", default = Color.DARK_GRAY.withAlpha(0.9f), allowAlpha = true, description = "Color of the background of the leap menu.")
     private val roundedRect by BooleanSetting("Rounded Rect", true, description = "Toggles the rounded rect for the gui.")
     private val useNumberKeys by BooleanSetting("Use Number Keys", false, description = "Use keyboard keys to leap to the player you want, going from left to right, top to bottom.")
     private val topLeftKeybind by KeybindSetting("Top Left", Keyboard.KEY_1, "Used to click on the first person in the leap menu.").withDependency { useNumberKeys }
@@ -37,8 +46,8 @@ object LeapMenu : Module(
     private val bottomRightKeybind by KeybindSetting("Bottom right", Keyboard.KEY_4, "Used to click on the fourth person in the leap menu.").withDependency { useNumberKeys }
     private val size by NumberSetting("Scale Factor", 1.0f, 0.5f, 2.0f, 0.1f, description = "Scale factor for the leap menu.")
     private val leapHelperToggle by BooleanSetting("Leap Helper", false, description = "Highlights the leap helper player in the leap menu.")
-    private val leapHelperColor by ColorSetting("Leap Helper Color", Color.WHITE, description = "Color of the Leap Helper highlight").withDependency { leapHelperToggle }
-    val delay by NumberSetting("Reset Leap Helper Delay", 30, 10.0, 120.0, 1.0, description = "Delay for clearing the leap helper highlight").withDependency { leapHelperToggle }
+    private val leapHelperColor by ColorSetting("Leap Helper Color", Color.WHITE, description = "Color of the Leap Helper highlight.").withDependency { leapHelperToggle }
+    val delay by NumberSetting("Reset Leap Helper Delay", 30, 10.0, 120.0, 1.0, description = "Delay for clearing the leap helper highlight.").withDependency { leapHelperToggle }
     private val leapAnnounce by BooleanSetting("Leap Announce", false, description = "Announces when you leap to a player.")
 
     private val EMPTY = DungeonPlayer("Empty", DungeonClass.Unknown)
@@ -102,7 +111,6 @@ object LeapMenu : Module(
         val chest = (event.gui as? GuiChest)?.inventorySlots ?: return
         if (chest !is ContainerChest || chest.name != "Spirit Leap" || leapTeammates.isEmpty() || leapTeammates.all { it == EMPTY }) return
         if (Loader.instance().activeModList.any { it.modId == "notenoughupdates" }) NEUApi.setInventoryButtonsToDisabled()
-//        leapMenu().open()
     }
 
     private fun handleMouseClick(quadrant: Int) {
@@ -116,23 +124,18 @@ object LeapMenu : Module(
     }
 
     @SubscribeEvent
-    fun keyTyped(event: GuiEvent.GuiKeyPressEvent) {
+    fun keyTyped(event: GuiScreenEvent.KeyboardInputEvent.Pre) {
         val gui = event.gui as? GuiChest ?: return
         if (
             gui.inventorySlots !is ContainerChest ||
             gui.inventorySlots.name != "Spirit Leap" ||
-            !event.keyCode.equalsOneOf(topLeftKeybind.key, topRightKeybind.key, bottomLeftKeybind.key, bottomRightKeybind.key) ||
+            keybindList.none { it.isDown() } ||
             leapTeammates.isEmpty() ||
             !useNumberKeys
         ) return
-        val keyCodeNumber = when (event.keyCode) {
-            topLeftKeybind.key -> 1
-            topRightKeybind.key -> 2
-            bottomLeftKeybind.key -> 3
-            bottomRightKeybind.key -> 4
-            else -> return
-        }
-        val playerToLeap = if (keyCodeNumber > leapTeammates.size) return else leapTeammates[keyCodeNumber - 1]
+
+        val index = keybindList.indexOfFirst { it.isDown() }
+        val playerToLeap = if (index + 1 > leapTeammates.size) return else leapTeammates[index]
         if (playerToLeap == EMPTY) return
         if (playerToLeap.isDead) return modMessage("This player is dead, can't leap.")
 
@@ -142,9 +145,9 @@ object LeapMenu : Module(
     }
 
     private fun leapTo(name: String, containerChest: ContainerChest) {
-        val index = getItemIndexInContainerChest(containerChest, name, 11..16) ?: return modMessage("Cant find player $name. This shouldn't be possible!")
+        val index = getItemIndexInContainerChest(containerChest, name, 11..16) ?: return modMessage("Cant find player $name. This shouldn't be possible! are you nicked?")
         modMessage("Teleporting to $name.")
-        if (leapAnnounce) partyMessage("Leaping to $name.")
+        if (leapAnnounce) partyMessage("Leaped to $name!")
         mc.playerController.windowClick(containerChest.windowId, index, 2, 3, mc.thePlayer)
     }
 
@@ -160,12 +163,12 @@ object LeapMenu : Module(
         }
     }
 
-   private val leapTeammates: MutableList<DungeonPlayer> = mutableListOf(
+   /*private val leapTeammates: MutableList<DungeonPlayer> = mutableListOf(
         DungeonPlayer("Stivais", DungeonClass.Healer),
         DungeonPlayer("Odtheking", DungeonClass.Archer),
         DungeonPlayer("freebonsai", DungeonClass.Mage),
         DungeonPlayer("Cezar", DungeonClass.Tank)
-    )
+    )*/
 
     /**
      * Sorts the list of players based on their default quadrant and class priority.

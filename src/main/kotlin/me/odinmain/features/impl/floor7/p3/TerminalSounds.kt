@@ -9,7 +9,10 @@ import me.odinmain.utils.equalsOneOf
 import me.odinmain.utils.skyblock.PlayerUtils
 import net.minecraft.client.gui.inventory.GuiChest
 import net.minecraft.network.play.server.S29PacketSoundEffect
+import net.minecraftforge.client.event.GuiScreenEvent
+import net.minecraftforge.fml.common.eventhandler.EventPriority
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import org.lwjgl.input.Mouse
 
 object TerminalSounds : Module(
     name = "Terminal Sounds",
@@ -42,29 +45,19 @@ object TerminalSounds : Module(
     private var lastPlayed = System.currentTimeMillis()
 
     @SubscribeEvent
-    fun onPacket(event: PacketReceivedEvent){
-        with(event.packet) {
-            if (
-                this is S29PacketSoundEffect &&
-                soundName == "note.pling" &&
-                volume == 8f &&
-                pitch == 4.047619f &&
-                shouldReplaceSounds
-            ) event.isCanceled = true
-        }
+    fun onPacket(event: PacketEvent.Receive) = with(event.packet) {
+        if (this is S29PacketSoundEffect && soundName == "note.pling" && volume == 8f && pitch == 4.047619f && shouldReplaceSounds)
+            event.isCanceled = true
     }
 
-    @SubscribeEvent
-    fun onSlotClick(event: GuiEvent.GuiMouseClickEvent) {
-        if (!shouldReplaceSounds) return
-        val slot = (event.gui as? GuiChest)?.slotUnderMouse?.slotIndex ?: return
-        clickSlot(slot)
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    fun onSlotClick(event: GuiScreenEvent.MouseInputEvent.Pre) {
+        if (shouldReplaceSounds && Mouse.getEventButtonState()) clickSlot((event.gui as? GuiChest)?.slotUnderMouse?.slotIndex ?: return)
     }
 
     @SubscribeEvent
     fun onCustomSlotClick(event: GuiEvent.CustomTermGuiClick) {
-        if (!shouldReplaceSounds) return
-        clickSlot(event.slot)
+        if (shouldReplaceSounds) clickSlot(event.slot)
     }
 
     @SubscribeEvent
@@ -82,7 +75,7 @@ object TerminalSounds : Module(
     private fun clickSlot(slot: Int) {
         if (
             (!currentTerm.type.equalsOneOf(TerminalTypes.MELODY, TerminalTypes.ORDER) && slot !in TerminalSolver.currentTerm.solution) ||
-            (currentTerm.type == TerminalTypes.ORDER && slot != TerminalSolver.currentTerm.solution.first()) ||
+            (currentTerm.type == TerminalTypes.ORDER && slot != (TerminalSolver.currentTerm.solution.firstOrNull() ?: return)) ||
             (currentTerm.type == TerminalTypes.MELODY && slot !in intArrayOf(43, 34, 25, 16))
         ) return
         if ((TerminalSolver.currentTerm.solution.size == 1 || (currentTerm.type == TerminalTypes.MELODY && slot == 43)) && completeSounds) {
@@ -92,14 +85,12 @@ object TerminalSounds : Module(
     }
 
     fun playCompleteSound() {
-        val sound = if (completedSound == defaultSounds.size - 1) customCompleteSound else defaultSounds[completedSound]
-        PlayerUtils.playLoudSound(sound, completeVolume, completePitch)
+        PlayerUtils.playLoudSound( if (completedSound == defaultSounds.size - 1) customCompleteSound else defaultSounds[completedSound], completeVolume, completePitch)
     }
 
     private fun playTerminalSound() {
         if (System.currentTimeMillis() - lastPlayed <= 2) return
-        val sound = if (sound == defaultSounds.size - 1) customSound else defaultSounds[sound]
-        PlayerUtils.playLoudSound(sound, clickVolume, clickPitch)
+        PlayerUtils.playLoudSound(if (sound == defaultSounds.size - 1) customSound else defaultSounds[sound], clickVolume, clickPitch)
         lastPlayed = System.currentTimeMillis()
     }
 

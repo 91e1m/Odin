@@ -1,6 +1,6 @@
 package me.odinmain.features.impl.dungeon
 
-import me.odinmain.events.impl.PacketSentEvent
+import me.odinmain.events.impl.PacketEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
 import me.odinmain.features.settings.impl.ListSetting
@@ -27,7 +27,7 @@ object PosMessages : Module(
     val parsedStrings: MutableList<PosMessage> = mutableListOf()
 
     @SubscribeEvent
-    fun posMessageSend(event: PacketSentEvent) {
+    fun posMessageSend(event: PacketEvent.Send) {
         if (event.packet !is C04PacketPlayerPosition || (onlyDungeons && !DungeonUtils.inDungeons)) return
         parsedStrings.forEach { message ->
             message.x2?.let { handleInString(message) } ?: handleAtString(message)

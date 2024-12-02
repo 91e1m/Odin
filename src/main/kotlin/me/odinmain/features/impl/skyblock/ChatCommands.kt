@@ -3,25 +3,28 @@ package me.odinmain.features.impl.skyblock
 import me.odinmain.events.impl.MessageSentEvent
 import me.odinmain.features.Module
 import me.odinmain.features.impl.dungeon.DungeonRequeue.disableRequeue
-import me.odinmain.features.impl.render.ServerHud
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.*
+import me.odinmain.features.settings.impl.BooleanSetting
+import me.odinmain.features.settings.impl.DropdownSetting
+import me.odinmain.features.settings.impl.ListSetting
 import me.odinmain.utils.*
 import me.odinmain.utils.skyblock.*
 import net.minecraft.event.ClickEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.math.floor
 import kotlin.random.Random
 
 object ChatCommands : Module(
     name = "Chat Commands",
-    description = "Type !help in the corresponding channel for cmd list. Use /blacklist.",
+    description = "Type !help in the corresponding channel for cmd list. Use /blacklist."
 ) {
     private val chatEmotes by BooleanSetting(name = "Chat Emotes", default = true, description = "Replaces chat emotes with their corresponding emojis.")
     private val party by BooleanSetting(name = "Party commands", default = true, description = "Toggles chat commands in party chat.")
     private val guild by BooleanSetting(name = "Guild commands", default = true, description = "Toggles chat commands in guild chat.")
     private val private by BooleanSetting(name = "Private commands", default = true, description = "Toggles chat commands in private chat.")
-    private val whitelistOnly by SelectorSetting("Whitelist Only", "Blacklist", arrayListOf("Blacklist", "Whitelist") , description = "Whether the list should act like a whitelist or a blacklist")
+    private val whitelistOnly by BooleanSetting(name = "Whitelist Only", default = false, description = "Whether the list should act like a whitelist or a blacklist.")
     private val showSettings by DropdownSetting(name = "Show Settings", default = false)
 
     private val warp by BooleanSetting(name = "Warp", default = true, description = "Executes the /party warp commnad.").withDependency { showSettings }
@@ -44,6 +47,8 @@ object ChatCommands : Module(
     private val time by BooleanSetting(name = "Time", default = false, description = "Sends the current time.").withDependency { showSettings }
     private val demote by BooleanSetting(name = "Demote", default = false, description = "Executes the /party demote command.").withDependency { showSettings }
     private val promote by BooleanSetting(name = "Promote", default = false, description = "Executes the /party promote command.").withDependency { showSettings }
+    private val location by BooleanSetting(name = "Location", default = true, description = "Sends your current location.").withDependency { showSettings }
+    private val holding by BooleanSetting(name = "Holding", default = true, description = "Sends the item you are holding.").withDependency { showSettings }
 
     private var dtPlayer: String? = null
     private val dtReason = mutableListOf<Pair<String, String>>()
@@ -74,11 +79,9 @@ object ChatCommands : Module(
             val ign = match.groups[2]?.value ?: match.groups[5]?.value ?: match.groups[9]?.value ?: return@onMessage
             val msg = match.groups[3]?.value ?: match.groups[7]?.value ?: match.groups[10]?.value ?: return@onMessage
 
-            if (whitelistOnly == 1 != isInBlacklist(ign)) return@onMessage
+            if (whitelistOnly != isInBlacklist(ign)) return@onMessage
 
-            runIn(8) {
-                handleChatCommands(msg, ign, channel)
-            }
+            runIn(8) { handleChatCommands(msg, ign, channel) }
 
             onWorldLoad { dtReason.clear() }
         }
@@ -101,13 +104,16 @@ object ChatCommands : Module(
             "coords", "co" -> if (coords) channelMessage(PlayerUtils.getPositionString(), name, channel)
             "odin", "od" -> if (odin) channelMessage("Odin! https://discord.gg/2nCbC9hkxT", name, channel)
             "boop" -> if (boop) sendChatMessage("/boop ${message.substringAfter("boop ")}")
-            "cf" -> if (cf) channelMessage(flipCoin(), name, channel)
-            "8ball" -> if (eightball) channelMessage(eightBall(), name, channel)
-            "dice" -> if (dice) channelMessage(rollDice(), name, channel)
+            "cf" -> if (cf) channelMessage(if (Math.random() < 0.5) "heads" else "tails", name, channel)
+            "8ball" -> if (eightball) channelMessage(responses.random(), name, channel)
+            "dice" -> if (dice) channelMessage((1..6).random(), name, channel)
             "racism" -> if (racism) channelMessage("$name is ${Random.nextInt(1, 101)}% racist. Racism is not allowed!", name, channel)
             "ping" -> if (ping) channelMessage("Current Ping: ${floor(ServerUtils.averagePing).toInt()}ms", name, channel)
             "tps" -> if (tps) channelMessage("Current TPS: ${ServerUtils.averageTps.floor()}", name, channel)
-            "fps" -> if (fps) channelMessage("Current FPS: ${ServerHud.getFPS()}", name, channel)
+            "fps" -> if (fps) channelMessage("Current FPS: ${ServerUtils.fps}", name, channel)
+            "time" -> if (time) channelMessage("Current Time: ${ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"))}", name, channel)
+            "location" -> if (location) channelMessage("Current Location: ${LocationUtils.currentArea.displayName}", name, channel)
+            "holding" -> if (holding) channelMessage("Holding: ${mc.thePlayer?.heldItem?.displayName?.noControlCodes ?: "Nothing :("}", name, channel)
 
             // Party cmds only
             "warp", "w" -> if (warp && channel == ChatChannel.PARTY) sendCommand("p warp")
@@ -207,4 +213,27 @@ object ChatCommands : Module(
     enum class ChatChannel {
         PARTY, GUILD, PRIVATE
     }
+
+    private val responses = arrayOf(
+        "It is certain",
+        "It is decidedly so",
+        "Without a doubt",
+        "Yes definitely",
+        "You may rely on it",
+        "As I see it, yes",
+        "Most likely",
+        "Outlook good",
+        "Yes",
+        "Signs point to yes",
+        "Reply hazy try again",
+        "Ask again later",
+        "Better not tell you now",
+        "Cannot predict now",
+        "Concentrate and ask again",
+        "Don't count on it",
+        "My reply is no",
+        "My sources say no",
+        "Outlook not so good",
+        "Very doubtful"
+    )
 }

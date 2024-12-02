@@ -2,14 +2,13 @@ package me.odinclient.features.impl.render
 
 import com.github.stivais.aurora.utils.withAlpha
 import me.odinmain.events.impl.RenderEntityModelEvent
+import me.odinmain.features.Category
 import me.odinmain.features.Module
 import me.odinmain.features.settings.Setting.Companion.withDependency
-import me.odinmain.features.settings.impl.BooleanSetting
-import me.odinmain.features.settings.impl.ColorSetting
-import me.odinmain.features.settings.impl.NumberSetting
-import me.odinmain.utils.addVec
-import me.odinmain.utils.render.OutlineUtils
-import me.odinmain.utils.render.RenderUtils
+import me.odinmain.features.settings.impl.*
+import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
+import me.odinmain.utils.*
+import me.odinmain.utils.render.*
 import me.odinmain.utils.render.RenderUtils.renderVec
 import me.odinmain.utils.render.RenderUtils.renderX
 import me.odinmain.utils.render.RenderUtils.renderY
@@ -19,7 +18,6 @@ import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.isHolding
 import me.odinmain.utils.skyblock.isLeap
 import me.odinmain.utils.skyblock.isShortbow
-import me.odinmain.utils.ui.Colors
 import net.minecraft.entity.Entity
 import net.minecraft.entity.boss.EntityWither
 import net.minecraft.entity.item.EntityArmorStand
@@ -27,16 +25,11 @@ import net.minecraft.entity.monster.EntityBlaze
 import net.minecraft.entity.projectile.EntityArrow
 import net.minecraft.item.ItemBow
 import net.minecraft.item.ItemEnderPearl
-import net.minecraft.util.AxisAlignedBB
-import net.minecraft.util.EnumFacing
+import net.minecraft.util.*
 import net.minecraft.util.MathHelper.sqrt_double
-import net.minecraft.util.MovingObjectPosition
-import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.sqrt
+import kotlin.math.*
 
 object Trajectories : Module(
     name = "Trajectories",
@@ -231,7 +224,7 @@ object Trajectories : Module(
             }
             else -> return
         }
-        RenderUtils.drawFilledAABB(AxisAlignedBB(vec1.xCoord, vec1.yCoord, vec1.zCoord, vec2.xCoord, vec2.yCoord, vec2.zCoord), color.withAlpha(color.alpha / 2f), false)
+        RenderUtils.drawFilledAABB(AxisAlignedBB(vec1.xCoord, vec1.yCoord, vec1.zCoord, vec2.xCoord, vec2.yCoord, vec2.zCoord), color.withAlpha(color.alpha / 2), false)
     }
 
     private fun drawPearlCollisionBox() {

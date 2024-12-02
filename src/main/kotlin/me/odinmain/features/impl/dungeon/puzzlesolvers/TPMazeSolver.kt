@@ -7,17 +7,14 @@ import me.odinmain.events.impl.RoomEnterEvent
 import me.odinmain.features.impl.dungeon.puzzlesolvers.PuzzleSolvers.mazeColorMultiple
 import me.odinmain.features.impl.dungeon.puzzlesolvers.PuzzleSolvers.mazeColorOne
 import me.odinmain.features.impl.dungeon.puzzlesolvers.PuzzleSolvers.mazeColorVisited
-import me.odinmain.utils.isXZInterceptable
+import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
+import me.odinmain.utils.*
+import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils.getRealCoords
-import me.odinmain.utils.skyblock.getBlockAt
-import me.odinmain.utils.toAABB
-import net.minecraft.init.Blocks
 import net.minecraft.network.play.server.S08PacketPlayerPosLook
-import net.minecraft.util.AxisAlignedBB
-import net.minecraft.util.BlockPos
-import net.minecraft.util.Vec3
+import net.minecraft.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 
 object TPMazeSolver {
@@ -26,10 +23,7 @@ object TPMazeSolver {
     private var visited = CopyOnWriteArraySet<BlockPos>()
 
     fun onRoomEnter(event: RoomEnterEvent) = with(event.room) {
-        if (this?.data?.name != "Teleport Maze") return
-
-        tpPads = BlockPos.getAllInBox(getRealCoords(BlockPos(0, 69, 0)), getRealCoords(BlockPos(30, 69, 30)))
-            .filter { getBlockAt(it) == Blocks.end_portal_frame }.toSet()
+        if (this?.data?.name == "Teleport Maze") tpPads = endPortalFrameLocations.map { getRealCoords(it.x, it.y, it.z) }.toSet()
     }
 
     fun tpPacket(event: S08PacketPlayerPosLook) {
@@ -50,13 +44,12 @@ object TPMazeSolver {
         }
     }
 
-    fun tpRender() {
+    fun onRenderWorld() {
         if (DungeonUtils.currentRoomName != "Teleport Maze") return
-        val color = if (correctPortals.size == 1) mazeColorOne else mazeColorMultiple
         tpPads.forEach {
             when (it) {
+                in correctPortals -> Renderer.drawBlock(it, if (correctPortals.size == 1) mazeColorOne else mazeColorMultiple, outlineAlpha = 0, depth = false)
                 in visited -> Renderer.drawBlock(it, mazeColorVisited, outlineAlpha = 0, depth = true)
-                in correctPortals -> Renderer.drawBlock(it, color, outlineAlpha = 0, depth = false)
                 else -> Renderer.drawBlock(it, Color.WHITE.withAlpha(0.5f), outlineAlpha = 0, fillAlpha = 0.5f, depth = true)
             }
         }
@@ -66,4 +59,17 @@ object TPMazeSolver {
         correctPortals = listOf()
         visited = CopyOnWriteArraySet<BlockPos>()
     }
+
+    private val endPortalFrameLocations = setOf(
+        BlockPos(4, 69, 28), BlockPos(4, 69, 22), BlockPos(4, 69, 20),
+        BlockPos(4, 69, 14), BlockPos(4, 69, 12), BlockPos(4, 69, 6),
+        BlockPos(10, 69, 28), BlockPos(10, 69, 22), BlockPos(10, 69, 20),
+        BlockPos(10, 69, 14), BlockPos(10, 69, 12), BlockPos(10, 69, 6),
+        BlockPos(12, 69, 28), BlockPos(12, 69, 22), BlockPos(15, 69, 14),
+        BlockPos(15, 69, 12), BlockPos(18, 69, 28), BlockPos(18, 69, 22),
+        BlockPos(20, 69, 28), BlockPos(20, 69, 22), BlockPos(20, 69, 20),
+        BlockPos(20, 69, 14), BlockPos(20, 69, 12), BlockPos(20, 69, 6),
+        BlockPos(26, 69, 28), BlockPos(26, 69, 22), BlockPos(26, 69, 20),
+        BlockPos(26, 69, 14), BlockPos(26, 69, 12), BlockPos(26, 69, 6)
+    )
 }

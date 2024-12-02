@@ -3,7 +3,9 @@ package me.odinmain.features.impl.dungeon.puzzlesolvers
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import me.odinmain.events.impl.RoomEnterEvent
-import me.odinmain.utils.*
+import me.odinmain.utils.addRotationCoords
+import me.odinmain.utils.equalsOneOf
+import me.odinmain.utils.removeFirstOrNull
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.getBlockIdAt
@@ -49,9 +51,10 @@ object BoulderSolver {
 
     fun onRenderWorld() {
         if (DungeonUtils.currentRoomName != "Boulder" || currentPositions.isEmpty()) return
-        if (PuzzleSolvers.showAllBoulderClicks == 0) currentPositions.forEach {
+        if (PuzzleSolvers.showAllBoulderClicks) currentPositions.forEach {
             Renderer.drawStyledBlock(it.render, PuzzleSolvers.boulderColor, PuzzleSolvers.boulderStyle, PuzzleSolvers.boulderLineWidth)
-        } else currentPositions.firstOrNull()?.let {
+        }
+        else currentPositions.firstOrNull()?.let {
             Renderer.drawStyledBlock(it.render, PuzzleSolvers.boulderColor, PuzzleSolvers.boulderStyle, PuzzleSolvers.boulderLineWidth)
         }
     }

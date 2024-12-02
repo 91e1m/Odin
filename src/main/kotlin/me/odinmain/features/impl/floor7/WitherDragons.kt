@@ -1,20 +1,21 @@
 package me.odinmain.features.impl.floor7
 
-import me.odinmain.events.impl.RealServerTick
+import me.odinmain.events.impl.ServerTickEvent
+import me.odinmain.features.Category
 import me.odinmain.features.Module
-import me.odinmain.features.impl.floor7.DragonBoxes.renderBoxes
 import me.odinmain.features.impl.floor7.DragonCheck.dragonSpawn
 import me.odinmain.features.impl.floor7.DragonCheck.dragonSprayed
 import me.odinmain.features.impl.floor7.DragonCheck.dragonUpdate
-import me.odinmain.features.impl.floor7.DragonCheck.onChatPacket
-import me.odinmain.features.impl.floor7.DragonHealth.renderHP
-import me.odinmain.features.impl.floor7.DragonTimer.renderTime
-import me.odinmain.features.impl.floor7.DragonTracer.renderTracers
+import me.odinmain.features.impl.floor7.DragonCheck.lastDragonDeath
 import me.odinmain.features.impl.floor7.KingRelics.relicsBlockPlace
 import me.odinmain.features.impl.floor7.KingRelics.relicsOnMessage
 import me.odinmain.features.impl.floor7.KingRelics.relicsOnWorldLast
 import me.odinmain.features.settings.Setting.Companion.withDependency
 import me.odinmain.features.settings.impl.*
+import me.odinmain.ui.clickgui.util.ColorUtil.withAlpha
+import me.odinmain.utils.addVec
+import me.odinmain.utils.render.*
+import me.odinmain.utils.render.RenderUtils.renderVec
 import me.odinmain.utils.runIn
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.M7Phases
@@ -84,7 +85,7 @@ object WitherDragons : Module(
     val relicSpawnTicks by NumberSetting("Relic Spawn Ticks", 42, 0, 100, description = "The amount of ticks for the relic to spawn.").withDependency {  relicDropDown }
     val cauldronHighlight by BooleanSetting("Cauldron Highlight", true, description = "Highlights the cauldron for held relic.").withDependency { relicDropDown }
 
-   /* private val relicHud by HudSetting("Relic Hud", 10f, 10f, 1f, true) {
+    /*private val relicHud by HudSetting("Relic Hud", 10f, 10f, 1f, true) {
         if (it) return@HudSetting mcTextAndWidth("§3Relics: 4.30s", 2, 5f, 1, Color.WHITE, center = false) + 2f to 16f
         if (DungeonUtils.getF7Phase() != M7Phases.P5 || KingRelics.relicTicksToSpawn <= 0) return@HudSetting 0f to 0f
         mcTextAndWidth("§3Relics: ${String.format(Locale.US, "%.2f", KingRelics.relicTicksToSpawn / 20.0)}s", 2, 5f, 1, Color.WHITE, center = false) + 2f to 16f
@@ -128,7 +129,9 @@ object WitherDragons : Module(
         }
 
         onMessage(Regex("^\\[BOSS] Wither King: (Oh, this one hurts!|I have more of those\\.|My soul is disposable\\.)$"), { enabled && DungeonUtils.getF7Phase() == M7Phases.P5 } ) {
-            onChatPacket()
+            WitherDragonsEnum.entries.find { lastDragonDeath == it && lastDragonDeath != WitherDragonsEnum.None }?.let {
+                if (sendNotification && WitherDragons.enabled) modMessage("§${it.colorCode}${it.name} dragon counts.")
+            }
         }
     }
 
@@ -136,18 +139,34 @@ object WitherDragons : Module(
     fun onRenderWorld(event: RenderWorldLastEvent) {
         if (DungeonUtils.getF7Phase() != M7Phases.P5 || !enabled) return
 
-        if (dragonHealth) renderHP()
-        if (dragonTimer) renderTime()
-        if (dragonBoxes) renderBoxes()
+        if (dragonHealth) {
+            DragonCheck.dragonEntityList.forEach {
+                if (it.health > 0) Renderer.drawStringInWorld(colorHealth(it.health), it.renderVec.addVec(y = 1.5), Color.WHITE, depth = false, scale = 0.2f, shadow = true)
+            }
+        }
+        if (dragonTimer) {
+            WitherDragonsEnum.entries.forEach { dragon ->
+                if (dragon.state == WitherDragonState.SPAWNING)  Renderer.drawStringInWorld(
+                    "§${dragon.colorCode}${dragon.name.first()}: ${colorDragonTimer(dragon.timeToSpawn)}${String.format(Locale.US, "%.2f", dragon.timeToSpawn / 20.0)}${if (addUselessDecimal) "0" else ""}", dragon.spawnPos,
+                    color = Color.WHITE, depth = false, scale = 0.16f
+                )
+            }
+        }
+        if (dragonBoxes)
+            WitherDragonsEnum.entries.forEach {
+                if (it.state != WitherDragonState.DEAD) Renderer.drawBox(it.boxesDimensions, it.color.withAlpha(0.5f), lineThickness, depth = false, fillAlpha = 0)
+            }
+
         if (cauldronHighlight) relicsOnWorldLast()
-        if (priorityDragon != WitherDragonsEnum.None && dragonTracers)
-            renderTracers(priorityDragon)
+        if (priorityDragon != WitherDragonsEnum.None && dragonTracers && priorityDragon.state == WitherDragonState.SPAWNING)
+            Renderer.drawTracer(priorityDragon.spawnPos.addVec(0.5, 3.5, 0.5), color = priorityDragon.color, lineWidth = tracerThickness)
+
     }
 
     @SubscribeEvent
-    fun onServerTick(event: RealServerTick) {
+    fun onServerTick(event: ServerTickEvent) {
         currentTick++
-        DragonCheck.updateTime()
+        WitherDragonsEnum.entries.forEach { if (it.state == WitherDragonState.SPAWNING && it.timeToSpawn > 0) it.timeToSpawn-- }
         KingRelics.onServerTick()
     }
 
@@ -164,6 +183,32 @@ object WitherDragons : Module(
             if (dragon.entity?.isEntityAlive != true && arrowsHit <= 0) return@runIn
             modMessage("§fYou hit §6${arrowsHit} §farrows on §${dragon.colorCode}${dragon.name}${if (dragon.entity?.isEntityAlive == true) " §fin §c${String.format(Locale.US, "%.2f", dragon.skipKillTime.toFloat()/20)} §fSeconds." else "."}")
             arrowsHit = 0
+        }
+    }
+
+    private fun colorDragonTimer(spawnTime: Int): String {
+        return when {
+            spawnTime <= 20 -> "§c"
+            spawnTime <= 60 -> "§e"
+            else -> "§a"
+        }
+    }
+
+    private fun colorHealth(health: Float): String {
+        return when {
+            health >= 750_000_000 -> "§a${formatHealth(health)}"
+            health >= 500_000_000 -> "§e${formatHealth(health)}"
+            health >= 250_000_000 -> "§6${formatHealth(health)}"
+            else -> "§c${formatHealth(health)}"
+        }
+    }
+
+    private fun formatHealth(health: Float): String {
+        return when {
+            health >= 1_000_000_000 -> "${String.format(Locale.US, "%.2f", health / 1_000_000_000)}b"
+            health >= 1_000_000     -> "${String.format(Locale.US, "%.2f", health / 1_000_000    )}m"
+            health >= 1_000         -> "${String.format(Locale.US, "%.2f", health / 1_000        )}k"
+            else -> "${health.toInt()}"
         }
     }
 }

@@ -1,12 +1,11 @@
 package me.odinmain.features.impl.floor7.p3
 
 import com.github.stivais.aurora.color.Color
-import me.odinmain.events.impl.PacketSentEvent
+import me.odinmain.events.impl.PacketEvent
 import me.odinmain.features.Module
 import me.odinmain.features.settings.impl.BooleanSetting
-import me.odinmain.utils.addVec
-import me.odinmain.utils.distanceSquaredTo
-import me.odinmain.utils.flooredVec
+import me.odinmain.utils.*
+import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
 import me.odinmain.utils.skyblock.dungeon.M7Phases
@@ -57,7 +56,7 @@ object ArrowAlign : Module(
     }
 
     @SubscribeEvent
-    fun onPacket(event: PacketSentEvent) {
+    fun onPacket(event: PacketEvent.Send) {
         val packet = event.packet as? C02PacketUseEntity ?: return
         if (DungeonUtils.getF7Phase() != M7Phases.P3 || clicksRemaining.isEmpty() || packet.action != C02PacketUseEntity.Action.INTERACT) return
         val entity = packet.getEntityFromWorld(mc.theWorld) ?: return

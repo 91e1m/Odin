@@ -1,19 +1,17 @@
 package me.odinmain.features.impl.dungeon
 
-import com.github.stivais.aurora.color.Color
 import me.odinmain.events.impl.BlockChangeEvent
 import me.odinmain.events.impl.RealServerTick
+import me.odinmain.features.Category
 import me.odinmain.features.Module
-import me.odinmain.utils.addVec
-import me.odinmain.utils.equal
+import me.odinmain.utils.*
+import me.odinmain.utils.render.Color
 import me.odinmain.utils.render.Renderer
 import me.odinmain.utils.skyblock.dungeon.DungeonUtils
-import me.odinmain.utils.toVec3
-import me.odinmain.utils.ui.Colors
 import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
 
 object TerracottaTimer : Module(
@@ -26,25 +24,22 @@ object TerracottaTimer : Module(
     @SubscribeEvent
     fun onBlockPacket(event: BlockChangeEvent) {
         if (!DungeonUtils.isFloor(6) || !DungeonUtils.inBoss || !event.update.block.isFlowerPot || terracottaSpawning.any { it.pos.equal(event.pos.toVec3().addVec(0.5, 1.5, 0.5)) }) return
-        terracottaSpawning.add(Terracotta(event.pos.toVec3().addVec(0.5, 1.5, 0.5), if (DungeonUtils.floor.isMM) 1200.0 else 1500.0))
+        terracottaSpawning.add(Terracotta(event.pos.toVec3().addVec(0.5, 1.5, 0.5), if (DungeonUtils.floor.isMM) 12.0 else 15.0))
     }
 
     @SubscribeEvent
-    fun onServerTick(event: RealServerTick) {
+    fun onServerTick(event: ServerTickEvent) {
         terracottaSpawning.removeAll {
-            it.time -= 5
+            it.time -= .05
             it.time <= 0
         }
     }
 
     @SubscribeEvent
     fun onRenderWorld(event: RenderWorldLastEvent) {
-        if (!DungeonUtils.isFloor(6) || !DungeonUtils.inBoss || terracottaSpawning.isEmpty()) return
+        if (!DungeonUtils.inBoss || !DungeonUtils.isFloor(6) || terracottaSpawning.isEmpty()) return
         terracottaSpawning.forEach {
-            Renderer.drawStringInWorld(
-                "${String.format(Locale.US, "%.2f", it.time / 100.0)}s",
-                it.pos, getColor(it.time / 100.0), depth = false, scale = 0.03f
-            )
+            Renderer.drawStringInWorld(String.format(Locale.US, "%.2f", it.time) + "s", it.pos, getColor(it.time), depth = false, scale = 0.03f)
         }
     }
 

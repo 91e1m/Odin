@@ -14,6 +14,7 @@ object WarpCooldown : Module (
 ) {
     private val showUnit by BooleanSetting("Show unit", default = false, description = "Displays unit of time for the cooldown.").hide()
 
+    private var warpTimer = Clock(30_000L)
     private val HUD by TextHUD("Warp HUD") { color, font, shadow ->
         needs { lastUpdate - System.currentTimeMillis() >= 0 }
         buildText(
@@ -26,8 +27,12 @@ object WarpCooldown : Module (
     private var lastUpdate: Long = System.currentTimeMillis()
 
     init {
-        onMessage(Regex("^-*>newLine<-\\[[^]]+] (\\w+) entered (?:MM )?\\w+ Catacombs, Floor (\\w+)!->newLine<-*$")) {
-            lastUpdate = System.currentTimeMillis() + 30_000
+        onMessage(Regex("You were kicked while joining that server!"), { enabled && announceKick }) {
+            partyMessage(kickText)
+        }
+
+        onMessage(Regex("^-*\\n\\[[^]]+] (\\w+) entered (?:MM )?\\w+ Catacombs, Floor (\\w+)!\\n-*$")) {
+            warpTimer.updateCD()
         }
     }
 
