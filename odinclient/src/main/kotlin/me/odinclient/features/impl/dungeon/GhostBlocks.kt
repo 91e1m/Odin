@@ -297,6 +297,18 @@ object GhostBlocks : Module(
             BlockPos(56, 111, 110)
         ),
         4 to arrayOf(
+            BlockPos(58, 123, 123),
+            BlockPos(58, 123, 122),
+            BlockPos(58, 123, 121),
+            BlockPos(58, 123, 119),
+            BlockPos(57, 123, 122),
+            BlockPos(57, 123, 121),
+            BlockPos(57, 123, 120),
+            BlockPos(57, 123, 119),
+            BlockPos(57, 123, 118)
+           
+        ),
+        4 to arrayOf(
             BlockPos(54, 64, 72),
             BlockPos(54, 64, 73),
             BlockPos(54, 63, 73),
